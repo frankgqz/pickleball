@@ -9,6 +9,7 @@ interface Player {
   id: string;
   name: string;
   duprId: string | null;
+  duprNumericId: string | null;  // Add this line
   duprScore: number | null;
 }
 
