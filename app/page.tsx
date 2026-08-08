@@ -20,6 +20,8 @@ export default function Home() {
   const [duprId, setDuprId] = useState("");
   const [duprScore, setDuprScore] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load players from database on mount
   useEffect(() => {
@@ -27,9 +29,15 @@ export default function Home() {
   }, []);
 
   async function loadPlayers() {
-    const result = await getPlayers();
-    if (result.success) {
-      setPlayers(result.players || []);
+    try {
+      const result = await getPlayers();
+      if (result.success) {
+        setPlayers(result.players || []);
+      } else {
+        setError(result.error || "Unknown error");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Connection failed");
     }
     setLoading(false);
   }
@@ -75,6 +83,18 @@ export default function Home() {
     setEventPool(eventPool.filter(p => p.id !== playerId));
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl text-center max-w-md">
+          <p className="text-red-600 font-bold mb-2">⚠️ Database Error</p>
+          <p className="text-gray-700 text-sm">{error}</p>
+          <p className="text-gray-500 text-xs mt-4">Check Vercel environment variables</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
@@ -82,6 +102,7 @@ export default function Home() {
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
