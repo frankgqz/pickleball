@@ -1264,8 +1264,8 @@ export default function Home() {
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="p-2 text-left">Name</th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("adjustedOrder")}>
-                      Order# {sortColumn === "adjustedOrder" && (sortDirection === "asc" ? "↑" : "↓")}
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("seed")}>
+                      Order# {sortColumn === "seed" && (sortDirection === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
                       W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
