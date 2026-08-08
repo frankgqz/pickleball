@@ -1,16 +1,17 @@
-import { PrismaClient } from "@prisma/client/index";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from ".prisma/client";
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
+class PrismaClientSingleton {
+  private static instance: PrismaClient | null = null;
 
-function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL!;
-  const adapter = new PrismaPg({ connectionString });
-  return new PrismaClient({ adapter });
+  static getClient(): PrismaClient {
+    if (!this.instance) {
+      const { PrismaPg } = require("@prisma/adapter-pg");
+      const connectionString = process.env.DATABASE_URL!;
+      const adapter = new PrismaPg({ connectionString });
+      this.instance = new PrismaClient({ adapter });
+    }
+    return this.instance;
+  }
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+export const prisma = PrismaClientSingleton.getClient();
