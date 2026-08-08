@@ -948,7 +948,7 @@ export default function Home() {
             </div>
 
             {/* Match Format Selection (if not yet started) */}
-            {!roundState.submitted && roundState.matches.length > 0 && roundState.matches.every(m => m.score1 === undefined) && (
+            {!roundState.submitted && roundState.matches.length > 0 && roundState.matches.every(m => m.team1Score === undefined && m.team2Score === undefined) && (
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={() => {
@@ -989,8 +989,8 @@ export default function Home() {
                         type="number"
                         placeholder="Score"
                         className="w-16 px-2 py-1 border rounded text-center"
-                        value={match.score1 ?? ""}
-                        onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
+                        value={match.team1Score ?? ""}
+                        onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team1')}
                       />
                     </div>
 
@@ -1068,15 +1068,15 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Single score input */}
+{/* Single score input */}
                         <div className="flex flex-col items-center px-4">
                           <span className="text-gray-400 text-sm mb-2">Score</span>
                           <input
                             type="number"
                             placeholder="11"
                             className="w-16 px-3 py-2 border-2 border-gray-300 rounded-lg text-center text-lg"
-                            value={match.score1 ?? ""}
-                            onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
+                            value={match.team1Score ?? ""}
+                            onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team1')}
                           />
                         </div>
 
