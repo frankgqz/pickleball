@@ -189,9 +189,9 @@ export default function Home() {
         }
         courtNum++;
       } else if (courtPlayers.length > 0) {
-        // Partial court - assign remaining to next available or create bye
-        if (courtPlayers.length >= 2) {
-          // Can still play with reduced numbers
+        // Partial court - if we can't form 2v2, give everyone byes
+        if (courtPlayers.length >= 4) {
+          // Can play full court
           if (format === "PICK_PARTNER") {
             matches.push({
               id: `match-${courtNum}`,
@@ -204,12 +204,24 @@ export default function Home() {
             matches.push({
               id: `match-${courtNum}`,
               court: courtNum,
-              team1: [courtPlayers[0]],
-              team2: courtPlayers.slice(1),
+              team1: [courtPlayers[0], courtPlayers[3]],
+              team2: [courtPlayers[1], courtPlayers[2]],
               bye: false,
             });
           }
           courtNum++;
+        } else {
+          // Not enough for 2v2 - everyone gets a bye
+          courtPlayers.forEach((pid, idx) => {
+            matches.push({
+              id: `bye-${courtNum}-${idx}`,
+              court: 0,
+              team1: [pid],
+              team2: [],
+              bye: true,
+              byePlayerId: pid,
+            });
+          });
         }
       }
     }
@@ -1055,7 +1067,7 @@ export default function Home() {
                           {match.team1.map((id) => {
                             const p = eventPool.find(ep => ep.id === id);
                             return (
-                              <div key={id} className="bg-white rounded-lg p-2 border border-blue-200">
+                              <div key={id} className="bg-purple-50 rounded-lg p-2 border border-purple-300">
                                 <p className="font-medium text-sm">{p?.name}</p>
                                 {p?.duprScore && (
                                   <p className="text-xs text-gray-500">{p.duprScore.toFixed(1)}</p>
@@ -1063,20 +1075,26 @@ export default function Home() {
                               </div>
                             );
                           })}
-                          <div className="text-center py-2 bg-blue-100 rounded-lg">
-                            <p className="text-sm font-bold text-blue-700">1v4</p>
+                          <div className="text-center py-2 bg-purple-100 rounded-lg">
+                            <p className="text-sm font-bold text-purple-700">1v4</p>
                           </div>
                         </div>
 
-{/* Single score input */}
-                        <div className="flex flex-col items-center px-4">
-                          <span className="text-gray-400 text-sm mb-2">Score</span>
+                        {/* Two score boxes */}
+                        <div className="flex flex-col items-center px-4 gap-2">
                           <input
                             type="number"
                             placeholder="11"
-                            className="w-16 px-3 py-2 border-2 border-gray-300 rounded-lg text-center text-lg"
+                            className="w-16 px-3 py-2 border-2 border-purple-400 rounded-lg text-center text-lg bg-purple-50"
                             value={match.team1Score ?? ""}
                             onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team1')}
+                          />
+                          <input
+                            type="number"
+                            placeholder="11"
+                            className="w-16 px-3 py-2 border-2 border-green-400 rounded-lg text-center text-lg bg-green-50"
+                            value={match.team2Score ?? ""}
+                            onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team2')}
                           />
                         </div>
 
@@ -1085,7 +1103,7 @@ export default function Home() {
                           {match.team2.map((id) => {
                             const p = eventPool.find(ep => ep.id === id);
                             return (
-                              <div key={id} className="bg-white rounded-lg p-2 border border-green-200">
+                              <div key={id} className="bg-green-50 rounded-lg p-2 border border-green-300">
                                 <p className="font-medium text-sm">{p?.name}</p>
                                 {p?.duprScore && (
                                   <p className="text-xs text-gray-500">{p.duprScore.toFixed(1)}</p>
@@ -1126,14 +1144,14 @@ export default function Home() {
                     const standingsEntry = standings.find(s => s.id === match.byePlayerId);
                     if (!standingsEntry) return null;
                     const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
-                    const sitOuts = Math.max(0, standingsEntry.byeMod - standingsEntry.byeCount - config.lateJoinBonus);
+                    const sitOutCount = Math.max(0, (standingsEntry.byeMod - standingsEntry.byeCount - config.lateJoinBonus) / config.sitProtection);
                     return (
-                      <div key={match.id} className="bg-white rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-2">
+                      <div key={match.id} className="bg-white rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-3">
                         <span className="text-xl">😴</span>
                         <div>
                           <p className="font-medium">{player?.name}</p>
-                          <p className="text-xs text-gray-500" title={`Base: ${standingsEntry.byeBase.toFixed(2)} | Byes: +${standingsEntry.byeCount} | Sit Outs: +${sitOuts.toFixed(2)} | Late Join: +${config.lateJoinBonus.toFixed(2)}`}>
-                            Total: {totalBye.toFixed(2)} ({standingsEntry.byeBase >= 0 ? '+' : ''}{standingsEntry.byeBase.toFixed(2)} base)
+                          <p className="text-xs text-gray-500">
+                            {standingsEntry.byeBase.toFixed(2)} + {standingsEntry.byeCount} byes + {sitOutCount.toFixed(0)} sit outs = {totalBye.toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -1245,7 +1263,7 @@ export default function Home() {
                         <td className="p-2 text-center">
                           <span 
                             className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
-                            title={`Base: ${entry.byeBase.toFixed(2)} | Byes Earned: +${entry.byeCount} | Sit Outs: +${(entry.byeMod - entry.byeCount - config.lateJoinBonus).toFixed(2)} | Late Join: +${config.lateJoinBonus.toFixed(2)}`}
+                            title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${Math.max(0, (entry.byeMod - entry.byeCount - config.lateJoinBonus) / config.sitProtection).toFixed(0)} sit outs + ${config.lateJoinBonus.toFixed(2)} late join`}
                           >
                             {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
                           </span>
