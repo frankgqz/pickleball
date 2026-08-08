@@ -26,6 +26,9 @@ interface StandingsEntry {
   baseOrder: number;       // Order# based on DUPR ranking (highest DUPR = 1)
   adjustedOrder: number;   // baseOrder adjusted by wins/losses (ranking for pairings)
   
+  // Order history: track each round's impact
+  orderHistory: { round: number; change: number; reason: string }[];
+  
   // Bye calculation
   byeBase: number;         // Base bye value from DUPR rank (set at event start, regeneratable)
   byeMod: number;          // Fractional: late join bonus only
@@ -300,8 +303,7 @@ export default function Home() {
 
   // Submit round results
   const submitRoundResults = () => {
-    // No minimum - order# can go negative
-    // Band creates rubberband effect at extremes
+    const currentRound = standings.reduce((max, e) => Math.max(max, e.orderHistory.length), 0) + 1;
     
     // Update standings with results and apply court bonuses
     setStandings(prev => prev.map(entry => {
@@ -311,7 +313,8 @@ export default function Home() {
         // Player got a bye - increment byeCount (byeMod stays as fractional for late join only)
         return { 
           ...entry, 
-          byeCount: entry.byeCount + 1
+          byeCount: entry.byeCount + 1,
+          orderHistory: [...entry.orderHistory, { round: currentRound, change: 0, reason: "bye" }],
         };
       }
       
@@ -319,7 +322,8 @@ export default function Home() {
       if (sittingOutThisRound.includes(entry.id)) {
         return { 
           ...entry, 
-          sitOutCount: entry.sitOutCount + 1 // Track sit outs separately
+          sitOutCount: entry.sitOutCount + 1,
+          orderHistory: [...entry.orderHistory, { round: currentRound, change: 0, reason: "sit out" }],
         };
       }
       
@@ -331,8 +335,9 @@ export default function Home() {
         const won = myScore > opponentScore && myScore > 0;
         const playedMatch = myScore > 0 || opponentScore > 0;
 
-        // Apply court bonus: winners subtract, losers add (no bounds clamping)
+        // Apply court bonus: winners subtract, losers add
         const courtBonus = won ? -config.courtBonus : config.courtBonus;
+        const reason = won ? `win (${myScore}-${opponentScore})` : `loss (${myScore}-${opponentScore})`;
 
         return {
           ...entry,
@@ -341,6 +346,7 @@ export default function Home() {
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
           adjustedOrder: entry.adjustedOrder + courtBonus,
+          orderHistory: [...entry.orderHistory, { round: currentRound, change: courtBonus, reason }],
         };
       }
       
@@ -501,13 +507,20 @@ export default function Home() {
     if (existingEntry) return;
 
     // Calculate baseOrder based on DUPR rank among current standings
-    const playersWithDupr = [...standings, {
-      id: player.id, duprScore: player.duprScore,
-    } as StandingsEntry].filter(p => p.duprScore !== null);
+    // First, get all active players sorted by DUPR (highest first)
+    const allActivePlayers = eventPool
+      .map(p => {
+        const standing = standings.find(s => s.id === p.id);
+        return { id: p.id, duprScore: p.duprScore ?? standing?.duprScore ?? null };
+      })
+      .filter(p => p.duprScore !== null)
+      .sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0));
     
-    const sortedByDupr = playersWithDupr.sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0));
-    const rank = sortedByDupr.findIndex(p => p.id === player.id);
-    const initialOrder = Math.max(1, 1 + (rank >= 0 ? rank * config.orderGap : 0));
+    // Find index of this player - ensure each player gets unique index
+    const playerIndex = allActivePlayers.findIndex(p => p.id === player.id);
+    // If no DUPR, put at end with unique index
+    const effectiveIndex = playerIndex >= 0 ? playerIndex : standings.length;
+    const initialOrder = 1 + (effectiveIndex * config.orderGap);
 
     const byeBase = generateByeBase(player.duprScore);
     // Late joiners only get bonus if first round has been completed
@@ -517,6 +530,7 @@ export default function Home() {
       id: player.id, name: player.name, duprId: player.duprId,
       duprScore: player.duprScore, baseOrder: initialOrder,
       adjustedOrder: initialOrder,
+      orderHistory: [],
       byeBase, byeMod, byeCount: 0, sitOutCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
     }]);
   };
@@ -583,11 +597,12 @@ export default function Home() {
       });
 
       // Assign baseOrder and byeBase based on position in sorted list (keep adjustedOrder)
+      // Each player gets a unique baseOrder: 1, 1.25, 1.5, 1.75, etc.
       return sorted.map((entry, index) => ({
         ...entry,
-        baseOrder: Math.max(1, 1 + (index * config.orderGap)),
+        baseOrder: 1 + (index * config.orderGap),
         byeBase: generateByeBase(entry.duprScore),
-        // Don't reset byeCount, sitOutCount, or adjustedOrder on pool change
+        // Don't reset byeCount, sitOutCount, adjustedOrder, or orderHistory on pool change
       }));
     });
   };
@@ -1306,7 +1321,10 @@ export default function Home() {
                           <div className="font-medium">{entry.name}</div>
                           {entry.duprScore && <div className="text-xs text-green-600">{entry.duprScore.toFixed(1)}</div>}
                         </td>
-                        <td className="p-2 text-center font-mono text-blue-600">{entry.adjustedOrder.toFixed(2)}</td>
+                        <td className="p-2 text-center font-mono text-blue-600 cursor-help" 
+                          title={`base: ${entry.baseOrder.toFixed(2)}\n${entry.orderHistory.map(h => `R${h.round}: ${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)} (${h.reason})`).join('\n')}`}>
+                          {entry.adjustedOrder.toFixed(2)}
+                        </td>
                         <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
                         <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
                         <td className="p-2 text-center">{entry.pointsFor}</td>
