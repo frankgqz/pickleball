@@ -164,9 +164,13 @@ export default function Home() {
       if (byeCount === 0) byeCount = 0;
     }
     
-    // STEP 1: Determine who gets byes (lowest total bye scores first)
+    // STEP 1: Determine who gets byes (lowest TOTAL bye scores first)
     const activeStandings = standings.filter(s => activePlayers.some(p => p.id === s.id));
-    const sortedByBye = [...activeStandings].sort((a, b) => (a.byeBase + a.byeMod) - (b.byeBase + b.byeMod));
+    const sortedByBye = [...activeStandings].sort((a, b) => {
+      const aTotal = a.byeBase + a.byeCount + (a.sitOutCount * config.sitProtection) + a.byeMod;
+      const bTotal = b.byeBase + b.byeCount + (b.sitOutCount * config.sitProtection) + b.byeMod;
+      return aTotal - bTotal;
+    });
     const byePlayerIds: string[] = sortedByBye.slice(0, byeCount).map(s => s.id);
     
     // Track who is sitting out this round (for byeMod calculation)
@@ -1062,7 +1066,7 @@ export default function Home() {
                             <input
                               type="number"
                               placeholder="11"
-                              className="w-16 px-3 py-2 border-2 border-purple-400 rounded-lg text-center text-lg bg-purple-50"
+                              className="w-20 px-3 py-2 border-2 border-purple-400 rounded-lg text-center text-lg bg-purple-50"
                               value={match.team1Score ?? ""}
                               onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team1')}
                             />
@@ -1073,7 +1077,7 @@ export default function Home() {
                             <input
                               type="number"
                               placeholder="11"
-                              className="w-16 px-3 py-2 border-2 border-green-400 rounded-lg text-center text-lg bg-green-50"
+                              className="w-20 px-3 py-2 border-2 border-green-400 rounded-lg text-center text-lg bg-green-50"
                               value={match.team2Score ?? ""}
                               onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team2')}
                             />
@@ -1325,7 +1329,7 @@ export default function Home() {
                         <td className="p-2 text-center">
                           <span 
                             className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
-                            title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${entry.sitOutCount} sit outs + ${config.lateJoinBonus.toFixed(2)} late join`}
+                            title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${(entry.sitOutCount * config.sitProtection).toFixed(2)} sit outs${entry.byeMod > 0 ? ` + ${entry.byeMod.toFixed(2)} late join` : ''}`}
                           >
                             {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
                           </span>
