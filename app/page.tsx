@@ -41,7 +41,7 @@ interface TournamentConfig {
   byeBonusTop: number;
   byeIncrement: number;
   sitProtection: number;
-  lateJoinBonus: number;
+  x: number;d
   courts: number;
   teamsPerPool: number;
   finalsFormat: "top2" | "top4" | "all";
@@ -336,7 +336,7 @@ export default function Home() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Order minmax Padding</label>
-                  <input type="number" step="0.25" min="0" value={config.orderBuffer} onChange={(e) => updateConfig("orderBuffer", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" step="0.25" min="0" value={config.padding} onChange={(e) => updateConfig("padding", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
 
@@ -366,7 +366,7 @@ export default function Home() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Late Prot.</label>
-                  <input type="number" step="0.25" min="0.25" value={config.lateJoinRange} onChange={(e) => updateConfig("lateJoinRange", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus} onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
             </div>
