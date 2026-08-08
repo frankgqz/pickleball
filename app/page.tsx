@@ -308,8 +308,8 @@ export default function Home() {
         };
       }
 
-      // Player played a match
-      const won = match.score1 !== undefined && entry.team1?.includes(entry.id);
+      // Player played a match - check if on team1 of the match
+      const won = match.score1 !== undefined && match.team1.includes(entry.id);
       // For simplicity, whoever has the score wins (they entered their winning score)
       const playedMatch = match.score1 !== undefined;
 
@@ -984,7 +984,7 @@ export default function Home() {
                           placeholder="Score"
                           className="w-16 px-2 py-1 border rounded text-center"
                           value={match.score1 ?? ""}
-                          onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, match.score2 || 0)}
+                          onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
                         />
                       )}
                     </div>
