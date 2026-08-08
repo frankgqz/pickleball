@@ -6,12 +6,16 @@ import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } fr
 
 
 
+{/* === INTERFACE: Player === */}
+{/* Defines the structure of a player in our app */}
+/* Note: 'isSitting' is UI-only state, not stored in database yet */
 interface Player {
   id: string;
   name: string;
-  duprId: string | null;
-  duprNumericId: string | null;  // Add this line
-  duprScore: number | null;
+  duprId: string | null;         // Letter DUPR ID (e.g., "5E64ZL") for DUPR export
+  duprNumericId: string | null;  // Numeric DUPR ID (e.g., "7438750465") for API lookups
+  duprScore: number | null;       // Player's DUPR rating (doubles)
+  isSitting?: boolean;           // Whether player is sitting out this round (UI state)
 }
 
 export default function Home() {
