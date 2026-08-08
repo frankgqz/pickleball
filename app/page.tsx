@@ -53,6 +53,27 @@ interface TournamentConfig {
   finalsFormat: "top2" | "top4" | "all";
 }
 
+// Match types
+type MatchFormat = "PICK_PARTNER" | "FIXED_14V23";
+
+interface Match {
+  id: string;
+  court: number;
+  team1: string[]; // Player IDs
+  team2: string[];
+  score1?: number;
+  score2?: number;
+  bye: boolean;
+  byePlayerId?: string; // Who gets the bye
+}
+
+interface RoundState {
+  active: boolean;
+  format: MatchFormat;
+  matches: Match[];
+  submitted: boolean;
+}
+
 // ==========================================
 // === LOGIC ===
 // ==========================================
@@ -98,6 +119,200 @@ export default function Home() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+
+  // --- Round State ---
+  const [roundState, setRoundState] = useState<RoundState>({
+    active: false,
+    format: "PICK_PARTNER",
+    matches: [],
+    submitted: false,
+  });
+
+  // --- Match Generation ---
+  
+  // Generate matches for the current round
+  const generateMatches = (format: MatchFormat) => {
+    const activePlayers = eventPool.filter(p => !p.isSitting);
+    const sittingOut = eventPool.filter(p => p.isSitting);
+    
+    // Sort by adjustedOrder
+    const sortedPlayers = [...standings].sort((a, b) => a.adjustedOrder - b.adjustedOrder);
+    const activeIds = sortedPlayers.filter(s => activePlayers.some(p => p.id === s.id)).map(s => s.id);
+    
+    // Calculate byes needed (odd number of players)
+    const playersPerCourt = 4;
+    const remainder = activeIds.length % playersPerCourt;
+    const byeCount = remainder === 0 ? 0 : playersPerCourt - remainder;
+    
+    const matches: Match[] = [];
+    
+    if (format === "PICK_PARTNER") {
+      // For pick partner: pairs are made, player picks partner from remaining
+      // Simple approach: group by adjustedOrder, player 1 picks from 2,3,4
+      let courtNum = 1;
+      for (let i = 0; i < activeIds.length; i += playersPerCourt) {
+        const courtPlayers = activeIds.slice(i, i + playersPerCourt);
+        
+        if (courtPlayers.length === playersPerCourt) {
+          matches.push({
+            id: `match-${courtNum}`,
+            court: courtNum,
+            team1: [courtPlayers[0]], // Player 1 picks partner
+            team2: courtPlayers.slice(1), // Remaining 3
+            bye: false,
+          });
+        } else {
+          // Not enough for a full court, some get bye
+          const byePlayers = courtPlayers.slice(playersPerCourt - byeCount);
+          byePlayers.forEach(pid => {
+            matches.push({
+              id: `bye-${pid}`,
+              court: courtNum,
+              team1: [pid],
+              team2: [],
+              bye: true,
+              byePlayerId: pid,
+            });
+          });
+        }
+        courtNum++;
+      }
+    } else {
+      // FIXED_14V23: 1v4 on one side, 2v3 on the other
+      let courtNum = 1;
+      for (let i = 0; i < activeIds.length; i += playersPerCourt) {
+        const courtPlayers = activeIds.slice(i, i + playersPerCourt);
+        
+        if (courtPlayers.length === playersPerCourt) {
+          matches.push({
+            id: `match-${courtNum}`,
+            court: courtNum,
+            team1: [courtPlayers[0], courtPlayers[3]], // 1v4
+            team2: [courtPlayers[1], courtPlayers[2]], // 2v3
+            bye: false,
+          });
+        } else if (courtPlayers.length === playersPerCourt - 1) {
+          // 3 players - one gets bye
+          matches.push({
+            id: `match-${courtNum}`,
+            court: courtNum,
+            team1: [courtPlayers[0]],
+            team2: [courtPlayers[1]],
+            bye: true,
+            byePlayerId: courtPlayers[2],
+          });
+        } else if (courtPlayers.length === playersPerCourt - 2) {
+          // 2 players - both get bye this round
+          matches.push({
+            id: `bye-pair-${courtNum}`,
+            court: courtNum,
+            team1: [courtPlayers[0]],
+            team2: [],
+            bye: true,
+            byePlayerId: courtPlayers[0],
+          });
+          matches.push({
+            id: `bye-pair-${courtNum}-b`,
+            court: courtNum,
+            team1: [courtPlayers[1]],
+            team2: [],
+            bye: true,
+            byePlayerId: courtPlayers[1],
+          });
+        }
+        courtNum++;
+      }
+    }
+
+    setRoundState({
+      active: true,
+      format,
+      matches,
+      submitted: false,
+    });
+  };
+
+  // Update match score
+  const updateMatchScore = (matchId: string, team1Score: number, team2Score: number) => {
+    setRoundState(prev => ({
+      ...prev,
+      matches: prev.matches.map(m =>
+        m.id === matchId ? { ...m, score1: team1Score, score2: team2Score } : m
+      ),
+    }));
+  };
+
+  // Update pick partner selection
+  const updatePickPartner = (matchId: string, partnerId: string) => {
+    setRoundState(prev => ({
+      ...prev,
+      matches: prev.matches.map(m =>
+        m.id === matchId ? { ...m, team1: [m.team1[0], partnerId] } : m
+      ),
+    }));
+  };
+
+  // Submit round results
+  const submitRoundResults = () => {
+    // Update standings with results
+    setStandings(prev => prev.map(entry => {
+      const match = roundState.matches.find(m => m.team1.includes(entry.id) || m.team2.includes(entry.id));
+      if (!match || match.bye) {
+        if (match?.bye && match.byePlayerId === entry.id) {
+          // Player got a bye - increment bye count
+          return { ...entry, byeCount: entry.byeCount + 1 };
+        }
+        return entry;
+      }
+
+      const isOnTeam1 = match.team1.includes(entry.id);
+      const myScore = isOnTeam1 ? (match.score1 || 0) : (match.score2 || 0);
+      const opponentScore = isOnTeam1 ? (match.score2 || 0) : (match.score1 || 0);
+
+      const won = myScore > opponentScore;
+      const lost = myScore < opponentScore;
+
+      return {
+        ...entry,
+        wins: entry.wins + (won ? 1 : 0),
+        losses: entry.losses + (lost ? 1 : 0),
+        pointsFor: entry.pointsFor + myScore,
+        pointsAgainst: entry.pointsAgainst + opponentScore,
+      };
+    }));
+
+    // Recalculate adjusted order based on new standings
+    recalculateAdjustedOrder();
+
+    setRoundState(prev => ({ ...prev, submitted: true }));
+  };
+
+  // Recalculate adjusted order based on performance
+  const recalculateAdjustedOrder = () => {
+    setStandings(prev => {
+      return prev.map(entry => {
+        // Simple: baseOrder adjusted by win percentage
+        const gamesPlayed = entry.wins + entry.losses;
+        const winPct = gamesPlayed > 0 ? entry.wins / gamesPlayed : 0.5;
+        // Lower adjustedOrder is better, so subtract win bonus
+        const adjustment = winPct * config.winLossMagnitude;
+        return {
+          ...entry,
+          adjustedOrder: entry.baseOrder - adjustment,
+        };
+      });
+    });
+  };
+
+  // End round
+  const endRound = () => {
+    setRoundState({
+      active: false,
+      format: roundState.format,
+      matches: [],
+      submitted: false,
+    });
+  };
 
   // --- Config Helper ---
   const updateConfig = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
@@ -700,17 +915,251 @@ export default function Home() {
           )}
         </section>
 
-        {/* --- Start Round Button --- */}
-        {eventPool.filter(p => !p.isSitting).length >= 4 && (
-          <section className="text-center">
-            <button className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-12 py-4 rounded-xl text-xl shadow-lg hover:scale-105">
-              🎾 Start Round ({eventPool.filter(p => !p.isSitting).length} active)
-            </button>
+        {/* --- Round / Courts UI --- */}
+        {roundState.active ? (
+          <section className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">🎾 Active Round</h2>
+              <div className="flex gap-2">
+                <span className={`px-3 py-1 rounded-full text-sm ${roundState.format === "PICK_PARTNER" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
+                  {roundState.format === "PICK_PARTNER" ? "Pick Partner" : "1v4 vs 2v3"}
+                </span>
+                {!roundState.submitted && (
+                  <button onClick={endRound} className="text-red-600 hover:text-red-800 px-3 py-1">
+                    Cancel Round
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Match Format Selection (if not yet started) */}
+            {!roundState.submitted && roundState.matches.length > 0 && roundState.matches.every(m => m.score1 === undefined) && (
+              <div className="flex gap-4 mb-6">
+                <button
+                  onClick={() => {
+                    setRoundState(prev => ({ ...prev, format: "PICK_PARTNER" }));
+                    generateMatches("PICK_PARTNER");
+                  }}
+                  className={`px-4 py-2 rounded-lg border-2 ${roundState.format === "PICK_PARTNER" ? "border-purple-500 bg-purple-50" : "border-gray-300"}`}
+                >
+                  🤝 Pick Partner (You choose teammates)
+                </button>
+                <button
+                  onClick={() => {
+                    setRoundState(prev => ({ ...prev, format: "FIXED_14V23" }));
+                    generateMatches("FIXED_14V23");
+                  }}
+                  className={`px-4 py-2 rounded-lg border-2 ${roundState.format === "FIXED_14V23" ? "border-blue-500 bg-blue-50" : "border-gray-300"}`}
+                >
+                  ⚔️ 1v4 vs 2v3 (Auto-pair by order)
+                </button>
+                <button disabled className="px-4 py-2 rounded-lg border-2 border-gray-200 text-gray-400 opacity-50">
+                  🔀 Shuffle (Less repeat partners)
+                </button>
+              </div>
+            )}
+
+            {/* Court Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {roundState.matches.map((match) => {
+                const team1Players = match.team1.map(id => eventPool.find(p => p.id === id)).filter(Boolean);
+                const team2Players = match.team2.map(id => eventPool.find(p => p.id === id)).filter(Boolean);
+                const byePlayer = match.byePlayerId ? eventPool.find(p => p.id === match.byePlayerId) : null;
+
+                return (
+                  <div key={match.id} className={`rounded-xl border-2 p-4 ${match.bye ? "border-orange-300 bg-orange-50" : "border-green-200 bg-green-50"}`}>
+                    {/* Court Header */}
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-bold text-lg">{match.bye ? "😴 BYE" : `Court ${match.court}`}</span>
+                      {!match.bye && (
+                        <input
+                          type="number"
+                          placeholder="Score"
+                          className="w-16 px-2 py-1 border rounded text-center"
+                          value={match.score1 ?? ""}
+                          onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, match.score2 || 0)}
+                        />
+                      )}
+                    </div>
+
+                    {match.bye ? (
+                      /* Bye Player Display */
+                      <div className="text-center py-8">
+                        <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                          <span className="text-2xl">😴</span>
+                        </div>
+                        <p className="font-semibold text-orange-700">{byePlayer?.name}</p>
+                        <p className="text-sm text-orange-500">Rest round</p>
+                      </div>
+                    ) : roundState.format === "PICK_PARTNER" ? (
+                      /* Pick Partner Format */
+                      <div className="space-y-3">
+                        {/* Player 1 (picker) */}
+                        <div className="bg-white rounded-lg p-3 border-2 border-purple-300">
+                          <p className="font-semibold">{team1Players[0]?.name}</p>
+                          {team1Players[0]?.duprScore && (
+                            <p className="text-xs text-green-600">{team1Players[0].duprScore.toFixed(1)}</p>
+                          )}
+                          <p className="text-xs text-purple-600 mt-1">⬅️ Picker - choose partner</p>
+                        </div>
+
+                        {/* Partner Selection (if not picked yet) */}
+                        {team1Players.length === 1 ? (
+                          <div className="bg-white rounded-lg p-3 border-2 border-dashed border-gray-300">
+                            <select
+                              className="w-full px-3 py-2 border rounded"
+                              onChange={(e) => updatePickPartner(match.id, e.target.value)}
+                              value=""
+                            >
+                              <option value="">-- Pick Partner --</option>
+                              {team2Players.map((p) => (
+                                <option key={p!.id} value={p!.id}>{p!.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <div className="bg-purple-100 rounded-lg p-3 border-2 border-purple-400">
+                            <p className="font-semibold text-purple-700">{team1Players[1]?.name}</p>
+                            {team1Players[1]?.duprScore && (
+                              <p className="text-xs text-purple-500">{team1Players[1].duprScore.toFixed(1)}</p>
+                            )}
+                            <p className="text-xs text-purple-600">Partner picked</p>
+                          </div>
+                        )}
+
+                        {/* Team 2 (remaining) */}
+                        <div className="space-y-2">
+                          {team2Players.map((p) => (
+                            <div key={p!.id} className="bg-white rounded-lg p-3 border border-gray-200">
+                              <p className="font-medium">{p!.name}</p>
+                              {p!.duprScore && (
+                                <p className="text-xs text-gray-500">{p!.duprScore.toFixed(1)}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* VS and score input for team 2 */}
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-gray-400 font-bold">vs</span>
+                          <input
+                            type="number"
+                            placeholder="Score"
+                            className="w-16 px-2 py-1 border rounded text-center"
+                            value={match.score2 ?? ""}
+                            onChange={(e) => updateMatchScore(match.id, match.score1 || 0, parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      /* 1v4 vs 2v3 Format */
+                      <div className="flex items-center justify-between">
+                        {/* Team 1: 1v4 */}
+                        <div className="flex-1 space-y-2">
+                          {match.team1.map((id) => {
+                            const p = eventPool.find(ep => ep.id === id);
+                            return (
+                              <div key={id} className="bg-white rounded-lg p-2 border border-blue-200">
+                                <p className="font-medium text-sm">{p?.name}</p>
+                                {p?.duprScore && (
+                                  <p className="text-xs text-gray-500">{p.duprScore.toFixed(1)}</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                          <div className="text-center py-2 bg-blue-100 rounded-lg">
+                            <p className="text-sm font-bold text-blue-700">1v4</p>
+                          </div>
+                        </div>
+
+                        {/* Score inputs */}
+                        <div className="flex flex-col items-center px-4">
+                          <div className="text-2xl font-bold text-gray-400">vs</div>
+                          <div className="flex gap-2 mt-2">
+                            <input
+                              type="number"
+                              placeholder="11"
+                              className="w-12 px-2 py-1 border rounded text-center"
+                              value={match.score1 ?? ""}
+                              onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, match.score2 || 0)}
+                            />
+                            <input
+                              type="number"
+                              placeholder="11"
+                              className="w-12 px-2 py-1 border rounded text-center"
+                              value={match.score2 ?? ""}
+                              onChange={(e) => updateMatchScore(match.id, match.score1 || 0, parseInt(e.target.value) || 0)}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Team 2: 2v3 */}
+                        <div className="flex-1 space-y-2">
+                          {match.team2.map((id) => {
+                            const p = eventPool.find(ep => ep.id === id);
+                            return (
+                              <div key={id} className="bg-white rounded-lg p-2 border border-green-200">
+                                <p className="font-medium text-sm">{p?.name}</p>
+                                {p?.duprScore && (
+                                  <p className="text-xs text-gray-500">{p.duprScore.toFixed(1)}</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                          <div className="text-center py-2 bg-green-100 rounded-lg">
+                            <p className="text-sm font-bold text-green-700">2v3</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Submit Results Button */}
+            {!roundState.submitted && roundState.matches.some(m => m.score1 !== undefined && m.score2 !== undefined) && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={submitRoundResults}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded-xl text-lg"
+                >
+                  ✓ Submit Round Results
+                </button>
+              </div>
+            )}
+
+            {roundState.submitted && (
+              <div className="mt-6 text-center">
+                <p className="text-green-600 font-bold mb-4">✅ Round completed!</p>
+                <button onClick={endRound} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl">
+                  Start New Round
+                </button>
+              </div>
+            )}
           </section>
-        )}
-        {eventPool.length > 0 && eventPool.filter(p => !p.isSitting).length < 4 && (
+        ) : eventPool.filter(p => !p.isSitting).length >= 4 ? (
+          <section className="text-center">
+            <h3 className="text-white text-lg mb-4">Ready to start a round?</h3>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => generateMatches("PICK_PARTNER")}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-lg hover:scale-105"
+              >
+                🤝 Pick Partner Format
+              </button>
+              <button
+                onClick={() => generateMatches("FIXED_14V23")}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-lg hover:scale-105"
+              >
+                ⚔️ 1v4 vs 2v3 Format
+              </button>
+            </div>
+            <p className="text-green-200 text-sm mt-3">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
+          </section>
+        ) : eventPool.length > 0 ? (
           <p className="text-center text-white text-lg">Need at least 4 active players to start a round.</p>
-        )}
+        ) : null}
 
       </div>
     </div>
