@@ -1,0 +1,65 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// PLAYER — A person in the tournament
+// ============================================
+model Player {
+  id        String   @id @default(uuid())
+  name      String
+  duprId    String?
+  duprScore Float?
+  seed      Int      @default(999)
+  isSitting Boolean  @default(false)
+  orderScore Float   @default(0)
+  createdAt DateTime @default(now())
+  
+  // Link back to tournament
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
+  tournamentId String?
+}
+
+// ============================================
+// TOURNAMENT — The event itself
+// ============================================
+model Tournament {
+  id            String   @id @default(uuid())
+  name          String
+  format        String   // "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY"
+  pointsPerGame Int      @default(11)
+  winByTwo      Boolean  @default(true)
+  courtCount    Int      @default(2)
+  status        String   @default("SETUP") // "SETUP" | "ACTIVE" | "COMPLETED"
+  orderDelta    Int      @default(2)       // Points to add/subtract on win/loss
+  createdAt     DateTime @default(now())
+  
+  players Player[]
+  matches Match[]
+}
+
+// ============================================
+// MATCH — A single game between two teams
+// ============================================
+model Match {
+  id            String   @id @default(uuid())
+  round         Int
+  court         Int
+  team1Player1  String
+  team1Player2  String
+  team2Player1  String
+  team2Player2  String
+  team1Score    Int?
+  team2Score    Int?
+  winner        String?  // "TEAM1" | "TEAM2" | null
+  isComplete    Boolean  @default(false)
+  tournamentId  String
+  
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+}
