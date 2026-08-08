@@ -180,7 +180,7 @@ export default function Home() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => addToPool(player)}
-                        disabled={eventPool.find(p => p.id === player.id)}
+                        disabled={eventPool.some(p => p.id === player.id)}
                         className={`px-4 py-1 rounded-full text-sm font-medium transition-colors ${
                           eventPool.find(p => p.id === player.id)
                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
