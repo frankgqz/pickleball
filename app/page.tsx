@@ -144,6 +144,16 @@ const handleUpdatePlayer = async () => {
     setEventPool([...eventPool, player]);
   };
 
+    {/* === PART 1C: TOGGLE SITTING OUT === */}
+  /* Toggles a player's 'isSitting' status in the event pool */
+  /* Players who are sitting out won't be included in round generation */
+  /* Note: This only affects the UI state - database update can be added later */
+  const handleToggleSitting = (playerId: string) => {
+    setEventPool(eventPool.map(p => 
+      p.id === playerId ? { ...p, isSitting: !p.isSitting } : p
+    ));
+  };
+
   // Remove player from event pool
   const removeFromPool = (playerId: string) => {
     setEventPool(eventPool.filter(p => p.id !== playerId));
@@ -174,8 +184,10 @@ const handleUpdatePlayer = async () => {
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
       {/* Header */}
       <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Round Robin</h1>
-        <p className="text-green-100">King of Court Tournament Manager</p>
+        {/* === PART 1A: PAGE HEADER === */}
+        {/* Main title and subtitle for the app */}
+        <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
+        <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
       </header>
 
       <div className="max-w-6xl mx-auto space-y-8">
@@ -337,17 +349,19 @@ const handleUpdatePlayer = async () => {
                           
                           {/* Button: Add player to current event pool */}
                           {/* State: Shows "In Pool" if already added, or "Add to Event" if not */}
+                          {/* === PART 1E: ADD TO EVENT BUTTON === */}
+                          {/* Simple + button to add player to current event pool */}
                           <button
                             onClick={() => addToPool(player)}
                             disabled={eventPool.some(p => p.id === player.id)}
-                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                            className={`w-8 h-8 rounded-full font-bold text-sm transition-colors ${
                               eventPool.some(p => p.id === player.id)
                                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                 : "bg-blue-600 text-white hover:bg-blue-700"
                             }`}
-                            title={eventPool.some(p => p.id === player.id) ? "Already in event pool" : "Add to current event"}
+                            title={eventPool.some(p => p.id === player.id) ? "In event pool" : "Add to event pool"}
                           >
-                            {eventPool.some(p => p.id === player.id) ? "✓ In Pool" : "+ Event"}
+                            {eventPool.some(p => p.id === player.id) ? "✓" : "+"}
                           </button>
                           
                           {/* Button: Edit player details (name, DUPR IDs, rating) */}
@@ -402,17 +416,49 @@ const handleUpdatePlayer = async () => {
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {eventPool.map((player, index) => (
                   <div key={player.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                    {/* === PART 1B: EVENT POOL PLAYER ROW === */}
+                    {/* Shows player with number, name, rating, and sitting out checkbox */}
                     <div className="flex items-center gap-3">
+                      
+                      {/* Player position number (1, 2, 3...) */}
                       <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">
                         {index + 1}
                       </span>
-                      <span className="font-medium text-gray-800">{player.name}</span>
+                      
+                      {/* Player name */}
+                      <span className={`font-medium ${player.isSitting ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                        {player.name}
+                      </span>
+                      
+                      {/* Player DUPR rating (shows gray if sitting out) */}
                       {player.duprScore && (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-sm font-medium">
+                        <span className={`px-2 py-0.5 rounded text-sm font-medium ${
+                          player.isSitting ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'
+                        }`}>
                           {player.duprScore.toFixed(1)}
                         </span>
                       )}
+                      
+                      {/* Sitting out checkbox - toggle with handleToggleSitting function */}
+                      <label className="flex items-center gap-1 ml-auto text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={player.isSitting}
+                          onChange={() => handleToggleSitting(player.id)}
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-gray-500">sit out</span>
+                      </label>
+                      
+                      {/* Remove button */}
+                      <button
+                        onClick={() => removeFromPool(player.id)}
+                        className="text-red-500 hover:text-red-700 font-medium text-sm"
+                      >
+                        ✕
+                      </button>
                     </div>
+
                     <button
                       onClick={() => removeFromPool(player.id)}
                       className="text-red-500 hover:text-red-700 font-medium text-sm"
@@ -429,10 +475,13 @@ const handleUpdatePlayer = async () => {
         {/* ========== START TOURNAMENT BUTTON ========== */}
         {eventPool.length >= 4 && (
           <section className="text-center">
+            {/* === PART 1D: START ROUND BUTTON === */}
+            {/* Button to start generating matches for the current round */}
+            {/* Only enabled if we have at least 4 active players (not sitting out) */}
             <button
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-12 py-4 rounded-xl text-xl shadow-lg transition-all hover:scale-105"
             >
-              🎾 Start Tournament ({eventPool.length} players)
+              🎾 Start Round ({eventPool.filter(p => !p.isSitting).length} active players)
             </button>
           </section>
         )}
