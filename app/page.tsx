@@ -360,17 +360,29 @@ export default function Home() {
         let orderChange: number;
         let courtType: string;
         
+        const courtTotal = config.courts; // Last court number (bottom court)
+        
         if (match.court === 1) {
           // Top court (lower order numbers)
           orderChange = won ? -config.courtBonus : config.winLossMagnitude;
           courtType = "top";
-        } else {
-          // Bottom court (higher order numbers)
+        } else if (match.court === courtTotal) {
+          // Bottom court (last court - higher order numbers)
           orderChange = won ? -config.winLossMagnitude : config.courtBonus;
           courtType = "bottom";
+        } else {
+          // Middle courts (between top and bottom)
+          orderChange = won ? -config.courtBonus : config.courtBonus; // Neutral effect
+          courtType = `court ${match.court}`;
         }
         
-        const reason = `${courtType} court ${won ? 'win' : 'loss'} (${myScore}-${opponentScore})`;
+        const reason = `${courtType} ${won ? 'win' : 'loss'} (${myScore}-${opponentScore})`;
+        
+        // Apply change and clamp to band bounds
+        const rawAdjustment = entry.seedAdjustment + orderChange;
+        const minSeedTotal = 1 - config.band;
+        const maxSeedTotal = 1 + config.band + ((standings.length - 1) * config.orderGap);
+        const clampedAdjustment = Math.max(minSeedTotal - entry.seed, Math.min(maxSeedTotal - entry.seed, rawAdjustment));
 
         return {
           ...entry,
@@ -378,8 +390,8 @@ export default function Home() {
           losses: entry.losses + (playedMatch && !won ? 1 : 0),
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
-          seedAdjustment: entry.seedAdjustment + orderChange,
-          orderHistory: [...entry.orderHistory, { round: currentRound, change: orderChange, reason }],
+          seedAdjustment: clampedAdjustment,
+          orderHistory: [...entry.orderHistory, { round: currentRound, change: clampedAdjustment - entry.seedAdjustment, reason }],
         };
       }
       
@@ -638,20 +650,25 @@ export default function Home() {
   // Helper to calculate seedTotal and byeTotal
   const getSeedTotal = (entry: StandingsEntry) => entry.seed + entry.seedAdjustment;
   const getByeTotal = (entry: StandingsEntry) => entry.byeBase + entry.byeCount + (entry.sitOutCount * config.sitProtection) + entry.byeMod;
+  const getPointDiff = (entry: StandingsEntry) => entry.pointsFor - entry.pointsAgainst;
+  const getPtsPct = (entry: StandingsEntry) => entry.pointsFor + entry.pointsAgainst > 0 
+    ? (entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100 
+    : 0;
   
   const sortedStandings = standings.slice().sort((a, b) => {
     // Special handling for seed and seedAdjustment - use seedTotal for comparison
     if (sortColumn === "seed" || sortColumn === "seedAdjustment") {
-      const aTotal = getSeedTotal(a);
-      const bTotal = getSeedTotal(b);
-      return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
+      return sortDirection === "asc" ? getSeedTotal(a) - getSeedTotal(b) : getSeedTotal(b) - getSeedTotal(a);
     }
     
     // Special handling for byeBase - use byeTotal
     if (sortColumn === "byeBase") {
-      const aTotal = getByeTotal(a);
-      const bTotal = getByeTotal(b);
-      return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
+      return sortDirection === "asc" ? getByeTotal(a) - getByeTotal(b) : getByeTotal(b) - getByeTotal(a);
+    }
+    
+    // Special handling for pointsFor - sort by pointDiff
+    if (sortColumn === "pointsFor") {
+      return sortDirection === "asc" ? getPointDiff(a) - getPointDiff(b) : getPointDiff(b) - getPointDiff(a);
     }
 
     const aVal = a[sortColumn];
@@ -1320,12 +1337,10 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {sortedStandings.map((entry) => {
-                    const pointDiff = entry.pointsFor - entry.pointsAgainst;
                     const seedTotal = getSeedTotal(entry);
                     const byeTotal = getByeTotal(entry);
-                    const ptsPct = entry.pointsFor + entry.pointsAgainst > 0
-                      ? ((entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100).toFixed(0)
-                      : "0";
+                    const pointDiff = getPointDiff(entry);
+                    const ptsPctVal = getPtsPct(entry);
                     return (
                       <tr key={entry.id} className="border-t hover:bg-gray-50">
                         <td className="p-2">
@@ -1344,8 +1359,8 @@ export default function Home() {
                           {pointDiff >= 0 ? "+" : ""}{pointDiff}
                         </td>
                         <td className="p-2 text-center">
-                          <span className={parseInt(ptsPct) >= 50 ? "text-green-600 font-bold" : "text-gray-600"}>
-                            {ptsPct}%
+                          <span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-gray-600"}>
+                            {ptsPctVal.toFixed(0)}%
                           </span>
                         </td>
                         <td className="p-2 text-center">
