@@ -28,8 +28,9 @@ interface StandingsEntry {
   
   // Bye calculation
   byeBase: number;         // Base bye value from DUPR rank (set at event start, regeneratable)
-  byeMod: number;          // Fractional: late join bonus; Whole: byes earned - sit outs
-  byeCount: number;        // Pure count of byes earned in rounds (for display)
+  byeMod: number;          // Fractional: late join bonus only
+  byeCount: number;        // Count of byes earned in rounds
+  sitOutCount: number;     // Count of sit outs (each adds sitProtection)
   
   wins: number;
   losses: number;
@@ -301,16 +302,19 @@ export default function Home() {
 
   // Submit round results
   const submitRoundResults = () => {
-    // Update standings with results
+    const maxPlayers = Math.max(...standings.map(p => p.baseOrder)) / config.orderGap;
+    const minAdjusted = 1 - config.padding;
+    const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.padding;
+    
+    // Update standings with results and apply court bonuses
     setStandings(prev => prev.map(entry => {
       const match = roundState.matches.find(m => m.team1.includes(entry.id) || m.team2.includes(entry.id));
       
       if (match && match.bye && match.byePlayerId === entry.id) {
-        // Player got a bye - increment byeMod and byeCount
+        // Player got a bye - increment byeCount (byeMod stays as fractional for late join only)
         return { 
           ...entry, 
-          byeMod: entry.byeMod + 1, // Increment bye score by 1
-          byeCount: entry.byeCount + 1 
+          byeCount: entry.byeCount + 1
         };
       }
       
@@ -318,7 +322,7 @@ export default function Home() {
       if (sittingOutThisRound.includes(entry.id)) {
         return { 
           ...entry, 
-          byeMod: entry.byeMod + config.sitProtection // Add sit protection penalty
+          sitOutCount: entry.sitOutCount + 1 // Track sit outs separately
         };
       }
       
@@ -330,19 +334,24 @@ export default function Home() {
         const won = myScore > opponentScore && myScore > 0;
         const playedMatch = myScore > 0 || opponentScore > 0;
 
+        // Apply court bonus: winners subtract, losers add
+        const courtBonus = won ? -config.courtBonus : config.courtBonus;
+        const newAdjusted = Math.max(minAdjusted, Math.min(maxAdjusted, entry.adjustedOrder + courtBonus));
+
         return {
           ...entry,
           wins: entry.wins + (won ? 1 : 0),
           losses: entry.losses + (playedMatch && !won ? 1 : 0),
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
+          adjustedOrder: newAdjusted,
         };
       }
       
       return entry;
     }));
 
-    // Recalculate adjusted order based on new standings
+    // Recalculate adjusted order based on win percentage
     recalculateAdjustedOrder();
 
     // Mark first round as completed (for late join bonus)
@@ -357,16 +366,57 @@ export default function Home() {
   // Recalculate adjusted order based on performance
   const recalculateAdjustedOrder = () => {
     setStandings(prev => {
+      // Get max players count for clamping
+      const maxPlayers = Math.max(...prev.map(p => p.baseOrder)) / config.orderGap;
+      const minAdjusted = 1 - config.padding;
+      const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.padding;
+      
       return prev.map(entry => {
-        // Simple: baseOrder adjusted by win percentage
+        // Base adjusted order from baseOrder minus wins bonus
         const gamesPlayed = entry.wins + entry.losses;
         const winPct = gamesPlayed > 0 ? entry.wins / gamesPlayed : 0.5;
-        // Lower adjustedOrder is better, so subtract win bonus
         const adjustment = winPct * config.winLossMagnitude;
+        let newAdjusted = entry.baseOrder - adjustment;
+        
+        // Clamp to min/max bounds
+        newAdjusted = Math.max(minAdjusted, Math.min(maxAdjusted, newAdjusted));
+        
         return {
           ...entry,
-          adjustedOrder: entry.baseOrder - adjustment,
+          adjustedOrder: newAdjusted,
         };
+      });
+    });
+  };
+
+  // Calculate court bonus adjustment for a match result
+  const calculateCourtBonus = (baseOrder: number, won: boolean, isTopCourt: boolean): number => {
+    const bonus = config.courtBonus;
+    
+    if (won) {
+      // Winners subtract bonus from their adjusted order (move up)
+      return -bonus;
+    } else {
+      // Losers add bonus to their adjusted order (move down)
+      return bonus;
+    }
+  };
+
+  // Apply court bonus to all players after a round
+  const applyCourtBonuses = (matchResults: { playerId: string; won: boolean; isTopCourt: boolean }[]) => {
+    setStandings(prev => {
+      const maxPlayers = Math.max(...prev.map(p => p.baseOrder)) / config.orderGap;
+      const minAdjusted = 1 - config.padding;
+      const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.padding;
+      
+      return prev.map(entry => {
+        const result = matchResults.find(r => r.playerId === entry.id);
+        if (!result) return entry;
+        
+        const bonus = calculateCourtBonus(entry.baseOrder, result.won, result.isTopCourt);
+        const newAdjusted = Math.max(minAdjusted, Math.min(maxAdjusted, entry.adjustedOrder + bonus));
+        
+        return { ...entry, adjustedOrder: newAdjusted };
       });
     });
   };
@@ -471,7 +521,7 @@ export default function Home() {
     
     const sortedByDupr = playersWithDupr.sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0));
     const rank = sortedByDupr.findIndex(p => p.id === player.id);
-    const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
+    const initialOrder = Math.max(1, 1 + (rank >= 0 ? rank * config.orderGap : 0));
 
     const byeBase = generateByeBase(player.duprScore);
     // Late joiners only get bonus if first round has been completed
@@ -481,7 +531,7 @@ export default function Home() {
       id: player.id, name: player.name, duprId: player.duprId,
       duprScore: player.duprScore, baseOrder: initialOrder,
       adjustedOrder: initialOrder,
-      byeBase, byeMod, byeCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
+      byeBase, byeMod, byeCount: 0, sitOutCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
     }]);
   };
 
@@ -499,8 +549,8 @@ export default function Home() {
       });
       return sorted.map((entry, index) => ({
         ...entry,
-        baseOrder: 1 + (index * config.orderGap),
-        adjustedOrder: 1 + (index * config.orderGap),
+        baseOrder: Math.max(1, 1 + (index * config.orderGap)), // Never below 1
+        adjustedOrder: Math.max(1, 1 + (index * config.orderGap)),
       }));
     });
   };
@@ -546,13 +596,12 @@ export default function Home() {
         return b.duprScore - a.duprScore;
       });
 
-      // Assign baseOrder and byeBase based on position in sorted list
+      // Assign baseOrder and byeBase based on position in sorted list (keep adjustedOrder)
       return sorted.map((entry, index) => ({
         ...entry,
-        baseOrder: 1 + (index * config.orderGap),
-        adjustedOrder: 1 + (index * config.orderGap),
+        baseOrder: Math.max(1, 1 + (index * config.orderGap)),
         byeBase: generateByeBase(entry.duprScore),
-        byeCount: 0, // Reset bye count on pool change
+        // Don't reset byeCount, sitOutCount, or adjustedOrder on pool change
       }));
     });
   };
@@ -680,7 +729,7 @@ export default function Home() {
           {(config.format === "STANDARD" || config.format === "FIXED_PARTNER") && (
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-medium text-gray-700">Order & Match Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
                   <input type="number" step="0.25" min="0.25" value={config.orderGap}
@@ -707,16 +756,10 @@ export default function Home() {
                     onChange={(e) => updateConfig("padding", parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Late Join Bonus</label>
-                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus}
-                    onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.75)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
               </div>
 
               <h3 className="font-medium text-gray-700 mt-4">Bye Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
                   <input type="number" min="1" max="16" value={config.courts}
@@ -741,10 +784,27 @@ export default function Home() {
                     onChange={(e) => updateConfig("sitProtection", parseFloat(e.target.value) || 0.5)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Late Join Bonus</label>
+                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus}
+                    onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.75)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
               </div>
             </div>
           )}
 
+          {/* Pool Play Options */}
+          {config.format === "POOL_PLAY" && (
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-medium text-gray-700">Pool & Finals Settings</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Per Pool</label>
+                  <input type="number" min="3" max="8" value={config.teamsPerPool}
+                    onChange={(e) => updateConfig("teamsPerPool", parseInt(e.target.value) || 4)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
           {/* Pool Play Options */}
           {config.format === "POOL_PLAY" && (
             <div className="space-y-4 border-t pt-4">
@@ -1135,7 +1195,7 @@ export default function Home() {
                         const player = eventPool.find(p => p.id === match.byePlayerId);
                         const standingsEntry = standings.find(s => s.id === match.byePlayerId);
                         if (!standingsEntry) return null;
-                        const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
+                        const totalBye = standingsEntry.byeBase + standingsEntry.byeCount + (standingsEntry.sitOutCount * config.sitProtection) + standingsEntry.byeMod;
                         return (
                           <div key={match.id} className="bg-orange-100 rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-3">
                             <span className="text-xl">😴</span>
@@ -1153,19 +1213,19 @@ export default function Home() {
                 {/* Sitting Out */}
                 {sittingOutThisRound.length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-600 font-medium mb-2">Sitting Out This Round:</p>
+                    <p className="text-sm text-gray-600 font-medium mb-2">Sitting Out (adds to bye score for next match):</p>
                     <div className="flex flex-wrap gap-3">
                       {sittingOutThisRound.map(playerId => {
                         const player = eventPool.find(p => p.id === playerId);
                         const standingsEntry = standings.find(s => s.id === playerId);
                         if (!standingsEntry) return null;
-                        const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
+                        const totalBye = standingsEntry.byeBase + standingsEntry.byeCount + (standingsEntry.sitOutCount * config.sitProtection) + standingsEntry.byeMod;
                         return (
                           <div key={playerId} className="bg-gray-200 rounded-lg px-4 py-2 border border-gray-400 flex items-center gap-3">
                             <span className="text-xl">💤</span>
                             <div>
                               <p className="font-medium text-gray-700">{player?.name}</p>
-                              <p className="text-xs text-gray-500">Total bye: {totalBye.toFixed(2)} (+sit out penalty)</p>
+                              <p className="text-xs text-gray-500">Total bye: {totalBye.toFixed(2)}</p>
                             </div>
                           </div>
                         );
@@ -1260,7 +1320,7 @@ export default function Home() {
                 <tbody>
                   {sortedStandings.map((entry) => {
                     const pointDiff = entry.pointsFor - entry.pointsAgainst;
-                    const totalBye = entry.byeBase + entry.byeMod;
+                    const totalBye = entry.byeBase + entry.byeCount + (entry.sitOutCount * config.sitProtection) + entry.byeMod;
                     const ptsPct = entry.pointsFor + entry.pointsAgainst > 0
                       ? ((entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100).toFixed(0)
                       : "0";
@@ -1286,7 +1346,7 @@ export default function Home() {
                         <td className="p-2 text-center">
                           <span 
                             className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
-                            title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${Math.max(0, (entry.byeMod - entry.byeCount - config.lateJoinBonus) / config.sitProtection).toFixed(0)} sit outs + ${config.lateJoinBonus.toFixed(2)} late join`}
+                            title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${entry.sitOutCount} sit outs + ${config.lateJoinBonus.toFixed(2)} late join`}
                           >
                             {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
                           </span>
