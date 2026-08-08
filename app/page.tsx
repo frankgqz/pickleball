@@ -28,7 +28,8 @@ interface StandingsEntry {
   
   // Bye calculation
   byeBase: number;         // Base bye value from DUPR rank (set at event start, regeneratable)
-  byeMod: number;          // Modifiers: +byes earned, -sit outs, +late join bonus
+  byeMod: number;          // Fractional: late join bonus; Whole: byes earned - sit outs
+  byeCount: number;        // Pure count of byes earned in rounds (for display)
   
   wins: number;
   losses: number;
@@ -191,14 +192,14 @@ export default function Home() {
     const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
 
     const byeBase = generateByeBase(player.duprScore);
-    // Late joiners get a bonus added to byeMod
+    // Late joiners get a bonus added to byeMod (fractional)
     const byeMod = config.lateJoinBonus;
 
     setStandings([...standings, {
       id: player.id, name: player.name, duprId: player.duprId,
       duprScore: player.duprScore, baseOrder: initialOrder,
       adjustedOrder: initialOrder,
-      byeBase, byeMod, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
+      byeBase, byeMod, byeCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
     }]);
   };
 
@@ -269,11 +270,12 @@ export default function Home() {
         baseOrder: 1 + (index * config.orderGap),
         adjustedOrder: 1 + (index * config.orderGap),
         byeBase: generateByeBase(entry.duprScore),
+        byeCount: 0, // Reset bye count on pool change
       }));
     });
   };
 
-  // Regenerate bye base for all players
+  // Regenerate bye base for all players (does NOT reset byeMod which has late join bonus)
   const regenerateByes = () => {
     setStandings(prev => {
       const sorted = [...prev].sort((a, b) => {
@@ -286,8 +288,7 @@ export default function Home() {
       return sorted.map(entry => ({
         ...entry,
         byeBase: generateByeBase(entry.duprScore),
-        // Keep byeMod (byes earned, sit outs) but reset round byes
-        byeMod: entry.byeMod - (entry.byeMod % 1), // Keep fractional (late join bonus) but reset whole numbers
+        byeCount: 0, // Reset bye count
       }));
     });
   };
@@ -651,15 +652,18 @@ export default function Home() {
                       PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="p-2 text-center">+/-</th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeBase")}>
-                      Bye {sortColumn === "byeBase" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
+                    <th className="p-2 text-center">Pts%</th>
+                    <th className="p-2 text-center">Bye</th>
+                    <th className="p-2 text-center">Byes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedStandings.map((entry) => {
                     const pointDiff = entry.pointsFor - entry.pointsAgainst;
                     const totalBye = entry.byeBase + entry.byeMod;
+                    const ptsPct = entry.pointsFor + entry.pointsAgainst > 0
+                      ? ((entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100).toFixed(0)
+                      : "0";
                     return (
                       <tr key={entry.id} className="border-t hover:bg-gray-50">
                         <td className="p-2">
@@ -675,9 +679,17 @@ export default function Home() {
                           {pointDiff >= 0 ? "+" : ""}{pointDiff}
                         </td>
                         <td className="p-2 text-center">
+                          <span className={parseInt(ptsPct) >= 50 ? "text-green-600 font-bold" : "text-gray-600"}>
+                            {ptsPct}%
+                          </span>
+                        </td>
+                        <td className="p-2 text-center">
                           <span className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"}`}>
                             {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
                           </span>
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className="text-purple-600 font-bold">{entry.byeCount}</span>
                         </td>
                       </tr>
                     );
