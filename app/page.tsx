@@ -469,77 +469,141 @@ const handleUpdatePlayer = async () => {
         <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
         <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
       </header>
-
       <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* ========== TOURNAMENT FORMAT SECTION ========== */}
+        <section className="bg-white rounded-2xl shadow-xl p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">⚙️ Tournament Format</h2>
+          
+          {/* Format Type Selector */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <button
+              onClick={() => setFormat("STANDARD")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                format === "STANDARD" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"
+              }`}
+            >
+              <div className="text-2xl mb-2">👑</div>
+              <div className="font-semibold">Standard</div>
+              <div className="text-xs mt-1">King of Court</div>
+            </button>
+            <button
+              onClick={() => setFormat("FIXED_PARTNER")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                format === "FIXED_PARTNER" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"
+              }`}
+            >
+              <div className="text-2xl mb-2">🤝</div>
+              <div className="font-semibold">Fixed Partner</div>
+              <div className="text-xs mt-1">Stay with partner</div>
+            </button>
+            <button
+              onClick={() => setFormat("POOL_PLAY")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                format === "POOL_PLAY" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"
+              }`}
+            >
+              <div className="text-2xl mb-2">🏊</div>
+              <div className="font-semibold">Pool Play</div>
+              <div className="text-xs mt-1">Groups + Finals</div>
+            </button>
+          </div>
+          
+          {/* Standard/Fixed Partner Options */}
+          {(format === "STANDARD" || format === "FIXED_PARTNER") && (
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-medium text-gray-700">Court & Order Settings</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
+                  <input type="number" min="1" max="10" value={courtCount} onChange={(e) => setCourtCount(parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Win Δ</label>
+                  <input type="number" step="0.25" value={winAdjustment} onChange={(e) => setWinAdjustment(parseFloat(e.target.value) || -1)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Loss Δ</label>
+                  <input type="number" step="0.25" value={lossAdjustment} onChange={(e) => setLossAdjustment(parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Court Bonus</label>
+                  <input type="number" step="0.25" min="0" max="2" value={courtBonusMultiplier} onChange={(e) => setCourtBonusMultiplier(parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Start Gap</label>
+                  <input type="number" step="0.25" min="0.25" value={orderStartGap} onChange={(e) => setOrderStartGap(parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Min</label>
+                  <input type="number" step="0.5" value={orderMin} onChange={(e) => setOrderMin(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Max</label>
+                  <input type="number" step="0.5" value={orderMax} onChange={(e) => setOrderMax(parseFloat(e.target.value) || 10)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Pool Play Options */}
+          {format === "POOL_PLAY" && (
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-medium text-gray-700">Pool & Finals Settings</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Per Pool</label>
+                  <input type="number" min="3" max="8" value={teamsPerPool} onChange={(e) => setTeamsPerPool(parseInt(e.target.value) || 4)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Finals</label>
+                  <select value={finalsFormat} onChange={(e) => setFinalsFormat(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="top2">Top 2 → Semis</option>
+                    <option value="top4">Top 4 → Quarters</option>
+                    <option value="all">Everyone</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
+                  <input type="number" min="1" max="10" value={courtCount} onChange={(e) => setCourtCount(parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
         
         {/* ========== ADD PLAYER FORM ========== */}
         <section className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">➕ Add New Player</h2>
-          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Smith"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Smith" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
-            
             {/* DUPR ID (Letters) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR ID (Letters)</label>
-              <input
-                type="text"
-                value={duprId}
-                onChange={(e) => setDuprId(e.target.value)}
-                placeholder="5E64ZL"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR ID</label>
+              <input type="text" value={duprId} onChange={(e) => setDuprId(e.target.value)} placeholder="5E64ZL" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
-
             {/* DUPR Numeric ID */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR Numeric ID</label>
-              <input
-                type="text"
-                value={duprNumericId}
-                onChange={(e) => setDuprNumericId(e.target.value)}
-                placeholder="7438750465"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Numeric ID</label>
+              <input type="text" value={duprNumericId} onChange={(e) => setDuprNumericId(e.target.value)} placeholder="7438750465" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
-            
             {/* Manual DUPR Score */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR Score</label>
-              <input
-                type="number"
-                step="0.1"
-                min="1"
-                max="6"
-                value={duprScore}
-                onChange={(e) => setDuprScore(e.target.value)}
-                placeholder="3.5"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-            
-            {/* Add Button */}
-            <div className="flex items-end">
-              <button
-                onClick={handleAddPlayer}
-                disabled={submitting || !name.trim()}
-                className="w-full bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {submitting ? "Adding..." : "Add Player"}
-              </button>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+              <input type="number" step="0.1" min="1" max="6" value={duprScore} onChange={(e) => setDuprScore(e.target.value)} placeholder="3.5" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" />
             </div>
           </div>
+          <div className="mt-4">
+            <button onClick={handleAddPlayer} disabled={submitting || !name.trim()} className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+              {submitting ? "Adding..." : "Add Player"}
+            </button>
+          </div>
         </section>
+
 
         {/* ========== PLAYER DATABASE & EVENT POOL ========== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -767,8 +831,10 @@ const handleUpdatePlayer = async () => {
         )}
         
         {eventPool.length > 0 && eventPool.length < 4 && (
+          {/* === PART 2A-3: PLAYER COUNT WARNING === */}
+          {/* Shows message when not enough players to start a round */}
           <p className="text-center text-white text-lg">
-            Need at least 4 players to start a tournament. You have {eventPool.length}.
+            Need at least 4 active players to start a round. You have {eventPool.filter(p => !p.isSitting).length}.
           </p>
         )}
         
