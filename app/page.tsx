@@ -36,6 +36,41 @@ export default function Home() {
   const [editDuprNumericId, setEditDuprNumericId] = useState("");
   const [editDuprScore, setEditDuprScore] = useState("");
 
+  {/* === PART 2A-1: STATE VARIABLES FOR FORMAT SELECTION === */}
+  /* These control the tournament format configuration */
+
+  /* Format type: 'STANDARD' = King of Court, 'FIXED_PARTNER' = Fixed pairs, 'POOL_PLAY' = Group stage + finals */
+  /* Default is 'STANDARD' for round robin play */
+  const [format, setFormat] = useState<string>("STANDARD");
+  /* Number of courts available - determines how many matches per round */
+  /* Affects bye calculation (e.g., 10 players on 2 courts = 1 bye) */
+  const [courtCount, setCourtCount] = useState<number>(2);
+  /* Order adjustment per win - winning players get this subtracted from their order# */
+  /* e.g., -1 means winning moves up 1 position in rankings */
+  const [winAdjustment, setWinAdjustment] = useState<number>(-1);
+  /* Order adjustment per loss - losing players get this added to their order# */
+  /* e.g., +1 means losing moves down 1 position in rankings */
+  const [lossAdjustment, setLossAdjustment] = useState<number>(1);
+  /* Court position bonus multiplier - top/bottom courts get extra adjustment */
+  /* e.g., 0.5 means top court winners get extra 0.5 boost (total -1.5) */
+  /* Default is 0.5 (50% extra on top of base adjustment) */
+  const [courtBonusMultiplier, setCourtBonusMultiplier] = useState<number>(0.5);
+  /* Starting gap between players - determines spacing in initial order# */
+  /* e.g., 0.25 means player 1 is at 1.0, player 2 at 1.25, player 3 at 1.5 */
+  const [orderStartGap, setOrderStartGap] = useState<number>(0.25);
+  /* Minimum order# - players can't go lower than this (prevents infinite climbing) */
+  const [orderMin, setOrderMin] = useState<number>(0);
+  /* Maximum order# - players can't go higher than this (prevents infinite falling) */
+  const [orderMax, setOrderMax] = useState<number>(10);
+
+  /* ===== POOL PLAY OPTIONS (shown only when format === 'POOL_PLAY') ===== */
+  /* Number of teams per pool for group stage */
+  /* e.g., 4 teams per pool means 16 players = 4 pools */
+  const [teamsPerPool, setTeamsPerPool] = useState<number>(4);
+  /* Finals format: how many teams advance from each pool */
+  /* Options: 'top2' (top 2 → semis), 'top4' (top 4 → quarters), 'all' (everyone) */
+  const [finalsFormat, setFinalsFormat] = useState<string>("top2");
+
 
   // Load players from database on mount
   useEffect(() => {
@@ -56,6 +91,247 @@ export default function Home() {
     setLoading(false);
   }
 
+  {/* === PART 2A-2: FORMAT SELECTION SECTION === */}
+  /* Configure the tournament format: Standard, Fixed Partner, or Pool Play */
+  /* Contains format type selector + format-specific options */
+
+  <section className="bg-white rounded-2xl shadow-xl p-6">
+    <h2 className="text-xl font-bold text-gray-800 mb-4">⚙️ Tournament Format</h2>
+    
+    {/* Format Type Selector */}
+    {/* Three main formats: Standard (King of Court), Fixed Partner, Pool Play */}
+    <div className="grid grid-cols-3 gap-4 mb-6">
+      
+      {/* Standard Format - Win/lose to move up/down courts */}
+      <button
+        onClick={() => setFormat("STANDARD")}
+        className={`p-4 rounded-xl border-2 transition-all ${
+          format === "STANDARD"
+            ? "border-green-500 bg-green-50 text-green-700"
+            : "border-gray-200 hover:border-gray-300 text-gray-600"
+        }`}
+      >
+        <div className="text-2xl mb-2">👑</div>
+        <div className="font-semibold">Standard</div>
+        <div className="text-xs mt-1">King of Court</div>
+      </button>
+      
+      {/* Fixed Partner Format - Partners stay together */}
+      <button
+        onClick={() => setFormat("FIXED_PARTNER")}
+        className={`p-4 rounded-xl border-2 transition-all ${
+          format === "FIXED_PARTNER"
+            ? "border-green-500 bg-green-50 text-green-700"
+            : "border-gray-200 hover:border-gray-300 text-gray-600"
+        }`}
+      >
+        <div className="text-2xl mb-2">🤝</div>
+        <div className="font-semibold">Fixed Partner</div>
+        <div className="text-xs mt-1">Stay with partner</div>
+      </button>
+      
+      {/* Pool Play Format - Group stage then finals */}
+      <button
+        onClick={() => setFormat("POOL_PLAY")}
+        className={`p-4 rounded-xl border-2 transition-all ${
+          format === "POOL_PLAY"
+            ? "border-green-500 bg-green-50 text-green-700"
+            : "border-gray-200 hover:border-gray-300 text-gray-600"
+        }`}
+      >
+        <div className="text-2xl mb-2">🏊</div>
+        <div className="font-semibold">Pool Play</div>
+        <div className="text-xs mt-1">Groups + Finals</div>
+      </button>
+    </div>
+    
+    {/* ===== FORMAT-SPECIFIC OPTIONS ===== */}
+    {/* Show different options based on selected format */}
+    
+    {/* Standard & Fixed Partner Options */}
+    {(format === "STANDARD" || format === "FIXED_PARTNER") && (
+      <div className="space-y-4 border-t pt-4">
+        <h3 className="font-medium text-gray-700">Court & Order Settings</h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Number of Courts */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              value={courtCount}
+              onChange={(e) => setCourtCount(parseInt(e.target.value) || 2)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Matches per round</p>
+          </div>
+          
+          {/* Win Adjustment (negative = move up) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Win Δ Order</label>
+            <input
+              type="number"
+              step="0.25"
+              value={winAdjustment}
+              onChange={(e) => setWinAdjustment(parseFloat(e.target.value) || -1)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Move up (-) on win</p>
+          </div>
+          
+          {/* Loss Adjustment (positive = move down) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Loss Δ Order</label>
+            <input
+              type="number"
+              step="0.25"
+              value={lossAdjustment}
+              onChange={(e) => setLossAdjustment(parseFloat(e.target.value) || 1)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Move down (+) on loss</p>
+          </div>
+          
+          {/* Court Bonus Multiplier (extra adjustment for top/bottom courts) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Court Bonus</label>
+            <input
+              type="number"
+              step="0.25"
+              min="0"
+              max="2"
+              value={courtBonusMultiplier}
+              onChange={(e) => setCourtBonusMultiplier(parseFloat(e.target.value) || 0.5)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Top/bottom court bonus</p>
+          </div>
+        </div>
+        
+        {/* Order Number Range */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+          {/* Starting gap between players */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Start Gap</label>
+            <input
+              type="number"
+              step="0.25"
+              min="0.25"
+              value={orderStartGap}
+              onChange={(e) => setOrderStartGap(parseFloat(e.target.value) || 0.25)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Spacing between players</p>
+          </div>
+          
+          {/* Minimum order# */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Order Min</label>
+            <input
+              type="number"
+              step="0.5"
+              value={orderMin}
+              onChange={(e) => setOrderMin(parseFloat(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Lowest possible order#</p>
+          </div>
+          
+          {/* Maximum order# */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Order Max</label>
+            <input
+              type="number"
+              step="0.5"
+              value={orderMax}
+              onChange={(e) => setOrderMax(parseFloat(e.target.value) || 10)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Highest possible order#</p>
+          </div>
+          
+          {/* Players per court */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Per Court</label>
+            <div className="px-3 py-2 bg-gray-100 rounded-lg text-center">
+              {format === "FIXED_PARTNER" ? "4" : "4"} <span className="text-xs text-gray-500">(pairs)</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Players per match</p>
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Pool Play Options */}
+    {format === "POOL_PLAY" && (
+      <div className="space-y-4 border-t pt-4">
+        <h3 className="font-medium text-gray-700">Pool & Finals Settings</h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Teams per Pool */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Per Pool</label>
+            <input
+              type="number"
+              min="3"
+              max="8"
+              value={teamsPerPool}
+              onChange={(e) => setTeamsPerPool(parseInt(e.target.value) || 4)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Teams in each pool</p>
+          </div>
+          
+          {/* Finals Format */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Finals</label>
+            <select
+              value={finalsFormat}
+              onChange={(e) => setFinalsFormat(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="top2">Top 2 → Semis</option>
+              <option value="top4">Top 4 → Quarters</option>
+              <option value="all">Everyone advances</option>
+            </select>
+            <p className="text-xs text-gray-400 mt-1">How many advance</p>
+          </div>
+          
+          {/* Courst (same as standard) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              value={courtCount}
+              onChange={(e) => setCourtCount(parseInt(e.target.value) || 2)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <p className="text-xs text-gray-400 mt-1">Available courts</p>
+          </div>
+          
+          {/* Points per game */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Points</label>
+            <input
+              type="number"
+              min="7"
+              max="21"
+              value={11}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              disabled
+            />
+            <p className="text-xs text-gray-400 mt-1">Win by 2 (default 11)</p>
+          </div>
+        </div>
+      </div>
+    )}
+  </section>
+
+  
   // Add player to database
   const handleAddPlayer = async () => {
     if (!name.trim()) return;
