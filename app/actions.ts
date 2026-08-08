@@ -7,13 +7,16 @@ import { prisma } from "@/lib/prisma";
 // Get all players from database
 export async function getPlayers() {
   try {
+    console.log("Attempting to connect to database...");
     const players = await prisma.player.findMany({
       orderBy: { createdAt: "desc" },
     });
+    console.log("Successfully fetched players:", players.length);
     return { success: true, players };
   } catch (error) {
-    console.error("Error fetching players:", error);
-    return { success: false, players: [], error: "Failed to fetch players" };
+    console.error("Database error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return { success: false, players: [], error: errorMessage };
   }
 }
 
