@@ -348,22 +348,19 @@ export default function Home() {
         const won = myScore > opponentScore && myScore > 0;
         const playedMatch = myScore > 0 || opponentScore > 0;
 
-        // Determine court position (top = lower baseOrder, bottom = higher baseOrder)
-        const matchCourt = match.court;
-        
-        // Calculate court bonus for balanced average:
-        // Top court (lower order): win -courtBonus, loss +courtBonus
-        // Bottom court (higher order): win +courtBonus, loss -courtBonus
-        let courtBonus: number;
+        // Calculate order# change based on court and result
+        // Top court: win = -courtBonus, loss = +winLossMagnitude
+        // Bottom court: win = -winLossMagnitude, loss = +courtBonus
+        let orderChange: number;
         let courtType: string;
         
-        if (matchCourt === 1) {
-          // Top court - winners go down (better), losers go up
-          courtBonus = won ? -config.courtBonus : config.courtBonus;
+        if (match.court === 1) {
+          // Top court (lower order numbers)
+          orderChange = won ? -config.courtBonus : config.winLossMagnitude;
           courtType = "top";
         } else {
-          // Bottom court - winners go up (catch up), losers go down
-          courtBonus = won ? config.courtBonus : -config.courtBonus;
+          // Bottom court (higher order numbers)
+          orderChange = won ? -config.winLossMagnitude : config.courtBonus;
           courtType = "bottom";
         }
         
@@ -375,8 +372,8 @@ export default function Home() {
           losses: entry.losses + (playedMatch && !won ? 1 : 0),
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
-          adjustedOrder: entry.adjustedOrder + courtBonus,
-          orderHistory: [...entry.orderHistory, { round: currentRound, change: courtBonus, reason }],
+          adjustedOrder: entry.adjustedOrder + orderChange,
+          orderHistory: [...entry.orderHistory, { round: currentRound, change: orderChange, reason }],
         };
       }
       
