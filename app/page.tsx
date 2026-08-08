@@ -14,14 +14,14 @@ export default function Home() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [eventPool, setEventPool] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Form state
   const [name, setName] = useState("");
   const [duprId, setDuprId] = useState("");
   const [duprScore, setDuprScore] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
 
   // Load players from database on mount
   useEffect(() => {
