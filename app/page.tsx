@@ -71,6 +71,12 @@ export default function Home() {
   /* Options: 'top2' (top 2 → semis), 'top4' (top 4 → quarters), 'all' (everyone) */
   const [finalsFormat, setFinalsFormat] = useState<string>("top2");
 
+  // Bye-related state variables
+  const [byeTopProtection, setByeTopProtection] = useState<number>(8);  // How many top players get better bye values
+  const [byeIncrement, setByeIncrement] = useState<number>(1);          // Value added to bye count after a bye
+  const [sitPenalty, setSitPenalty] = useState<number>(0.5);            // Value added after sitting out
+  const [lateJoinRange, setLateJoinRange] = useState<number>(0.25);     // Bye value range for late joiners
+
 
   // Load players from database on mount
   useEffect(() => {
@@ -148,117 +154,68 @@ export default function Home() {
     {/* ===== FORMAT-SPECIFIC OPTIONS ===== */}
     {/* Show different options based on selected format */}
     
-    {/* Standard & Fixed Partner Options */}
+    {/* Standard/Fixed Partner Options */}
     {(format === "STANDARD" || format === "FIXED_PARTNER") && (
       <div className="space-y-4 border-t pt-4">
-        <h3 className="font-medium text-gray-700">Court & Order Settings</h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <h3 className="font-medium text-gray-700">Order & Match Settings</h3>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {/* Number of Courts */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
-            <input
-              type="number"
-              min="1"
-              max="10"
-              value={courtCount}
-              onChange={(e) => setCourtCount(parseInt(e.target.value) || 2)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Matches per round</p>
+            <input type="number" min="1" max="10" value={courtCount} onChange={(e) => setCourtCount(parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
           </div>
-          
-          {/* Win Adjustment (negative = move up) */}
+          {/* W/L Magnitude - single option, applies to both win (negative) and loss (positive) */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Win Δ Order</label>
-            <input
-              type="number"
-              step="0.25"
-              value={winAdjustment}
-              onChange={(e) => setWinAdjustment(parseFloat(e.target.value) || -1)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Move up (-) on win</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">W/L Mag</label>
+            <input type="number" step="0.25" min="0.25" value={Math.abs(winAdjustment)} onChange={(e) => { const v = parseFloat(e.target.value) || 1; setWinAdjustment(-v); setLossAdjustment(v); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">Win/Loss impact</p>
           </div>
-          
-          {/* Loss Adjustment (positive = move down) */}
+          {/* Court Bonus Multiplier */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Loss Δ Order</label>
-            <input
-              type="number"
-              step="0.25"
-              value={lossAdjustment}
-              onChange={(e) => setLossAdjustment(parseFloat(e.target.value) || 1)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Move down (+) on loss</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Court ±</label>
+            <input type="number" step="0.25" min="0" max="2" value={courtBonusMultiplier} onChange={(e) => setCourtBonusMultiplier(parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">Top/Bottom bonus</p>
           </div>
-          
-          {/* Court Bonus Multiplier (extra adjustment for top/bottom courts) */}
+          {/* Order Gap - spacing between players */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Court Bonus</label>
-            <input
-              type="number"
-              step="0.25"
-              min="0"
-              max="2"
-              value={courtBonusMultiplier}
-              onChange={(e) => setCourtBonusMultiplier(parseFloat(e.target.value) || 0.5)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Top/bottom court bonus</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
+            <input type="number" step="0.25" min="0.25" value={orderStartGap} onChange={(e) => setOrderStartGap(parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">Player spacing</p>
+          </div>
+          {/* Order Buffer - determines min/max range */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Order Buffer</label>
+            <input type="number" step="0.25" min="0" value={orderMin} onChange={(e) => setOrderMin(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">Low end buffer</p>
           </div>
         </div>
         
-        {/* Order Number Range */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-          {/* Starting gap between players */}
+        {/* Bye Settings Section */}
+        <h3 className="font-medium text-gray-700 mt-4">Bye Settings</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Top Bye Protection - how many top players get better bye values */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Start Gap</label>
-            <input
-              type="number"
-              step="0.25"
-              min="0.25"
-              value={orderStartGap}
-              onChange={(e) => setOrderStartGap(parseFloat(e.target.value) || 0.25)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Spacing between players</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Top Bye Prot.</label>
+            <input type="number" min="0" max="20" value={byeTopProtection} onChange={(e) => setByeTopProtection(parseInt(e.target.value) || 8)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">Protected players</p>
           </div>
-          
-          {/* Minimum order# */}
+          {/* Bye Increment - value added to bye count after a bye */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Order Min</label>
-            <input
-              type="number"
-              step="0.5"
-              value={orderMin}
-              onChange={(e) => setOrderMin(parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Lowest possible order#</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Bye Incr.</label>
+            <input type="number" step="0.25" min="0.5" value={byeIncrement} onChange={(e) => setByeIncrement(parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">+value per bye</p>
           </div>
-          
-          {/* Maximum order# */}
+          {/* Sit-out Penalty - value added after sitting out */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Order Max</label>
-            <input
-              type="number"
-              step="0.5"
-              value={orderMax}
-              onChange={(e) => setOrderMax(parseFloat(e.target.value) || 10)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <p className="text-xs text-gray-400 mt-1">Highest possible order#</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Sit Penalty</label>
+            <input type="number" step="0.25" min="0" value={sitPenalty} onChange={(e) => setSitPenalty(parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">+value per sit-out</p>
           </div>
-          
-          {/* Players per court */}
+          {/* Late Join Range - bye value range for late joiners */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Per Court</label>
-            <div className="px-3 py-2 bg-gray-100 rounded-lg text-center">
-              {format === "FIXED_PARTNER" ? "4" : "4"} <span className="text-xs text-gray-500">(pairs)</span>
-            </div>
-            <p className="text-xs text-gray-400 mt-1">Players per match</p>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Late Join ±</label>
+            <input type="number" step="0.25" min="0.25" value={lateJoinRange} onChange={(e) => setLateJoinRange(parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            <p className="text-xs text-gray-400 mt-1">Late joiner range</p>
           </div>
         </div>
       </div>
