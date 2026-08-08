@@ -369,7 +369,7 @@ export default function Home() {
         // Adjust based on win percentage, clamped within band boundaries
         return {
           ...entry,
-          adjustedOrder: Math.max(1 - config.band, Math.min(1 + (config.orderGap * Math.max(...prev.map(p => p.baseOrder)) / config.orderGap) + config.band, entry.baseOrder - (winPct * config.winLossMagnitude))),
+          adjustedOrder: Math.max(1 - config.band, Math.min(1 + (config.orderGap * (Math.max(...prev.map(p => p.baseOrder)) / config.orderGap - 1)) + config.band, entry.baseOrder - (winPct * config.winLossMagnitude))),
         };
       });
     });
@@ -781,17 +781,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Pool Play Options */}
-          {config.format === "POOL_PLAY" && (
-            <div className="space-y-4 border-t pt-4">
-              <h3 className="font-medium text-gray-700">Pool & Finals Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Per Pool</label>
-                  <input type="number" min="3" max="8" value={config.teamsPerPool}
-                    onChange={(e) => updateConfig("teamsPerPool", parseInt(e.target.value) || 4)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
           {/* Pool Play Options */}
           {config.format === "POOL_PLAY" && (
             <div className="space-y-4 border-t pt-4">
