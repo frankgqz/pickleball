@@ -25,8 +25,11 @@ interface StandingsEntry {
   duprScore: number | null;
   baseOrder: number;       // Order# based on DUPR ranking (highest DUPR = 1)
   adjustedOrder: number;   // baseOrder adjusted by wins/losses (ranking for pairings)
-  byeValue: number;
-  byeCount: number;
+  
+  // Bye calculation
+  byeBase: number;         // Base bye value from DUPR rank (set at event start, regeneratable)
+  byeMod: number;          // Modifiers: +byes earned, -sit outs, +late join bonus
+  
   wins: number;
   losses: number;
   pointsFor: number;
@@ -187,13 +190,15 @@ export default function Home() {
     const rank = sortedByDupr.findIndex(p => p.id === player.id);
     const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
 
-    const byeValue = generateByeValue(player.duprScore);
+    const byeBase = generateByeBase(player.duprScore);
+    // Late joiners get a bonus added to byeMod
+    const byeMod = config.lateJoinBonus;
 
     setStandings([...standings, {
       id: player.id, name: player.name, duprId: player.duprId,
       duprScore: player.duprScore, baseOrder: initialOrder,
       adjustedOrder: initialOrder,
-      byeValue, byeCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
+      byeBase, byeMod, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
     }]);
   };
 
@@ -258,34 +263,55 @@ export default function Home() {
         return b.duprScore - a.duprScore;
       });
 
-      // Assign baseOrder based on position in sorted list
+      // Assign baseOrder and byeBase based on position in sorted list
       return sorted.map((entry, index) => ({
         ...entry,
         baseOrder: 1 + (index * config.orderGap),
-        adjustedOrder: 1 + (index * config.orderGap), // Reset adjusted too
+        adjustedOrder: 1 + (index * config.orderGap),
+        byeBase: generateByeBase(entry.duprScore),
       }));
     });
   };
 
-  // Regenerate bye values for all players
+  // Regenerate bye base for all players
   const regenerateByes = () => {
-    setStandings(prev => prev.map(entry => ({
-      ...entry,
-      byeValue: generateByeValue(entry.duprScore),
-      byeCount: 0,
-    })));
+    setStandings(prev => {
+      const sorted = [...prev].sort((a, b) => {
+        if (a.duprScore == null && b.duprScore == null) return 0;
+        if (a.duprScore == null) return 1;
+        if (b.duprScore == null) return -1;
+        return b.duprScore - a.duprScore;
+      });
+
+      return sorted.map(entry => ({
+        ...entry,
+        byeBase: generateByeBase(entry.duprScore),
+        // Keep byeMod (byes earned, sit outs) but reset round byes
+        byeMod: entry.byeMod - (entry.byeMod % 1), // Keep fractional (late join bonus) but reset whole numbers
+      }));
+    });
   };
 
-  // Helper to generate bye value based on DUPR rank
-  const generateByeValue = (duprScore: number | null): number => {
-    const rank = standings.filter(s => s.duprScore != null && s.duprScore > (duprScore || 0)).length + 1;
+  // Helper to generate bye base based on DUPR rank
+  const generateByeBase = (duprScore: number | null): number => {
+    // Rank among players with DUPR scores (1 = highest)
+    const allWithDupr = standings.filter(s => s.duprScore != null).sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0));
+    const rank = allWithDupr.findIndex(s => s.duprScore === duprScore && duprScore != null) + 1;
     
-    if (rank <= config.byeTopProtection / 2) {
-      return (Math.random() * 2 - 1) * config.byeBonusTop;
-    } else if (rank <= config.byeTopProtection) {
-      return (Math.random() * 2 - 1) * (config.byeBonusTop + 0.25);
+    const topHalf = Math.floor(config.byeTopProtection / 2);
+    
+    // Everyone gets a base roll from -1 to 0
+    const baseRoll = -Math.random();
+    
+    if (rank > 0 && rank <= topHalf) {
+      // Top players: (-1 to 0) + byeBonusTop
+      return baseRoll + config.byeBonusTop;
+    } else if (rank > topHalf && rank <= config.byeTopProtection) {
+      // Middle players: (-1 to 0) + byeBonusTop/2
+      return baseRoll + (config.byeBonusTop / 2);
     } else {
-      return -Math.random();
+      // Everyone else: just the -1 to 0 roll
+      return baseRoll;
     }
   };
 
@@ -608,35 +634,51 @@ export default function Home() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-100">
-                    {(["name", "baseOrder", "adjustedOrder", "byeValue", "wins", "losses", "pointsFor", "pointsAgainst", "pointsFor", "byeCount"] as const).map((col, i) => (
-                      <th key={col} className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort(col)}>
-                        {["Name", "Base", "Adj#", "Bye#", "W", "L", "PF", "PA", "+/-", "Byes"][i]}
-                        {sortColumn === col && (sortDirection === "asc" ? " ↑" : " ↓")}
-                      </th>
-                    ))}
+                    <th className="p-2 text-left">Name</th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("adjustedOrder")}>
+                      Order# {sortColumn === "adjustedOrder" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
+                      W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("losses")}>
+                      L {sortColumn === "losses" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
+                      PF {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
+                      PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center">+/-</th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeBase")}>
+                      Bye {sortColumn === "byeBase" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedStandings.map((entry) => {
-                    const winPct = entry.wins + entry.losses > 0 ? ((entry.wins / (entry.wins + entry.losses)) * 100).toFixed(1) : "0.0";
                     const pointDiff = entry.pointsFor - entry.pointsAgainst;
+                    const totalBye = entry.byeBase + entry.byeMod;
                     return (
                       <tr key={entry.id} className="border-t hover:bg-gray-50">
                         <td className="p-2">
                           <div className="font-medium">{entry.name}</div>
-                          {entry.duprId && <div className="text-xs text-gray-500">DUPR: {entry.duprId}</div>}
+                          {entry.duprScore && <div className="text-xs text-green-600">{entry.duprScore.toFixed(1)}</div>}
                         </td>
-                        <td className="p-2 text-center font-mono">{entry.baseOrder.toFixed(2)}</td>
                         <td className="p-2 text-center font-mono text-blue-600">{entry.adjustedOrder.toFixed(2)}</td>
-                        <td className="p-2 text-center font-mono">{entry.byeValue.toFixed(2)}</td>
-                        <td className="p-2 text-center">{entry.wins}</td>
-                        <td className="p-2 text-center">{entry.losses}</td>
+                        <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
+                        <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
                         <td className="p-2 text-center">{entry.pointsFor}</td>
                         <td className="p-2 text-center">{entry.pointsAgainst}</td>
                         <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
                           {pointDiff >= 0 ? "+" : ""}{pointDiff}
                         </td>
-                        <td className="p-2 text-center">{entry.byeCount}</td>
+                        <td className="p-2 text-center">
+                          <span className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"}`}>
+                            {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
+                          </span>
+                        </td>
                       </tr>
                     );
                   })}
