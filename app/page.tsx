@@ -137,57 +137,45 @@ export default function Home() {
   // Generate matches for the current round
   const generateMatches = (format: MatchFormat) => {
     const activePlayers = eventPool.filter(p => !p.isSitting);
-    const sittingOut = eventPool.filter(p => p.isSitting);
     
-    // Sort by adjustedOrder
-    const sortedPlayers = [...standings].sort((a, b) => a.adjustedOrder - b.adjustedOrder);
-    const activeIds = sortedPlayers.filter(s => activePlayers.some(p => p.id === s.id)).map(s => s.id);
+    // Sort standings by adjustedOrder
+    const sortedStandings = [...standings].sort((a, b) => a.adjustedOrder - b.adjustedOrder);
+    const activeIds = sortedStandings.filter(s => activePlayers.some(p => p.id === s.id)).map(s => s.id);
     
-    // Calculate byes needed (odd number of players)
+    // Calculate byes needed: active_players - (num_courts * 4)
     const playersPerCourt = 4;
-    const remainder = activeIds.length % playersPerCourt;
-    const byeCount = remainder === 0 ? 0 : playersPerCourt - remainder;
+    const maxPlayersForCourts = config.courts * playersPerCourt;
+    const byeCount = Math.max(0, activeIds.length - maxPlayersForCourts);
     
+    // Find who gets byes: lowest total bye scores get the byes
+    let byePlayerIds: string[] = [];
+    if (byeCount > 0) {
+      // Sort by total bye (byeBase + byeMod) - lowest first
+      const activeStandings = sortedStandings.filter(s => activeIds.includes(s.id));
+      const sortedByBye = activeStandings.sort((a, b) => (a.byeBase + a.byeMod) - (b.byeBase + b.byeMod));
+      byePlayerIds = sortedByBye.slice(0, byeCount).map(s => s.id);
+    }
+    
+    // Create matches
     const matches: Match[] = [];
+    let courtNum = 1;
     
-    if (format === "PICK_PARTNER") {
-      // For pick partner: pairs are made, player picks partner from remaining
-      // Simple approach: group by adjustedOrder, player 1 picks from 2,3,4
-      let courtNum = 1;
-      for (let i = 0; i < activeIds.length; i += playersPerCourt) {
-        const courtPlayers = activeIds.slice(i, i + playersPerCourt);
-        
-        if (courtPlayers.length === playersPerCourt) {
+    for (let i = 0; i < activeIds.length; i += playersPerCourt) {
+      // Get next group of 4 players for this court
+      const courtPlayers = activeIds.slice(i, i + playersPerCourt).filter(id => !byePlayerIds.includes(id));
+      
+      if (courtPlayers.length === playersPerCourt) {
+        // Full court of 4
+        if (format === "PICK_PARTNER") {
           matches.push({
             id: `match-${courtNum}`,
             court: courtNum,
-            team1: [courtPlayers[0]], // Player 1 picks partner
+            team1: [courtPlayers[0]], // Picker
             team2: courtPlayers.slice(1), // Remaining 3
             bye: false,
           });
         } else {
-          // Not enough for a full court, some get bye
-          const byePlayers = courtPlayers.slice(playersPerCourt - byeCount);
-          byePlayers.forEach(pid => {
-            matches.push({
-              id: `bye-${pid}`,
-              court: courtNum,
-              team1: [pid],
-              team2: [],
-              bye: true,
-              byePlayerId: pid,
-            });
-          });
-        }
-        courtNum++;
-      }
-    } else {
-      // FIXED_14V23: 1v4 on one side, 2v3 on the other
-      let courtNum = 1;
-      for (let i = 0; i < activeIds.length; i += playersPerCourt) {
-        const courtPlayers = activeIds.slice(i, i + playersPerCourt);
-        
-        if (courtPlayers.length === playersPerCourt) {
+          // FIXED_14V23
           matches.push({
             id: `match-${courtNum}`,
             court: courtNum,
@@ -195,38 +183,45 @@ export default function Home() {
             team2: [courtPlayers[1], courtPlayers[2]], // 2v3
             bye: false,
           });
-        } else if (courtPlayers.length === playersPerCourt - 1) {
-          // 3 players - one gets bye
-          matches.push({
-            id: `match-${courtNum}`,
-            court: courtNum,
-            team1: [courtPlayers[0]],
-            team2: [courtPlayers[1]],
-            bye: true,
-            byePlayerId: courtPlayers[2],
-          });
-        } else if (courtPlayers.length === playersPerCourt - 2) {
-          // 2 players - both get bye this round
-          matches.push({
-            id: `bye-pair-${courtNum}`,
-            court: courtNum,
-            team1: [courtPlayers[0]],
-            team2: [],
-            bye: true,
-            byePlayerId: courtPlayers[0],
-          });
-          matches.push({
-            id: `bye-pair-${courtNum}-b`,
-            court: courtNum,
-            team1: [courtPlayers[1]],
-            team2: [],
-            bye: true,
-            byePlayerId: courtPlayers[1],
-          });
         }
         courtNum++;
+      } else if (courtPlayers.length > 0) {
+        // Partial court - assign remaining to next available or create bye
+        if (courtPlayers.length >= 2) {
+          // Can still play with reduced numbers
+          if (format === "PICK_PARTNER") {
+            matches.push({
+              id: `match-${courtNum}`,
+              court: courtNum,
+              team1: [courtPlayers[0]],
+              team2: courtPlayers.slice(1),
+              bye: false,
+            });
+          } else {
+            matches.push({
+              id: `match-${courtNum}`,
+              court: courtNum,
+              team1: [courtPlayers[0]],
+              team2: courtPlayers.slice(1),
+              bye: false,
+            });
+          }
+          courtNum++;
+        }
       }
     }
+    
+    // Add bye matches
+    byePlayerIds.forEach((pid, idx) => {
+      matches.push({
+        id: `bye-${idx + 1}`,
+        court: 0, // Bye doesn't have a court
+        team1: [pid],
+        team2: [],
+        bye: true,
+        byePlayerId: pid,
+      });
+    });
 
     setRoundState({
       active: true,
@@ -237,22 +232,62 @@ export default function Home() {
   };
 
   // Update match score
-  const updateMatchScore = (matchId: string, team1Score: number, team2Score: number) => {
+  const updateMatchScore = (matchId: string, score: number) => {
     setRoundState(prev => ({
       ...prev,
       matches: prev.matches.map(m =>
-        m.id === matchId ? { ...m, score1: team1Score, score2: team2Score } : m
+        m.id === matchId ? { ...m, score1: score } : m // Only track one score (winner score)
       ),
     }));
   };
 
-  // Update pick partner selection
+  // Update pick partner selection (player 1 picks partner)
   const updatePickPartner = (matchId: string, partnerId: string) => {
     setRoundState(prev => ({
       ...prev,
-      matches: prev.matches.map(m =>
-        m.id === matchId ? { ...m, team1: [m.team1[0], partnerId] } : m
-      ),
+      matches: prev.matches.map(m => {
+        if (m.id !== matchId) return m;
+        
+        // Find the player who was previously selected as partner (if any)
+        const previousPartnerId = m.team1.length > 1 ? m.team1[1] : null;
+        
+        // If selecting the same partner, do nothing
+        if (previousPartnerId === partnerId) return m;
+        
+        // Build new teams
+        const allPlayers = [...m.team1, ...m.team2];
+        const pickerId = m.team1[0];
+        
+        // New team1: picker + new partner
+        const newTeam1 = [pickerId, partnerId];
+        // New team2: everyone else
+        const newTeam2 = allPlayers.filter(id => id !== pickerId && id !== partnerId);
+        
+        return { ...m, team1: newTeam1, team2: newTeam2 };
+      }),
+    }));
+  };
+
+  // Swap player between teams
+  const swapPlayerTeam = (matchId: string, playerId: string) => {
+    setRoundState(prev => ({
+      ...prev,
+      matches: prev.matches.map(m => {
+        if (m.id !== matchId) return m;
+        
+        const isOnTeam1 = m.team1.includes(playerId);
+        
+        if (isOnTeam1 && m.team1.length <= 2) return m; // Can't remove if only 1-2 players
+        
+        const newTeam1 = isOnTeam1 
+          ? m.team1.filter(id => id !== playerId)
+          : [...m.team1, playerId];
+        const newTeam2 = isOnTeam1 
+          ? [...m.team2, playerId]
+          : m.team2.filter(id => id !== playerId);
+        
+        return { ...m, team1: newTeam1, team2: newTeam2 };
+      }),
     }));
   };
 
@@ -261,27 +296,29 @@ export default function Home() {
     // Update standings with results
     setStandings(prev => prev.map(entry => {
       const match = roundState.matches.find(m => m.team1.includes(entry.id) || m.team2.includes(entry.id));
-      if (!match || match.bye) {
-        if (match?.bye && match.byePlayerId === entry.id) {
-          // Player got a bye - increment bye count
-          return { ...entry, byeCount: entry.byeCount + 1 };
-        }
-        return entry;
+      
+      if (!match) return entry;
+      
+      if (match.bye && match.byePlayerId === entry.id) {
+        // Player got a bye - increment byeMod and byeCount
+        return { 
+          ...entry, 
+          byeMod: entry.byeMod + 1, // Increment bye score by 1
+          byeCount: entry.byeCount + 1 
+        };
       }
 
-      const isOnTeam1 = match.team1.includes(entry.id);
-      const myScore = isOnTeam1 ? (match.score1 || 0) : (match.score2 || 0);
-      const opponentScore = isOnTeam1 ? (match.score2 || 0) : (match.score1 || 0);
-
-      const won = myScore > opponentScore;
-      const lost = myScore < opponentScore;
+      // Player played a match
+      const won = match.score1 !== undefined && entry.team1?.includes(entry.id);
+      // For simplicity, whoever has the score wins (they entered their winning score)
+      const playedMatch = match.score1 !== undefined;
 
       return {
         ...entry,
         wins: entry.wins + (won ? 1 : 0),
-        losses: entry.losses + (lost ? 1 : 0),
-        pointsFor: entry.pointsFor + myScore,
-        pointsAgainst: entry.pointsAgainst + opponentScore,
+        losses: entry.losses + (playedMatch && !won ? 1 : 0),
+        pointsFor: entry.pointsFor + (match.score1 || 0),
+        pointsAgainst: entry.pointsAgainst + (match.score1 ? Math.max(0, match.score1 - 2) : 0), // Estimate opponent score
       };
     }));
 
@@ -971,70 +1008,36 @@ export default function Home() {
                             return (
                               <div 
                                 key={p!.id} 
-                                className={`rounded-lg p-2 border-2 cursor-pointer ${
+                                className={`rounded-lg p-2 border-2 cursor-pointer transition-all ${
                                   isOnTeam1 
                                     ? 'bg-purple-100 border-purple-400' 
                                     : 'bg-green-100 border-green-400'
                                 }`}
-                                onClick={() => {
-                                  // Toggle player between teams
-                                  if (team1Players.length > 1 || !isOnTeam1) {
-                                    // Remove from current team
-                                    const newTeam1 = team1Players.filter(tp => tp?.id !== p!.id);
-                                    const newTeam2 = team2Players.filter(tp => tp?.id !== p!.id);
-                                    // Add to opposite team
-                                    if (isOnTeam1) {
-                                      newTeam2.push(p!);
-                                    } else {
-                                      newTeam1.push(p!);
-                                    }
-                                    setRoundState(prev => ({
-                                      ...prev,
-                                      matches: prev.matches.map(m =>
-                                        m.id === match.id 
-                                          ? { ...m, team1: newTeam1.map(tp => tp!.id), team2: newTeam2.map(tp => tp!.id) }
-                                          : m
-                                      ),
-                                    }));
-                                  }
-                                }}
+                                onClick={() => swapPlayerTeam(match.id, p!.id)}
                               >
                                 <p className="font-medium text-sm">{p!.name}</p>
                                 {p!.duprScore && (
                                   <p className="text-xs text-gray-500">{p!.duprScore.toFixed(1)}</p>
                                 )}
-                                <p className="text-xs font-bold mt-1">{isOnTeam1 ? '🤝 Team 1' : '🎾 Team 2'}</p>
+                                <p className="text-xs font-bold mt-1">{isOnTeam1 ? '🤝 T1' : '🎾 T2'}</p>
                               </div>
                             );
                           })}
                         </div>
 
-                        {/* Team scores side by side */}
-                        <div className="flex items-center justify-center gap-4 pt-2">
-                          <div className="text-center">
-                            <p className="text-xs text-purple-600 mb-1">Team 1</p>
-                            <input
-                              type="number"
-                              placeholder="Score"
-                              className="w-16 px-2 py-2 border-2 border-purple-300 rounded-lg text-center text-lg"
-                              value={match.score1 ?? ""}
-                              onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, match.score2 || 0)}
-                            />
-                          </div>
-                          <span className="text-2xl font-bold text-gray-400">vs</span>
-                          <div className="text-center">
-                            <p className="text-xs text-green-600 mb-1">Team 2</p>
-                            <input
-                              type="number"
-                              placeholder="Score"
-                              className="w-16 px-2 py-2 border-2 border-green-300 rounded-lg text-center text-lg"
-                              value={match.score2 ?? ""}
-                              onChange={(e) => updateMatchScore(match.id, match.score1 || 0, parseInt(e.target.value) || 0)}
-                            />
-                          </div>
+                        {/* Single score input for winning team */}
+                        <div className="flex items-center justify-center gap-3 pt-3">
+                          <input
+                            type="number"
+                            placeholder="Winner's Score"
+                            className="w-24 px-3 py-2 border-2 border-gray-300 rounded-lg text-center text-lg"
+                            value={match.score1 ?? ""}
+                            onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
+                          />
+                          <span className="text-gray-400">pts</span>
                         </div>
 
-                        <p className="text-xs text-gray-500 text-center">Click players to swap teams</p>
+                        <p className="text-xs text-gray-500 text-center mt-2">Tap players to swap teams</p>
                       </div>
                     ) : (
                       /* 1v4 vs 2v3 Format */
@@ -1057,25 +1060,16 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Score inputs */}
+                        {/* Single score input */}
                         <div className="flex flex-col items-center px-4">
-                          <div className="text-2xl font-bold text-gray-400">vs</div>
-                          <div className="flex gap-2 mt-2">
-                            <input
-                              type="number"
-                              placeholder="11"
-                              className="w-12 px-2 py-1 border rounded text-center"
-                              value={match.score1 ?? ""}
-                              onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, match.score2 || 0)}
-                            />
-                            <input
-                              type="number"
-                              placeholder="11"
-                              className="w-12 px-2 py-1 border rounded text-center"
-                              value={match.score2 ?? ""}
-                              onChange={(e) => updateMatchScore(match.id, match.score1 || 0, parseInt(e.target.value) || 0)}
-                            />
-                          </div>
+                          <span className="text-gray-400 text-sm mb-2">Score</span>
+                          <input
+                            type="number"
+                            placeholder="11"
+                            className="w-16 px-3 py-2 border-2 border-gray-300 rounded-lg text-center text-lg"
+                            value={match.score1 ?? ""}
+                            onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
+                          />
                         </div>
 
                         {/* Team 2: 2v3 */}
@@ -1103,7 +1097,7 @@ export default function Home() {
             </div>
 
             {/* Submit Results Button */}
-            {!roundState.submitted && roundState.matches.some(m => m.score1 !== undefined && m.score2 !== undefined) && (
+            {!roundState.submitted && roundState.matches.some(m => m.score1 !== undefined) && (
               <div className="mt-6 text-center">
                 <button
                   onClick={submitRoundResults}
@@ -1111,6 +1105,29 @@ export default function Home() {
                 >
                   ✓ Submit Round Results
                 </button>
+              </div>
+            )}
+
+            {/* Bye List */}
+            {roundState.matches.some(m => m.bye) && (
+              <div className="mt-6 bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
+                <h3 className="font-bold text-orange-700 mb-3">😴 Players Having a Bye This Round</h3>
+                <div className="flex flex-wrap gap-3">
+                  {roundState.matches.filter(m => m.bye && m.byePlayerId).map(match => {
+                    const player = eventPool.find(p => p.id === match.byePlayerId);
+                    const standingsEntry = standings.find(s => s.id === match.byePlayerId);
+                    const totalBye = standingsEntry ? standingsEntry.byeBase + standingsEntry.byeMod : 0;
+                    return (
+                      <div key={match.id} className="bg-white rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-2">
+                        <span className="text-xl">😴</span>
+                        <div>
+                          <p className="font-medium">{player?.name}</p>
+                          <p className="text-xs text-orange-500">Bye score: {totalBye.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -1214,7 +1231,10 @@ export default function Home() {
                           </span>
                         </td>
                         <td className="p-2 text-center">
-                          <span className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"}`}>
+                          <span 
+                            className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
+                            title={`Base: ${entry.byeBase.toFixed(2)} | Byes Earned: +${entry.byeCount} | Sit Outs: +${(entry.byeMod - entry.byeCount - config.lateJoinBonus).toFixed(2)} | Late Join: +${config.lateJoinBonus.toFixed(2)}`}
+                          >
                             {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
                           </span>
                         </td>
