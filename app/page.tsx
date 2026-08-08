@@ -23,7 +23,8 @@ interface StandingsEntry {
   name: string;
   duprId: string | null;
   duprScore: number | null;
-  orderNumber: number;
+  baseOrder: number;       // Order# based on DUPR ranking (highest DUPR = 1)
+  adjustedOrder: number;   // baseOrder adjusted by wins/losses (ranking for pairings)
   byeValue: number;
   byeCount: number;
   wins: number;
@@ -169,36 +170,51 @@ export default function Home() {
     if (eventPool.find(p => p.id === player.id)) return;
     setEventPool([...eventPool, player]);
     initializeStandings(player);
+    // Recalculate baseOrder for all after pool change
+    setTimeout(() => recalculateBaseOrders(), 0);
   };
 
   const initializeStandings = (player: Player) => {
     const existingEntry = standings.find(s => s.id === player.id);
     if (existingEntry) return;
 
-    const sortedByDupr = eventPool
-      .filter(p => p.duprScore !== null)
-      .sort((a, b) => (a.duprScore || 5) - (b.duprScore || 5));
+    // Calculate baseOrder based on DUPR rank among current standings
+    const playersWithDupr = [...standings, {
+      id: player.id, duprScore: player.duprScore,
+    } as StandingsEntry].filter(p => p.duprScore !== null);
+    
+    const sortedByDupr = playersWithDupr.sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0));
     const rank = sortedByDupr.findIndex(p => p.id === player.id);
     const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
 
-    let byeValue = 0;
-    if (rank < config.byeTopProtection / 2) {
-      byeValue = (Math.random() * 2 - 1) * config.byeBonusTop;
-    } else if (rank < config.byeTopProtection) {
-      byeValue = (Math.random() * 2 - 1) * (config.byeBonusTop + 0.25);
-    } else {
-      byeValue = -Math.random();
-    }
+    const byeValue = generateByeValue(player.duprScore);
 
     setStandings([...standings, {
       id: player.id, name: player.name, duprId: player.duprId,
-      duprScore: player.duprScore, orderNumber: initialOrder,
+      duprScore: player.duprScore, baseOrder: initialOrder,
+      adjustedOrder: initialOrder,
       byeValue, byeCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
     }]);
   };
 
   const removeFromPool = (playerId: string) => {
     setEventPool(eventPool.filter(p => p.id !== playerId));
+    // Also remove from standings and recalculate
+    setStandings(prev => {
+      const updated = prev.filter(s => s.id !== playerId);
+      // Recalculate baseOrder for remaining players
+      const sorted = [...updated].sort((a, b) => {
+        if (a.duprScore == null && b.duprScore == null) return 0;
+        if (a.duprScore == null) return 1;
+        if (b.duprScore == null) return -1;
+        return b.duprScore - a.duprScore;
+      });
+      return sorted.map((entry, index) => ({
+        ...entry,
+        baseOrder: 1 + (index * config.orderGap),
+        adjustedOrder: 1 + (index * config.orderGap),
+      }));
+    });
   };
 
   const handleSort = (column: keyof StandingsEntry) => {
@@ -227,6 +243,50 @@ export default function Home() {
   const cancelEditPlayer = () => {
     setEditingPlayerId(null);
     setEditName(""); setEditDuprId(""); setEditDuprNumericId(""); setEditDuprScore("");
+  };
+
+  // --- Recalculation Functions ---
+  
+  // Recalculate baseOrder for all players based on DUPR (highest = 1)
+  const recalculateBaseOrders = () => {
+    setStandings(prev => {
+      // Sort by DUPR score (highest first), null scores go last
+      const sorted = [...prev].sort((a, b) => {
+        if (a.duprScore == null && b.duprScore == null) return 0;
+        if (a.duprScore == null) return 1;
+        if (b.duprScore == null) return -1;
+        return b.duprScore - a.duprScore;
+      });
+
+      // Assign baseOrder based on position in sorted list
+      return sorted.map((entry, index) => ({
+        ...entry,
+        baseOrder: 1 + (index * config.orderGap),
+        adjustedOrder: 1 + (index * config.orderGap), // Reset adjusted too
+      }));
+    });
+  };
+
+  // Regenerate bye values for all players
+  const regenerateByes = () => {
+    setStandings(prev => prev.map(entry => ({
+      ...entry,
+      byeValue: generateByeValue(entry.duprScore),
+      byeCount: 0,
+    })));
+  };
+
+  // Helper to generate bye value based on DUPR rank
+  const generateByeValue = (duprScore: number | null): number => {
+    const rank = standings.filter(s => s.duprScore != null && s.duprScore > (duprScore || 0)).length + 1;
+    
+    if (rank <= config.byeTopProtection / 2) {
+      return (Math.random() * 2 - 1) * config.byeBonusTop;
+    } else if (rank <= config.byeTopProtection) {
+      return (Math.random() * 2 - 1) * (config.byeBonusTop + 0.25);
+    } else {
+      return -Math.random();
+    }
   };
 
   // --- Derived Values (Logic) ---
@@ -339,7 +399,7 @@ export default function Home() {
               </div>
 
               <h3 className="font-medium text-gray-700 mt-4">Bye Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
                   <input type="number" min="1" max="16" value={config.courts}
@@ -368,12 +428,6 @@ export default function Home() {
                   <label className="block text-sm font-medium text-gray-600 mb-1">Sit Protection</label>
                   <input type="number" step="0.25" min="0" value={config.sitProtection}
                     onChange={(e) => updateConfig("sitProtection", parseFloat(e.target.value) || 0.5)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Late Prot.</label>
-                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus}
-                    onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.75)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
@@ -539,7 +593,13 @@ export default function Home() {
         <section className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-800">📊 Standings</h2>
-            <span className="text-sm text-gray-500">{standings.length} players</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500">{standings.length} players</span>
+              <button onClick={regenerateByes}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                🎲 Regenerate Byes
+              </button>
+            </div>
           </div>
           {standings.length === 0 ? (
             <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
@@ -548,9 +608,9 @@ export default function Home() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-100">
-                    {(["name", "orderNumber", "byeValue", "wins", "losses", "wins", "pointsFor", "pointsAgainst", "pointsFor", "byeCount"] as const).map((col, i) => (
+                    {(["name", "baseOrder", "adjustedOrder", "byeValue", "wins", "losses", "pointsFor", "pointsAgainst", "pointsFor", "byeCount"] as const).map((col, i) => (
                       <th key={col} className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort(col)}>
-                        {["Name", "Order#", "Bye#", "W", "L", "Win%", "PF", "PA", "+/-", "Byes"][i]}
+                        {["Name", "Base", "Adj#", "Bye#", "W", "L", "PF", "PA", "+/-", "Byes"][i]}
                         {sortColumn === col && (sortDirection === "asc" ? " ↑" : " ↓")}
                       </th>
                     ))}
@@ -566,11 +626,11 @@ export default function Home() {
                           <div className="font-medium">{entry.name}</div>
                           {entry.duprId && <div className="text-xs text-gray-500">DUPR: {entry.duprId}</div>}
                         </td>
-                        <td className="p-2 text-center font-mono">{entry.orderNumber.toFixed(2)}</td>
+                        <td className="p-2 text-center font-mono">{entry.baseOrder.toFixed(2)}</td>
+                        <td className="p-2 text-center font-mono text-blue-600">{entry.adjustedOrder.toFixed(2)}</td>
                         <td className="p-2 text-center font-mono">{entry.byeValue.toFixed(2)}</td>
                         <td className="p-2 text-center">{entry.wins}</td>
                         <td className="p-2 text-center">{entry.losses}</td>
-                        <td className="p-2 text-center">{winPct}%</td>
                         <td className="p-2 text-center">{entry.pointsFor}</td>
                         <td className="p-2 text-center">{entry.pointsAgainst}</td>
                         <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
