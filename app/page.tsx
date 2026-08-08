@@ -21,6 +21,7 @@ export default function Home() {
   // Form state
   const [name, setName] = useState("");
   const [duprId, setDuprId] = useState("");
+  const [duprNumericId, setDuprNumericId] = useState("");
   const [duprScore, setDuprScore] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -52,6 +53,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("name", name);
     formData.append("duprId", duprId);
+    formData.append("duprNumericId", duprNumericId);
     formData.append("duprScore", duprScore);
 
     const result = await addPlayer(formData);
@@ -60,10 +62,12 @@ export default function Home() {
       setPlayers([result.player, ...players]);
       setName("");
       setDuprId("");
+      setDuprNumericId("");
       setDuprScore("");
     }
     setSubmitting(false);
   };
+
 
     // Fetch player rating from DUPR
   const handleFetchDupr = async (playerId: string) => {
@@ -148,14 +152,26 @@ export default function Home() {
               />
             </div>
             
-            {/* DUPR ID */}
+            {/* DUPR ID (Letters) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR ID</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR ID (Letters)</label>
               <input
                 type="text"
                 value={duprId}
                 onChange={(e) => setDuprId(e.target.value)}
-                placeholder="L2ZWM5"
+                placeholder="5E64ZL"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+
+            {/* DUPR Numeric ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">DUPR Numeric ID</label>
+              <input
+                type="text"
+                value={duprNumericId}
+                onChange={(e) => setDuprNumericId(e.target.value)}
+                placeholder="7438750465"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
@@ -208,6 +224,9 @@ export default function Home() {
                       <span className="font-medium text-gray-800">{player.name}</span>
                       {player.duprId && (
                         <span className="ml-2 text-sm text-gray-500">DUPR: {player.duprId}</span>
+                      )}
+                      {player.duprNumericId && (
+                        <span className="ml-2 text-xs text-gray-400">(#{player.duprNumericId})</span>
                       )}
                       {player.duprScore && (
                         <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-sm font-medium">

@@ -130,7 +130,8 @@ export async function getPlayers() {
 // Add a new player
 export async function addPlayer(formData: FormData) {
   const name = formData.get("name") as string;
-  const duprId = formData.get("duprId") as string;
+  const duprId = formData.get("duprId") as string;      // Letter ID (e.g., "5E64ZL")
+  const duprNumericId = formData.get("duprNumericId") as string;  // Numeric ID (e.g., "7438750465")
   const duprScore = formData.get("duprScore") as string;
 
   if (!name?.trim()) {
@@ -141,7 +142,8 @@ export async function addPlayer(formData: FormData) {
     const player = await prisma.player.create({
       data: {
         name: name.trim(),
-        duprId: duprId?.trim() || null,
+        duprId: duprId?.trim() || null,           // Letter ID
+        duprNumericId: duprNumericId?.trim() || null, // Numeric ID
         duprScore: duprScore ? parseFloat(duprScore) : null,
         orderScore: duprScore ? parseFloat(duprScore) : 5,
       },
@@ -169,69 +171,58 @@ export async function deletePlayer(id: string) {
 // Fetch and update player rating from DUPR
 export async function fetchDuprRating(playerId: string) {
   try {
-    // Get the player from database
     const player = await prisma.player.findUnique({
       where: { id: playerId },
     });
 
-    if (!player || !player.duprId) {
-      return { success: false, error: "Player or DUPR ID not found" };
+    if (!player || !player.duprNumericId) {
+      return { success: false, error: "Player or Numeric DUPR ID not found" };
     }
 
-    // Login to DUPR
     const token = await getDuprToken();
     if (!token) {
       return { success: false, error: "Failed to login to DUPR" };
     }
 
-    // Try to fetch player info from DUPR
-    // Note: The API may not support looking up other users by referral code
-    // So we'll try different approaches
-    let playerData: { name: string; doublesRating: string; singlesRating: string } | null = null;
+    // Fetch by numeric ID
+    const response = await fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
+      method: "GET",
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-    // Try lookup by referral code
-    try {
-      const response = await fetch(`${DUPR_API_BASE}/user/v1.0/referral/${player.duprId}`, {
-        method: "GET",
-        headers: { "Authorization": `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        playerData = {
-          name: data.result?.fullName || player.name,
-          doublesRating: data.result?.stats?.doubles || "NR",
-          singlesRating: data.result?.stats?.singles || "NR",
-        };
-      }
-    } catch {
-      // Lookup failed, try search
-    }
-
-    // If we got data, update the player
-    if (playerData && playerData.doublesRating !== "NR") {
-      const rating = parseFloat(playerData.doublesRating) || null;
+    if (response.ok) {
+      const data = await response.json();
       
+      let rating = data.result?.ratings?.doubles;
+      
+      if (rating === "NR" || !rating) {
+        rating = null;
+      } else {
+        rating = parseFloat(rating);
+      }
+
+      // Update with all available data (name, letter ID, rating)
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
+          name: data.result?.fullName || player.name,
+          duprId: data.result?.duprId || player.duprId,  // Letter ID
+          duprNumericId: data.result?.id?.toString() || player.duprNumericId, // Numeric ID
           duprScore: rating,
-          name: playerData.name !== player.name ? playerData.name : player.name,
         },
       });
 
       return { 
         success: true, 
         player: updatedPlayer,
-        message: `Fetched rating: ${playerData.doublesRating}`
+        message: rating ? `Fetched: ${data.result.fullName} - ${rating}` : "Player found but no rating (NR)"
       };
     }
 
-    // If we couldn't fetch the rating, just update with manual entry needed
-    return { 
-      success: false, 
-      error: "Could not fetch rating from DUPR. Please enter manually." 
-    };
+    return { success: false, error: "Could not fetch player from DUPR" };
 
   } catch (error) {
     console.error("Error fetching DUPR rating:", error);
