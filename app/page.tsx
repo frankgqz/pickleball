@@ -61,8 +61,8 @@ interface Match {
   court: number;
   team1: string[]; // Player IDs
   team2: string[];
-  score1?: number;
-  score2?: number;
+  team1Score?: number;
+  team2Score?: number;
   bye: boolean;
   byePlayerId?: string; // Who gets the bye
 }
@@ -117,10 +117,13 @@ export default function Home() {
     byeIncrement: 1,
     sitProtection: 0.5,
     lateJoinBonus: 0.75,
-    courts: 2,
+    courts: 4, // Default to 4 courts
     teamsPerPool: 4,
     finalsFormat: "top2",
   });
+
+  // Track if first round has been completed (for late join bonus)
+  const [hasCompletedFirstRound, setHasCompletedFirstRound] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -231,12 +234,12 @@ export default function Home() {
     });
   };
 
-  // Update match score
-  const updateMatchScore = (matchId: string, score: number) => {
+  // Update match score (for which team)
+  const updateMatchScore = (matchId: string, score: number, team: 'team1' | 'team2') => {
     setRoundState(prev => ({
       ...prev,
       matches: prev.matches.map(m =>
-        m.id === matchId ? { ...m, score1: score } : m // Only track one score (winner score)
+        m.id === matchId ? { ...m, [team + 'Score']: score } : m
       ),
     }));
   };
@@ -308,22 +311,27 @@ export default function Home() {
         };
       }
 
-      // Player played a match - check if on team1 of the match
-      const won = match.score1 !== undefined && match.team1.includes(entry.id);
-      // For simplicity, whoever has the score wins (they entered their winning score)
-      const playedMatch = match.score1 !== undefined;
+      // Player played a match
+      const isOnTeam1 = match.team1.includes(entry.id);
+      const myScore = isOnTeam1 ? (match.team1Score || 0) : (match.team2Score || 0);
+      const opponentScore = isOnTeam1 ? (match.team2Score || 0) : (match.team1Score || 0);
+      const won = myScore > opponentScore && myScore > 0;
+      const playedMatch = myScore > 0 || opponentScore > 0;
 
       return {
         ...entry,
         wins: entry.wins + (won ? 1 : 0),
         losses: entry.losses + (playedMatch && !won ? 1 : 0),
-        pointsFor: entry.pointsFor + (match.score1 || 0),
-        pointsAgainst: entry.pointsAgainst + (match.score1 ? Math.max(0, match.score1 - 2) : 0), // Estimate opponent score
+        pointsFor: entry.pointsFor + myScore,
+        pointsAgainst: entry.pointsAgainst + opponentScore,
       };
     }));
 
     // Recalculate adjusted order based on new standings
     recalculateAdjustedOrder();
+
+    // Mark first round as completed (for late join bonus)
+    setHasCompletedFirstRound(true);
 
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
@@ -448,8 +456,8 @@ export default function Home() {
     const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
 
     const byeBase = generateByeBase(player.duprScore);
-    // Late joiners get a bonus added to byeMod (fractional)
-    const byeMod = config.lateJoinBonus;
+    // Late joiners only get bonus if first round has been completed
+    const byeMod = hasCompletedFirstRound ? config.lateJoinBonus : 0;
 
     setStandings([...standings, {
       id: player.id, name: player.name, duprId: player.duprId,
@@ -891,7 +899,7 @@ export default function Home() {
               <p className="text-gray-400 text-center py-8">Add players from the database to start your event!</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {eventPool.map((player) => (
+                {[...eventPool].reverse().map((player) => (
                   <div key={player.id} className={`flex items-center gap-3 p-3 rounded-lg border ${
                     player.isSitting 
                       ? 'bg-orange-50 border-orange-200' 
@@ -966,39 +974,27 @@ export default function Home() {
               </div>
             )}
 
-            {/* Court Layout */}
+            {/* Court Layout - only show non-bye matches */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {roundState.matches.map((match) => {
+              {roundState.matches.filter(m => !m.bye).map((match) => {
                 const team1Players = match.team1.map(id => eventPool.find(p => p.id === id)).filter(Boolean);
                 const team2Players = match.team2.map(id => eventPool.find(p => p.id === id)).filter(Boolean);
-                const byePlayer = match.byePlayerId ? eventPool.find(p => p.id === match.byePlayerId) : null;
 
                 return (
-                  <div key={match.id} className={`rounded-xl border-2 p-4 ${match.bye ? "border-orange-300 bg-orange-50" : "border-green-200 bg-green-50"}`}>
+                  <div key={match.id} className="rounded-xl border-2 p-4 border-green-200 bg-green-50">
                     {/* Court Header */}
                     <div className="flex justify-between items-center mb-4">
-                      <span className="font-bold text-lg">{match.bye ? "😴 BYE" : `Court ${match.court}`}</span>
-                      {!match.bye && (
-                        <input
-                          type="number"
-                          placeholder="Score"
-                          className="w-16 px-2 py-1 border rounded text-center"
-                          value={match.score1 ?? ""}
-                          onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
-                        />
-                      )}
+                      <span className="font-bold text-lg">Court {match.court}</span>
+                      <input
+                        type="number"
+                        placeholder="Score"
+                        className="w-16 px-2 py-1 border rounded text-center"
+                        value={match.score1 ?? ""}
+                        onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
+                      />
                     </div>
 
-                    {match.bye ? (
-                      /* Bye Player Display */
-                      <div className="text-center py-8">
-                        <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center mx-auto mb-2">
-                          <span className="text-2xl">😴</span>
-                        </div>
-                        <p className="font-semibold text-orange-700">{byePlayer?.name}</p>
-                        <p className="text-sm text-orange-500">Rest round</p>
-                      </div>
-                    ) : roundState.format === "PICK_PARTNER" ? (
+                    {roundState.format === "PICK_PARTNER" ? (
                       /* Pick Partner Format - Player 1 picks partner, remaining 2 auto-team */
                       <div className="space-y-3">
                         {/* All 4 players in the group */}
@@ -1019,22 +1015,34 @@ export default function Home() {
                                 {p!.duprScore && (
                                   <p className="text-xs text-gray-500">{p!.duprScore.toFixed(1)}</p>
                                 )}
-                                <p className="text-xs font-bold mt-1">{isOnTeam1 ? '🤝 T1' : '🎾 T2'}</p>
                               </div>
                             );
                           })}
                         </div>
 
-                        {/* Single score input for winning team */}
-                        <div className="flex items-center justify-center gap-3 pt-3">
-                          <input
-                            type="number"
-                            placeholder="Winner's Score"
-                            className="w-24 px-3 py-2 border-2 border-gray-300 rounded-lg text-center text-lg"
-                            value={match.score1 ?? ""}
-                            onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0)}
-                          />
-                          <span className="text-gray-400">pts</span>
+                        {/* Team colored score boxes at bottom */}
+                        <div className="flex items-center justify-center gap-4 pt-3">
+                          <div className="text-center">
+                            <p className="text-xs text-purple-600 mb-1">T1 Score</p>
+                            <input
+                              type="number"
+                              placeholder="11"
+                              className="w-16 px-3 py-2 border-2 border-purple-400 rounded-lg text-center text-lg bg-purple-50"
+                              value={match.team1Score ?? ""}
+                              onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team1')}
+                            />
+                          </div>
+                          <span className="text-2xl font-bold text-gray-400">vs</span>
+                          <div className="text-center">
+                            <p className="text-xs text-green-600 mb-1">T2 Score</p>
+                            <input
+                              type="number"
+                              placeholder="11"
+                              className="w-16 px-3 py-2 border-2 border-green-400 rounded-lg text-center text-lg bg-green-50"
+                              value={match.team2Score ?? ""}
+                              onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team2')}
+                            />
+                          </div>
                         </div>
 
                         <p className="text-xs text-gray-500 text-center mt-2">Tap players to swap teams</p>
@@ -1097,7 +1105,7 @@ export default function Home() {
             </div>
 
             {/* Submit Results Button */}
-            {!roundState.submitted && roundState.matches.some(m => m.score1 !== undefined) && (
+            {!roundState.submitted && roundState.matches.some(m => m.team1Score !== undefined || m.team2Score !== undefined) && (
               <div className="mt-6 text-center">
                 <button
                   onClick={submitRoundResults}
@@ -1108,21 +1116,25 @@ export default function Home() {
               </div>
             )}
 
-            {/* Bye List */}
+            {/* Bye List - who has byes based on total bye score */}
             {roundState.matches.some(m => m.bye) && (
               <div className="mt-6 bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
-                <h3 className="font-bold text-orange-700 mb-3">😴 Players Having a Bye This Round</h3>
+                <h3 className="font-bold text-orange-700 mb-3">😴 Byes This Round (Lowest Bye Scores)</h3>
                 <div className="flex flex-wrap gap-3">
                   {roundState.matches.filter(m => m.bye && m.byePlayerId).map(match => {
                     const player = eventPool.find(p => p.id === match.byePlayerId);
                     const standingsEntry = standings.find(s => s.id === match.byePlayerId);
-                    const totalBye = standingsEntry ? standingsEntry.byeBase + standingsEntry.byeMod : 0;
+                    if (!standingsEntry) return null;
+                    const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
+                    const sitOuts = Math.max(0, standingsEntry.byeMod - standingsEntry.byeCount - config.lateJoinBonus);
                     return (
                       <div key={match.id} className="bg-white rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-2">
                         <span className="text-xl">😴</span>
                         <div>
                           <p className="font-medium">{player?.name}</p>
-                          <p className="text-xs text-orange-500">Bye score: {totalBye.toFixed(2)}</p>
+                          <p className="text-xs text-gray-500" title={`Base: ${standingsEntry.byeBase.toFixed(2)} | Byes: +${standingsEntry.byeCount} | Sit Outs: +${sitOuts.toFixed(2)} | Late Join: +${config.lateJoinBonus.toFixed(2)}`}>
+                            Total: {totalBye.toFixed(2)} ({standingsEntry.byeBase >= 0 ? '+' : ''}{standingsEntry.byeBase.toFixed(2)} base)
+                          </p>
                         </div>
                       </div>
                     );
