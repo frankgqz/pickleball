@@ -101,6 +101,10 @@ export default function Home() {
   const [editDuprNumericId, setEditDuprNumericId] = useState("");
   const [editDuprScore, setEditDuprScore] = useState("");
 
+  // Player database search/sort
+  const [playerSearch, setPlayerSearch] = useState("");
+  const [playerSortBy, setPlayerSortBy] = useState<"date" | "alpha">("date");
+
   // Config state
   const [config, setConfig] = useState<TournamentConfig>({
     format: "STANDARD",
@@ -559,6 +563,20 @@ export default function Home() {
       : String(bVal).localeCompare(String(aVal));
   });
 
+  // Filtered and sorted player list
+  const filteredPlayers = players
+    .filter(p => 
+      p.name.toLowerCase().includes(playerSearch.toLowerCase()) ||
+      (p.duprId && p.duprId.toLowerCase().includes(playerSearch.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (playerSortBy === "alpha") {
+        return a.name.localeCompare(b.name);
+      }
+      // Default: by date added (most recent first) - since we add to front, reverse the array
+      return 0; // Keep original order (newest first)
+    });
+
   // ==========================================
   // === UI ===
   // ==========================================
@@ -753,13 +771,35 @@ export default function Home() {
           <section className="bg-white rounded-2xl shadow-xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">📋 Player Database</h2>
-              <span className="text-sm text-gray-500">{players.length} players</span>
+              <span className="text-sm text-gray-500">{filteredPlayers.length} / {players.length}</span>
             </div>
-            {players.length === 0 ? (
-              <p className="text-gray-400 text-center py-8">No players yet. Add some above!</p>
+            
+            {/* Search and Sort Controls */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                placeholder="Search by name or DUPR..."
+                value={playerSearch}
+                onChange={(e) => setPlayerSearch(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+              />
+              <select
+                value={playerSortBy}
+                onChange={(e) => setPlayerSortBy(e.target.value as "date" | "alpha")}
+                className="px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="date">Recent First</option>
+                <option value="alpha">A-Z</option>
+              </select>
+            </div>
+
+            {filteredPlayers.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">
+                {playerSearch ? "No players match your search" : "No players yet. Add some above!"}
+              </p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {players.map((player) => (
+                {filteredPlayers.map((player) => (
                   <div key={player.id} className="p-3 bg-gray-50 rounded-lg">
                     {editingPlayerId === player.id ? (
                       <div className="space-y-2">
@@ -808,20 +848,34 @@ export default function Home() {
           <section className="bg-white rounded-2xl shadow-xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">🎯 Event Pool</h2>
-              <span className="text-sm text-gray-500">{eventPool.length} players</span>
+              <span className="text-sm text-gray-500">{eventPool.filter(p => !p.isSitting).length} active / {eventPool.length} total</span>
             </div>
             {eventPool.length === 0 ? (
               <p className="text-gray-400 text-center py-8">Add players from the database to start your event!</p>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {eventPool.map((player, index) => (
-                  <div key={player.id} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">{index + 1}</span>
-                    <span className={`font-medium ${player.isSitting ? 'text-gray-400 line-through' : 'text-gray-800'}`}>{player.name}</span>
-                    {player.duprScore && <span className={`px-2 py-0.5 rounded text-sm ${player.isSitting ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'}`}>{player.duprScore.toFixed(1)}</span>}
+                {eventPool.map((player) => (
+                  <div key={player.id} className={`flex items-center gap-3 p-3 rounded-lg border ${
+                    player.isSitting 
+                      ? 'bg-orange-50 border-orange-200' 
+                      : 'bg-green-50 border-green-200'
+                  }`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      player.isSitting ? 'bg-orange-200 text-orange-700' : 'bg-green-600 text-white'
+                    }`}>
+                      {player.isSitting ? '💤' : '🎾'}
+                    </span>
+                    <span className={`font-medium ${player.isSitting ? 'text-gray-400' : 'text-gray-800'}`}>{player.name}</span>
+                    {player.duprScore && (
+                      <span className={`px-2 py-0.5 rounded text-sm ${
+                        player.isSitting ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {player.duprScore.toFixed(1)}
+                      </span>
+                    )}
                     <label className="flex items-center gap-1 ml-auto text-sm cursor-pointer">
                       <input type="checkbox" checked={player.isSitting} onChange={() => handleToggleSitting(player.id)} className="w-4 h-4" />
-                      <span className="text-gray-500">sit out</span>
+                      <span className={player.isSitting ? "text-orange-500" : "text-gray-500"}>sit out</span>
                     </label>
                     <button onClick={() => removeFromPool(player.id)} className="text-red-500 hover:text-red-700">✕</button>
                   </div>
@@ -831,91 +885,7 @@ export default function Home() {
           </section>
         </div>
 
-        {/* --- Standings Table --- */}
-        <section className="bg-white rounded-2xl shadow-xl p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">📊 Standings</h2>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-500">{standings.length} players</span>
-              <button onClick={regenerateByes}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
-                🎲 Regenerate Byes
-              </button>
-            </div>
-          </div>
-          {standings.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-2 text-left">Name</th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("adjustedOrder")}>
-                      Order# {sortColumn === "adjustedOrder" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
-                      W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("losses")}>
-                      L {sortColumn === "losses" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
-                      PF {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
-                      PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center">+/-</th>
-                    <th className="p-2 text-center">Pts%</th>
-                    <th className="p-2 text-center">Bye</th>
-                    <th className="p-2 text-center">Byes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedStandings.map((entry) => {
-                    const pointDiff = entry.pointsFor - entry.pointsAgainst;
-                    const totalBye = entry.byeBase + entry.byeMod;
-                    const ptsPct = entry.pointsFor + entry.pointsAgainst > 0
-                      ? ((entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100).toFixed(0)
-                      : "0";
-                    return (
-                      <tr key={entry.id} className="border-t hover:bg-gray-50">
-                        <td className="p-2">
-                          <div className="font-medium">{entry.name}</div>
-                          {entry.duprScore && <div className="text-xs text-green-600">{entry.duprScore.toFixed(1)}</div>}
-                        </td>
-                        <td className="p-2 text-center font-mono text-blue-600">{entry.adjustedOrder.toFixed(2)}</td>
-                        <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
-                        <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
-                        <td className="p-2 text-center">{entry.pointsFor}</td>
-                        <td className="p-2 text-center">{entry.pointsAgainst}</td>
-                        <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
-                          {pointDiff >= 0 ? "+" : ""}{pointDiff}
-                        </td>
-                        <td className="p-2 text-center">
-                          <span className={parseInt(ptsPct) >= 50 ? "text-green-600 font-bold" : "text-gray-600"}>
-                            {ptsPct}%
-                          </span>
-                        </td>
-                        <td className="p-2 text-center">
-                          <span className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"}`}>
-                            {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
-                          </span>
-                        </td>
-                        <td className="p-2 text-center">
-                          <span className="text-purple-600 font-bold">{entry.byeCount}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        {/* --- Round / Courts UI --- */}
+        {/* --- Round / Courts UI (above standings) --- */}
         {roundState.active ? (
           <section className="bg-white rounded-2xl shadow-xl p-6">
             <div className="flex justify-between items-center mb-6">
@@ -992,64 +962,79 @@ export default function Home() {
                         <p className="text-sm text-orange-500">Rest round</p>
                       </div>
                     ) : roundState.format === "PICK_PARTNER" ? (
-                      /* Pick Partner Format */
+                      /* Pick Partner Format - Player 1 picks partner, remaining 2 auto-team */
                       <div className="space-y-3">
-                        {/* Player 1 (picker) */}
-                        <div className="bg-white rounded-lg p-3 border-2 border-purple-300">
-                          <p className="font-semibold">{team1Players[0]?.name}</p>
-                          {team1Players[0]?.duprScore && (
-                            <p className="text-xs text-green-600">{team1Players[0].duprScore.toFixed(1)}</p>
-                          )}
-                          <p className="text-xs text-purple-600 mt-1">⬅️ Picker - choose partner</p>
+                        {/* All 4 players in the group */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {[...team1Players, ...team2Players].map((p) => {
+                            const isOnTeam1 = team1Players.some(tp => tp?.id === p!.id);
+                            return (
+                              <div 
+                                key={p!.id} 
+                                className={`rounded-lg p-2 border-2 cursor-pointer ${
+                                  isOnTeam1 
+                                    ? 'bg-purple-100 border-purple-400' 
+                                    : 'bg-green-100 border-green-400'
+                                }`}
+                                onClick={() => {
+                                  // Toggle player between teams
+                                  if (team1Players.length > 1 || !isOnTeam1) {
+                                    // Remove from current team
+                                    const newTeam1 = team1Players.filter(tp => tp?.id !== p!.id);
+                                    const newTeam2 = team2Players.filter(tp => tp?.id !== p!.id);
+                                    // Add to opposite team
+                                    if (isOnTeam1) {
+                                      newTeam2.push(p!);
+                                    } else {
+                                      newTeam1.push(p!);
+                                    }
+                                    setRoundState(prev => ({
+                                      ...prev,
+                                      matches: prev.matches.map(m =>
+                                        m.id === match.id 
+                                          ? { ...m, team1: newTeam1.map(tp => tp!.id), team2: newTeam2.map(tp => tp!.id) }
+                                          : m
+                                      ),
+                                    }));
+                                  }
+                                }}
+                              >
+                                <p className="font-medium text-sm">{p!.name}</p>
+                                {p!.duprScore && (
+                                  <p className="text-xs text-gray-500">{p!.duprScore.toFixed(1)}</p>
+                                )}
+                                <p className="text-xs font-bold mt-1">{isOnTeam1 ? '🤝 Team 1' : '🎾 Team 2'}</p>
+                              </div>
+                            );
+                          })}
                         </div>
 
-                        {/* Partner Selection (if not picked yet) */}
-                        {team1Players.length === 1 ? (
-                          <div className="bg-white rounded-lg p-3 border-2 border-dashed border-gray-300">
-                            <select
-                              className="w-full px-3 py-2 border rounded"
-                              onChange={(e) => updatePickPartner(match.id, e.target.value)}
-                              value=""
-                            >
-                              <option value="">-- Pick Partner --</option>
-                              {team2Players.map((p) => (
-                                <option key={p!.id} value={p!.id}>{p!.name}</option>
-                              ))}
-                            </select>
+                        {/* Team scores side by side */}
+                        <div className="flex items-center justify-center gap-4 pt-2">
+                          <div className="text-center">
+                            <p className="text-xs text-purple-600 mb-1">Team 1</p>
+                            <input
+                              type="number"
+                              placeholder="Score"
+                              className="w-16 px-2 py-2 border-2 border-purple-300 rounded-lg text-center text-lg"
+                              value={match.score1 ?? ""}
+                              onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, match.score2 || 0)}
+                            />
                           </div>
-                        ) : (
-                          <div className="bg-purple-100 rounded-lg p-3 border-2 border-purple-400">
-                            <p className="font-semibold text-purple-700">{team1Players[1]?.name}</p>
-                            {team1Players[1]?.duprScore && (
-                              <p className="text-xs text-purple-500">{team1Players[1].duprScore.toFixed(1)}</p>
-                            )}
-                            <p className="text-xs text-purple-600">Partner picked</p>
+                          <span className="text-2xl font-bold text-gray-400">vs</span>
+                          <div className="text-center">
+                            <p className="text-xs text-green-600 mb-1">Team 2</p>
+                            <input
+                              type="number"
+                              placeholder="Score"
+                              className="w-16 px-2 py-2 border-2 border-green-300 rounded-lg text-center text-lg"
+                              value={match.score2 ?? ""}
+                              onChange={(e) => updateMatchScore(match.id, match.score1 || 0, parseInt(e.target.value) || 0)}
+                            />
                           </div>
-                        )}
-
-                        {/* Team 2 (remaining) */}
-                        <div className="space-y-2">
-                          {team2Players.map((p) => (
-                            <div key={p!.id} className="bg-white rounded-lg p-3 border border-gray-200">
-                              <p className="font-medium">{p!.name}</p>
-                              {p!.duprScore && (
-                                <p className="text-xs text-gray-500">{p!.duprScore.toFixed(1)}</p>
-                              )}
-                            </div>
-                          ))}
                         </div>
 
-                        {/* VS and score input for team 2 */}
-                        <div className="flex items-center justify-between pt-2">
-                          <span className="text-gray-400 font-bold">vs</span>
-                          <input
-                            type="number"
-                            placeholder="Score"
-                            className="w-16 px-2 py-1 border rounded text-center"
-                            value={match.score2 ?? ""}
-                            onChange={(e) => updateMatchScore(match.id, match.score1 || 0, parseInt(e.target.value) || 0)}
-                          />
-                        </div>
+                        <p className="text-xs text-gray-500 text-center">Click players to swap teams</p>
                       </div>
                     ) : (
                       /* 1v4 vs 2v3 Format */
@@ -1160,6 +1145,90 @@ export default function Home() {
         ) : eventPool.length > 0 ? (
           <p className="text-center text-white text-lg">Need at least 4 active players to start a round.</p>
         ) : null}
+
+        {/* --- Standings Table (below courts) --- */}
+        <section className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">📊 Standings</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500">{standings.length} players</span>
+              <button onClick={regenerateByes}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+                🎲 Regenerate Byes
+              </button>
+            </div>
+          </div>
+          {standings.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-2 text-left">Name</th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("adjustedOrder")}>
+                      Order# {sortColumn === "adjustedOrder" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
+                      W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("losses")}>
+                      L {sortColumn === "losses" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
+                      PF {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
+                      PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center">+/-</th>
+                    <th className="p-2 text-center">Pts%</th>
+                    <th className="p-2 text-center">Bye</th>
+                    <th className="p-2 text-center">Byes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedStandings.map((entry) => {
+                    const pointDiff = entry.pointsFor - entry.pointsAgainst;
+                    const totalBye = entry.byeBase + entry.byeMod;
+                    const ptsPct = entry.pointsFor + entry.pointsAgainst > 0
+                      ? ((entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100).toFixed(0)
+                      : "0";
+                    return (
+                      <tr key={entry.id} className="border-t hover:bg-gray-50">
+                        <td className="p-2">
+                          <div className="font-medium">{entry.name}</div>
+                          {entry.duprScore && <div className="text-xs text-green-600">{entry.duprScore.toFixed(1)}</div>}
+                        </td>
+                        <td className="p-2 text-center font-mono text-blue-600">{entry.adjustedOrder.toFixed(2)}</td>
+                        <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
+                        <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
+                        <td className="p-2 text-center">{entry.pointsFor}</td>
+                        <td className="p-2 text-center">{entry.pointsAgainst}</td>
+                        <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {pointDiff >= 0 ? "+" : ""}{pointDiff}
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className={parseInt(ptsPct) >= 50 ? "text-green-600 font-bold" : "text-gray-600"}>
+                            {ptsPct}%
+                          </span>
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"}`}>
+                            {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="p-2 text-center">
+                          <span className="text-purple-600 font-bold">{entry.byeCount}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
       </div>
     </div>
