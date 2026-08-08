@@ -360,19 +360,21 @@ export default function Home() {
         let orderChange: number;
         let courtType: string;
         
-        const courtTotal = config.courts; // Last court number (bottom court)
+        // Determine if this is top court (court 1) or bottom court (last court with players)
+        const isTopCourt = match.court === 1;
+        const isBottomCourt = match.court === Math.ceil((activePlayers.length - byePlayerIds.length) / 4);
         
-        if (match.court === 1) {
-          // Top court (lower order numbers)
+        if (isTopCourt) {
+          // Top court: win = -courtBonus (reduced), loss = +winLossMagnitude (full)
           orderChange = won ? -config.courtBonus : config.winLossMagnitude;
           courtType = "top";
-        } else if (match.court === courtTotal) {
-          // Bottom court (last court - higher order numbers)
+        } else if (isBottomCourt) {
+          // Bottom court: win = -winLossMagnitude (full), loss = +courtBonus (reduced)
           orderChange = won ? -config.winLossMagnitude : config.courtBonus;
           courtType = "bottom";
         } else {
-          // Middle courts (between top and bottom)
-          orderChange = won ? -config.courtBonus : config.courtBonus; // Neutral effect
+          // Middle courts: full magnitude for both win and loss
+          orderChange = won ? -config.winLossMagnitude : config.winLossMagnitude;
           courtType = `court ${match.court}`;
         }
         
