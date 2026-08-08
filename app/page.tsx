@@ -140,32 +140,36 @@ export default function Home() {
   // Generate matches for the current round
   const generateMatches = (format: MatchFormat) => {
     const activePlayers = eventPool.filter(p => !p.isSitting);
-    
-    // Sort standings by adjustedOrder
-    const sortedStandings = [...standings].sort((a, b) => a.adjustedOrder - b.adjustedOrder);
-    const activeIds = sortedStandings.filter(s => activePlayers.some(p => p.id === s.id)).map(s => s.id);
+    const playersPerCourt = 4;
     
     // Calculate byes needed: active_players - (num_courts * 4)
-    const playersPerCourt = 4;
     const maxPlayersForCourts = config.courts * playersPerCourt;
-    const byeCount = Math.max(0, activeIds.length - maxPlayersForCourts);
+    const byeCount = Math.max(0, activePlayers.length - maxPlayersForCourts);
     
-    // Find who gets byes: lowest total bye scores get the byes
-    let byePlayerIds: string[] = [];
-    if (byeCount > 0) {
-      // Sort by total bye (byeBase + byeMod) - lowest first
-      const activeStandings = sortedStandings.filter(s => activeIds.includes(s.id));
-      const sortedByBye = activeStandings.sort((a, b) => (a.byeBase + a.byeMod) - (b.byeBase + b.byeMod));
-      byePlayerIds = sortedByBye.slice(0, byeCount).map(s => s.id);
-    }
+    // STEP 1: Determine who gets byes (lowest total bye scores first)
+    const activeStandings = standings.filter(s => activePlayers.some(p => p.id === s.id));
+    const sortedByBye = [...activeStandings].sort((a, b) => (a.byeBase + a.byeMod) - (b.byeBase + b.byeMod));
+    const byePlayerIds = sortedByBye.slice(0, byeCount).map(s => s.id);
     
-    // Create matches
+    // STEP 2: Get remaining players (sorted by order# for court assignment)
+    const remainingPlayers = activePlayers
+      .filter(p => !byePlayerIds.includes(p.id))
+      .map(p => p.id);
+    
+    // Sort remaining by order# (adjustedOrder)
+    const remainingOrdered = remainingPlayers.sort((aId, bId) => {
+      const aEntry = standings.find(s => s.id === aId);
+      const bEntry = standings.find(s => s.id === bId);
+      return (aEntry?.adjustedOrder || 999) - (bEntry?.adjustedOrder || 999);
+    });
+    
+    // STEP 3: Create matches - fill courts with remaining players by order#
     const matches: Match[] = [];
     let courtNum = 1;
     
-    for (let i = 0; i < activeIds.length; i += playersPerCourt) {
-      // Get next group of 4 players for this court
-      const courtPlayers = activeIds.slice(i, i + playersPerCourt).filter(id => !byePlayerIds.includes(id));
+    // Group remaining players into courts of 4
+    for (let i = 0; i < remainingOrdered.length; i += playersPerCourt) {
+      const courtPlayers = remainingOrdered.slice(i, i + playersPerCourt);
       
       if (courtPlayers.length === playersPerCourt) {
         // Full court of 4
@@ -188,49 +192,37 @@ export default function Home() {
           });
         }
         courtNum++;
-      } else if (courtPlayers.length > 0) {
+      } else if (courtPlayers.length >= 2) {
         // Partial court - if we can't form 2v2, give everyone byes
-        if (courtPlayers.length >= 4) {
-          // Can play full court
-          if (format === "PICK_PARTNER") {
-            matches.push({
-              id: `match-${courtNum}`,
-              court: courtNum,
-              team1: [courtPlayers[0]],
-              team2: courtPlayers.slice(1),
-              bye: false,
-            });
-          } else {
-            matches.push({
-              id: `match-${courtNum}`,
-              court: courtNum,
-              team1: [courtPlayers[0], courtPlayers[3]],
-              team2: [courtPlayers[1], courtPlayers[2]],
-              bye: false,
-            });
-          }
-          courtNum++;
+        if (format === "PICK_PARTNER") {
+          matches.push({
+            id: `match-${courtNum}`,
+            court: courtNum,
+            team1: [courtPlayers[0]],
+            team2: courtPlayers.slice(1),
+            bye: false,
+          });
         } else {
-          // Not enough for 2v2 - everyone gets a bye
-          courtPlayers.forEach((pid, idx) => {
-            matches.push({
-              id: `bye-${courtNum}-${idx}`,
-              court: 0,
-              team1: [pid],
-              team2: [],
-              bye: true,
-              byePlayerId: pid,
-            });
+          matches.push({
+            id: `match-${courtNum}`,
+            court: courtNum,
+            team1: [courtPlayers[0]],
+            team2: courtPlayers.slice(1),
+            bye: false,
           });
         }
+        courtNum++;
+      } else {
+        // Only 1 player left - they get a bye
+        byePlayerIds.push(courtPlayers[0]);
       }
     }
     
-    // Add bye matches
+    // STEP 4: Add bye matches for all bye players
     byePlayerIds.forEach((pid, idx) => {
       matches.push({
         id: `bye-${idx + 1}`,
-        court: 0, // Bye doesn't have a court
+        court: 0,
         team1: [pid],
         team2: [],
         bye: true,
