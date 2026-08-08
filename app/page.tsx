@@ -15,22 +15,39 @@ interface Player {
   isSitting?: boolean;
 }
 
+// Standings entry for each player
+interface StandingsEntry {
+  id: string;
+  name: string;
+  duprId: string | null;
+  duprScore: number | null;
+  orderNumber: number;
+  byeValue: number;
+  byeCount: number;
+  wins: number;
+  losses: number;
+  pointsFor: number;
+  pointsAgainst: number;
+}
+
 // Tournament configuration interface
 interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
-  courts: number;
+  orderGap: number;         // First variable
+  padding: number;          // Renamed from orderBuffer
   winLossMagnitude: number;
   courtBonus: number;
-  orderGap: number;
-  orderBuffer: number;
   byeTopProtection: number;
+  byeBonusTop: number;
   byeIncrement: number;
   sitProtection: number;
-  lateJoinRange: number;
-  byeBonusTop: number;           // Bonus for top players' bye values
+  lateJoinBonus: number;
+  courts: number;
   teamsPerPool: number;
   finalsFormat: "top2" | "top4" | "all";
 }
+
+
 
 export default function Home() {
   // === STATE VARIABLES ===
@@ -38,6 +55,10 @@ export default function Home() {
   const [eventPool, setEventPool] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [standings, setStandings] = useState<StandingsEntry[]>([]);
+  const [sortColumn, setSortColumn] = useState<keyof StandingsEntry>("orderNumber");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
 
   // Add player form state
   const [name, setName] = useState("");
@@ -56,16 +77,16 @@ export default function Home() {
   // Tournament configuration - all settings in one object
   const [config, setConfig] = useState<TournamentConfig>({
     format: "STANDARD",
-    courts: 2,
+    orderGap: 0.25,           // Order gap (spacing between players)
+    padding: 1,               // Padding for min/max order# (default: 1)
     winLossMagnitude: 1,
     courtBonus: 0.5,
-    orderGap: 0.25,
-    orderBuffer: 0,
-    byeTopProtection: 8,
-    byeIncrement: 1,
-    sitProtection: 0.5,
-    lateJoinRange: 0.25,
-    byeBonusTop: 0.5,
+    byeTopProtection: 8,      // How many top players get better bye values
+    byeBonusTop: 0.5,         // Bonus for top players' bye values
+    byeIncrement: 1,          // Value added to bye count after a bye
+    sitProtection: 0.5,       // Value added after sitting out
+    lateJoinBonus: 0.25,      // Value added to late joiners
+    courts: 2,                // Moved to bye settings area
     teamsPerPool: 4,
     finalsFormat: "top2",
   });
@@ -145,15 +166,70 @@ export default function Home() {
       setEditingPlayerId(null);
     }
   };
+  
 
   // === EVENT POOL FUNCTIONS ===
   const addToPool = (player: Player) => {
     if (eventPool.find(p => p.id === player.id)) return;
-    setEventPool([...eventPool, player]);
+    const newPool = [...eventPool, player];
+    setEventPool(newPool);
+    initializeStandings(player);
+  };
+
+  // Initialize standings for a player when added to event pool
+  const initializeStandings = (player: Player) => {
+    const existingEntry = standings.find(s => s.id === player.id);
+    if (existingEntry) return;
+    
+    // Calculate initial order# based on DUPR score (lower score = better order)
+    const sortedByDupr = eventPool
+      .filter(p => p.duprScore !== null)
+      .sort((a, b) => (a.duprScore || 5) - (b.duprScore || 5));
+    const rank = sortedByDupr.findIndex(p => p.id === player.id);
+    const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
+    
+    // Assign random bye value based on protection rules
+    let byeValue = 0;
+    if (rank < config.byeTopProtection / 2) {
+      // Top players get better bye range: -byeBonusTop to +byeBonusTop
+      byeValue = (Math.random() * 2 - 1) * config.byeBonusTop;
+    } else if (rank < config.byeTopProtection) {
+      // Next tier: -byeBonusTop-0.25 to +byeBonusTop-0.25
+      byeValue = (Math.random() * 2 - 1) * (config.byeBonusTop + 0.25);
+    } else {
+      // Everyone else: -1 to 0
+      byeValue = -Math.random();
+    }
+    
+    const newEntry: StandingsEntry = {
+      id: player.id,
+      name: player.name,
+      duprId: player.duprId,
+      duprScore: player.duprScore,
+      orderNumber: initialOrder,
+      byeValue: byeValue,
+      byeCount: 0,
+      wins: 0,
+      losses: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+    };
+    
+    setStandings([...standings, newEntry]);
   };
 
   const removeFromPool = (playerId: string) => {
     setEventPool(eventPool.filter(p => p.id !== playerId));
+  };
+
+
+  const handleSort = (column: keyof StandingsEntry) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
   };
 
   const handleToggleSitting = (playerId: string) => {
@@ -245,8 +321,8 @@ export default function Home() {
               <h3 className="font-medium text-gray-700">Order & Match Settings</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
-                  <input type="number" min="1" max="10" value={config.courts} onChange={(e) => updateConfig("courts", parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
+                  <input type="number" step="0.25" min="0.25" value={config.orderGap} onChange={(e) => updateConfig("orderGap", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">W/L Mag</label>
@@ -254,16 +330,12 @@ export default function Home() {
                   <p className="text-xs text-gray-400 mt-1">Win/Loss impact</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Court ±</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">± Top Bottom Court</label>
                   <input type="number" step="0.25" min="0" max="2" value={config.courtBonus} onChange={(e) => updateConfig("courtBonus", parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                  <p className="text-xs text-gray-400 mt-1">Top/Bottom bonus</p>
+                  <p className="text-xs text-gray-400 mt-1">Top win/Bottom loss reduction</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
-                  <input type="number" step="0.25" min="0.25" value={config.orderGap} onChange={(e) => updateConfig("orderGap", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Buffer</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Order minmax Padding</label>
                   <input type="number" step="0.25" min="0" value={config.orderBuffer} onChange={(e) => updateConfig("orderBuffer", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
@@ -272,7 +344,11 @@ export default function Home() {
               <h3 className="font-medium text-gray-700 mt-4">Bye Settings</h3>
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Top Bye</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
+                  <input type="number" min="1" max="16" value={config.courts} onChange={(e) => updateConfig("courts", parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Players Bye Bonus</label>
                   <input type="number" min="0" max="20" value={config.byeTopProtection} onChange={(e) => updateConfig("byeTopProtection", parseInt(e.target.value) || 8)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
@@ -289,7 +365,7 @@ export default function Home() {
                   <input type="number" step="0.25" min="0" value={config.sitProtection} onChange={(e) => updateConfig("sitProtection", parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Late ±</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Late Prot.</label>
                   <input type="number" step="0.25" min="0.25" value={config.lateJoinRange} onChange={(e) => updateConfig("lateJoinRange", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
@@ -431,6 +507,102 @@ export default function Home() {
             )}
           </section>
         </div>
+
+        {/* === STANDINGS TABLE === */}
+        <section className="bg-white rounded-2xl shadow-xl p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-800">📊 Standings</h2>
+            <span className="text-sm text-gray-500">{standings.length} players</span>
+          </div>
+          
+          {standings.length === 0 ? (
+            <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-2 text-left cursor-pointer hover:bg-gray-200" onClick={() => handleSort("name")}>
+                      Name {sortColumn === "name" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("orderNumber")}>
+                      Order# {sortColumn === "orderNumber" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeValue")}>
+                      Bye# {sortColumn === "byeValue" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
+                      W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("losses")}>
+                      L {sortColumn === "losses" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
+                      Win% {sortColumn === "wins" && sortDirection === "desc" ? "↓" : ""}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
+                      PF {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
+                      PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
+                      +/- {sortColumn === "pointsFor" && sortDirection === "desc" ? "↓" : ""}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeCount")}>
+                      Byes {sortColumn === "byeCount" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {standings
+                    .slice()
+                    .sort((a, b) => {
+                      const aVal = a[sortColumn];
+                      const bVal = b[sortColumn];
+                      if (aVal === null || aVal === undefined) return 1;
+                      if (bVal === null || bVal === undefined) return -1;
+                      if (typeof aVal === "string") {
+                        return sortDirection === "asc" 
+                          ? aVal.localeCompare(bVal as string)
+                          : (bVal as string).localeCompare(aVal);
+                      }
+                      return sortDirection === "asc" 
+                        ? (aVal as number) - (bVal as number)
+                        : (bVal as number) - (aVal as number);
+                    })
+                    .map((entry, index) => {
+                      const winPct = entry.wins + entry.losses > 0 
+                        ? ((entry.wins / (entry.wins + entry.losses)) * 100).toFixed(1)
+                        : "0.0";
+                      const pointDiff = entry.pointsFor - entry.pointsAgainst;
+                      return (
+                        <tr key={entry.id} className="border-t hover:bg-gray-50">
+                          <td className="p-2">
+                            <div className="font-medium">{entry.name}</div>
+                            {entry.duprId && <div className="text-xs text-gray-500">DUPR: {entry.duprId}</div>}
+                          </td>
+                          <td className="p-2 text-center font-mono">{entry.orderNumber.toFixed(2)}</td>
+                          <td className="p-2 text-center font-mono">{entry.byeValue.toFixed(2)}</td>
+                          <td className="p-2 text-center">{entry.wins}</td>
+                          <td className="p-2 text-center">{entry.losses}</td>
+                          <td className="p-2 text-center">{winPct}%</td>
+                          <td className="p-2 text-center">{entry.pointsFor}</td>
+                          <td className="p-2 text-center">{entry.pointsAgainst}</td>
+                          <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                            {pointDiff >= 0 ? "+" : ""}{pointDiff}
+                          </td>
+                          <td className="p-2 text-center">{entry.byeCount}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+
 
         {/* === START ROUND BUTTON === */}
         {eventPool.filter(p => !p.isSitting).length >= 4 && (
