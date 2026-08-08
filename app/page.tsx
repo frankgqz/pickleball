@@ -535,20 +535,14 @@ export default function Home() {
     });
   };
 
-  // Regenerate bye base for all players (does NOT reset byeMod which has late join bonus)
+  // Regenerate bye base for all players (only resets byeBase, keeps byeCount and byeMod)
   const regenerateByes = () => {
     setStandings(prev => {
-      const sorted = [...prev].sort((a, b) => {
-        if (a.duprScore == null && b.duprScore == null) return 0;
-        if (a.duprScore == null) return 1;
-        if (b.duprScore == null) return -1;
-        return b.duprScore - a.duprScore;
-      });
-
-      return sorted.map(entry => ({
+      return prev.map(entry => ({
         ...entry,
-        byeBase: generateByeBase(entry.duprScore),
-        byeCount: 0, // Reset bye count
+        byeBase: generateByeBase(entry.duprScore), // Only regenerate base
+        // byeCount stays (forced byes accumulated)
+        // byeMod stays (late join, sit outs accumulated)
       }));
     });
   };
@@ -717,12 +711,6 @@ export default function Home() {
                   <label className="block text-sm font-medium text-gray-600 mb-1">Bye Bonus</label>
                   <input type="number" step="0.25" min="0" max="2" value={config.byeBonusTop}
                     onChange={(e) => updateConfig("byeBonusTop", parseFloat(e.target.value) || 0.5)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Bye Increment</label>
-                  <input type="number" step="0.25" min="0.5" value={config.byeIncrement}
-                    onChange={(e) => updateConfig("byeIncrement", parseFloat(e.target.value) || 1)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
@@ -981,13 +969,6 @@ export default function Home() {
                     {/* Court Header */}
                     <div className="flex justify-between items-center mb-4">
                       <span className="font-bold text-lg">Court {match.court}</span>
-                      <input
-                        type="number"
-                        placeholder="Score"
-                        className="w-16 px-2 py-1 border rounded text-center"
-                        value={match.team1Score ?? ""}
-                        onChange={(e) => updateMatchScore(match.id, parseInt(e.target.value) || 0, 'team1')}
-                      />
                     </div>
 
                     {roundState.format === "PICK_PARTNER" ? (
@@ -1212,10 +1193,18 @@ export default function Home() {
                     <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
                       PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
                     </th>
-                    <th className="p-2 text-center">+/-</th>
-                    <th className="p-2 text-center">Pts%</th>
-                    <th className="p-2 text-center">Bye</th>
-                    <th className="p-2 text-center">Byes</th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
+                      +/- {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
+                      Pts% {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeBase")}>
+                      Bye {sortColumn === "byeBase" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeCount")}>
+                      Byes {sortColumn === "byeCount" && (sortDirection === "asc" ? "↑" : "↓")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
