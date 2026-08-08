@@ -60,7 +60,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingsEntry[]>([]);
-  const [sortColumn, setSortColumn] = useState<keyof StandingsEntry>("orderNumber");
+  const [sortColumn, setSortColumn] = useState<keyof StandingsEntry>("baseOrder");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Add player form state
