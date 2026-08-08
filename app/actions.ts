@@ -168,6 +168,35 @@ export async function deletePlayer(id: string) {
   }
 }
 
+// Update a player
+export async function updatePlayer(playerId: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const duprId = formData.get("duprId") as string;
+  const duprNumericId = formData.get("duprNumericId") as string;
+  const duprScore = formData.get("duprScore") as string;
+
+  if (!name?.trim()) {
+    return { success: false, error: "Name is required" };
+  }
+
+  try {
+    const player = await prisma.player.update({
+      where: { id: playerId },
+      data: {
+        name: name.trim(),
+        duprId: duprId?.trim() || null,
+        duprNumericId: duprNumericId?.trim() || null,
+        duprScore: duprScore ? parseFloat(duprScore) : null,
+      },
+    });
+    return { success: true, player };
+  } catch (error) {
+    console.error("Error updating player:", error);
+    return { success: false, error: "Failed to update player" };
+  }
+}
+
+
 // Fetch and update player rating from DUPR
 export async function fetchDuprRating(playerId: string) {
   try {

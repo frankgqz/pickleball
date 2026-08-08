@@ -2,7 +2,8 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { addPlayer, getPlayers, deletePlayer, fetchDuprRating } from "./actions";
+import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "./actions";
+
 
 
 interface Player {
@@ -25,6 +26,11 @@ export default function Home() {
   const [duprNumericId, setDuprNumericId] = useState("");
   const [duprScore, setDuprScore] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDuprId, setEditDuprId] = useState("");
+  const [editDuprNumericId, setEditDuprNumericId] = useState("");
+  const [editDuprScore, setEditDuprScore] = useState("");
 
 
   // Load players from database on mount
@@ -93,6 +99,44 @@ export default function Home() {
       setEventPool(eventPool.filter(p => p.id !== id));
     }
   };
+
+  // Start editing a player
+const startEditPlayer = (player: Player) => {
+  setEditingPlayerId(player.id);
+  setEditName(player.name);
+  setEditDuprId(player.duprId || "");
+  setEditDuprNumericId(player.duprNumericId || "");
+  setEditDuprScore(player.duprScore?.toString() || "");
+};
+
+// Cancel editing
+const cancelEditPlayer = () => {
+  setEditingPlayerId(null);
+  setEditName("");
+  setEditDuprId("");
+  setEditDuprNumericId("");
+  setEditDuprScore("");
+};
+
+// Save the edited player
+const handleUpdatePlayer = async () => {
+  if (!editingPlayerId || !editName.trim()) return;
+
+  const formData = new FormData();
+  formData.append("name", editName);
+  formData.append("duprId", editDuprId);
+  formData.append("duprNumericId", editDuprNumericId);
+  formData.append("duprScore", editDuprScore);
+
+  const result = await updatePlayer(editingPlayerId, formData);
+
+  if (result.success && result.player) {
+    setPlayers(players.map(p => p.id === editingPlayerId ? result.player! : p));
+    cancelEditPlayer();
+  } else {
+    alert(result.error || "Failed to update player");
+  }
+};
 
   // Add player to event pool
   const addToPool = (player: Player) => {
@@ -220,50 +264,100 @@ export default function Home() {
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {players.map((player) => (
-                  <div key={player.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <span className="font-medium text-gray-800">{player.name}</span>
-                      {player.duprId && (
-                        <span className="ml-2 text-sm text-gray-500">DUPR: {player.duprId}</span>
-                      )}
-                      {player.duprNumericId && (
-                        <span className="ml-2 text-xs text-gray-400">(#{player.duprNumericId})</span>
-                      )}
-                      {player.duprScore && (
-                        <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-sm font-medium">
-                          {player.duprScore.toFixed(1)}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => addToPool(player)}
-                        disabled={eventPool.some(p => p.id === player.id)}
-                        className={`px-4 py-1 rounded-full text-sm font-medium transition-colors ${
-                          eventPool.find(p => p.id === player.id)
-                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      >
-                        {eventPool.find(p => p.id === player.id) ? "In Pool" : "Add to Event"}
-                      </button>
-                      {player.duprId && (
-                        <button
-                          onClick={() => handleFetchDupr(player.id)}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm px-2"
-                          title="Fetch from DUPR"
-                        >
-                          🔍
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeletePlayer(player.id)}
-                        className="text-red-500 hover:text-red-700 font-medium text-sm px-2"
-                        title="Delete player"
-                      >
-                        🗑️
-                      </button>
-                    </div>
+                  <div key={player.id} className="p-3 bg-gray-50 rounded-lg">
+                    {editingPlayerId === player.id ? (
+                      // EDIT MODE
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          placeholder="Name"
+                        />
+                        <div className="grid grid-cols-3 gap-2">
+                          <input
+                            type="text"
+                            value={editDuprId}
+                            onChange={(e) => setEditDuprId(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="DUPR ID (5E64ZL)"
+                          />
+                          <input
+                            type="text"
+                            value={editDuprNumericId}
+                            onChange={(e) => setEditDuprNumericId(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Numeric ID"
+                          />
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={editDuprScore}
+                            onChange={(e) => setEditDuprScore(e.target.value)}
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            placeholder="Rating"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleUpdatePlayer}
+                            className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEditPlayer}
+                            className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // VIEW MODE
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <span className="font-medium text-gray-800">{player.name}</span>
+                          {player.duprId && (
+                            <span className="ml-2 text-sm text-gray-500">DUPR: {player.duprId}</span>
+                          )}
+                          {player.duprNumericId && (
+                            <span className="ml-2 text-xs text-gray-400">(#{player.duprNumericId})</span>
+                          )}
+                          {player.duprScore && (
+                            <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-sm font-medium">
+                              {player.duprScore.toFixed(1)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEditPlayer(player)}
+                            className="text-yellow-600 hover:text-yellow-800 font-medium text-sm px-2"
+                            title="Edit player"
+                          >
+                            ✏️
+                          </button>
+                          {player.duprNumericId && (
+                            <button
+                              onClick={() => handleFetchDupr(player.id)}
+                              className="text-blue-600 hover:text-blue-800 font-medium text-sm px-2"
+                              title="Fetch from DUPR"
+                            >
+                              🔍
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeletePlayer(player.id)}
+                            className="text-red-500 hover:text-red-700 font-medium text-sm px-2"
+                            title="Delete player"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
