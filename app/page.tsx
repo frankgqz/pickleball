@@ -2,7 +2,8 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
-import { addPlayer, getPlayers, deletePlayer } from "./actions";
+import { addPlayer, getPlayers, deletePlayer, fetchDuprRating } from "./actions";
+
 
 interface Player {
   id: string;
@@ -62,6 +63,21 @@ export default function Home() {
       setDuprScore("");
     }
     setSubmitting(false);
+  };
+
+    // Fetch player rating from DUPR
+  const handleFetchDupr = async (playerId: string) => {
+    const result = await fetchDuprRating(playerId);
+    
+    if (result.success && result.player) {
+      // Update the players list with the new data
+      setPlayers(players.map(p => 
+        p.id === playerId ? result.player! : p
+      ));
+      alert(result.message || "Rating updated!");
+    } else {
+      alert(result.error || "Failed to fetch rating");
+    }
   };
 
   // Delete player from database
@@ -211,6 +227,15 @@ export default function Home() {
                       >
                         {eventPool.find(p => p.id === player.id) ? "In Pool" : "Add to Event"}
                       </button>
+                      {player.duprId && (
+                        <button
+                          onClick={() => handleFetchDupr(player.id)}
+                          className="text-blue-600 hover:text-blue-800 font-medium text-sm px-2"
+                          title="Fetch from DUPR"
+                        >
+                          🔍
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeletePlayer(player.id)}
                         className="text-red-500 hover:text-red-700 font-medium text-sm px-2"
