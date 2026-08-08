@@ -392,8 +392,8 @@ export default function Home() {
   const applyCourtBonuses = (matchResults: { playerId: string; won: boolean; isTopCourt: boolean }[]) => {
     setStandings(prev => {
       const maxPlayers = Math.max(...prev.map(p => p.baseOrder)) / config.orderGap;
-      const minAdjusted = 1 - config.padding;
-      const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.padding;
+      const minAdjusted = 1 - config.band;
+      const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.band;
       
       return prev.map(entry => {
         const result = matchResults.find(r => r.playerId === entry.id);
