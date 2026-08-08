@@ -42,7 +42,7 @@ interface TournamentConfig {
   byeBonusTop: number;
   byeIncrement: number;
   sitProtection: number;
-  lateJoinBonus: number;  // ← was missing!
+  lateJoinBonus: number;
   courts: number;
   teamsPerPool: number;
   finalsFormat: "top2" | "top4" | "all";
@@ -67,7 +67,6 @@ export default function Home() {
   const [duprId, setDuprId] = useState("");
   const [duprNumericId, setDuprNumericId] = useState("");
   const [duprScore, setDuprScore] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
   // Edit player state
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
@@ -93,9 +92,11 @@ export default function Home() {
     finalsFormat: "top2",
   });
 
+  const [submitting, setSubmitting] = useState(false);
+
   // --- Config Helper ---
   const updateConfig = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
-    setConfig({ ...config, [key]: value });
+    setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
   // --- Player Functions ---
@@ -228,16 +229,32 @@ export default function Home() {
     setEditName(""); setEditDuprId(""); setEditDuprNumericId(""); setEditDuprScore("");
   };
 
-  // --- Derived Values ---
+  // --- Derived Values (Logic) ---
   const sortedStandings = standings.slice().sort((a, b) => {
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
-    if (aVal === null || aVal === undefined) return 1;
-    if (bVal === null || bVal === undefined) return -1;
-    if (typeof aVal === "string") {
-      return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+
+    // Handle null/undefined
+    if (aVal == null && bVal == null) return 0;
+    if (aVal == null) return 1;
+    if (bVal == null) return -1;
+
+    // Both are strings
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortDirection === "asc"
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
     }
-    return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+
+    // Both are numbers
+    if (typeof aVal === "number" && typeof bVal === "number") {
+      return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+    }
+
+    // Fallback: convert to string for comparison
+    return sortDirection === "asc"
+      ? String(aVal).localeCompare(String(bVal))
+      : String(bVal).localeCompare(String(aVal));
   });
 
   // ==========================================
