@@ -200,8 +200,8 @@ export default function Home() {
           matches.push({
             id: `match-${courtNum}`,
             court: courtNum,
-            team1: [courtPlayers[0]], // Picker
-            team2: courtPlayers.slice(1), // Remaining 3
+            team1: [courtPlayers[0], courtPlayers[3]], // Picker (1) + Partner (4 by default)
+            team2: [courtPlayers[1], courtPlayers[2]], // Remaining 2 and 3
             bye: false,
           });
         } else {
@@ -276,36 +276,40 @@ export default function Home() {
     }));
   };
 
-  // Swap player between teams (only partner can be swapped, picker stays)
+  // Swap player between teams (picker stays, only partner can be swapped with team2)
   const swapPlayerTeam = (matchId: string, playerId: string) => {
     setRoundState(prev => ({
       ...prev,
       matches: prev.matches.map(m => {
         if (m.id !== matchId) return m;
         
-        const pickerId = m.team1[0];
-        const isPicker = pickerId === playerId;
-        const isPartner = m.team1.length > 1 && m.team1[1] === playerId;
+        const pickerId = m.team1[0]; // Player 1 (picker)
+        const partnerId = m.team1[1]; // Player 4 by default (can be swapped)
         
-        // Only partner (not picker) can be swapped with someone from team2
-        if (isPicker) return m; // Picker stays on team1
-        if (!isPartner && !m.team2.includes(playerId)) return m; // Can only swap partner with team2
+        // Picker (first in team1) can't be swapped
+        if (playerId === pickerId) return m;
         
-        if (isPartner) {
-          // Partner leaves team1, playerId joins team1
+        // Player must be either partner or on team2
+        const isOnTeam2 = m.team2.includes(playerId);
+        if (playerId !== partnerId && !isOnTeam2) return m;
+        
+        if (playerId === partnerId && isOnTeam2) {
+          // Partner swapped with someone from team2
           return {
             ...m,
-            team1: [pickerId, playerId],
-            team2: [...m.team2, m.team1[1]].filter(id => id !== playerId),
+            team1: [pickerId, playerId], // Picker keeps position, new partner
+            team2: [...m.team2.filter(id => id !== playerId), partnerId], // Old partner goes to team2
           };
-        } else {
-          // Someone from team2 swaps with partner
+        } else if (isOnTeam2) {
+          // Someone from team2 swaps with current partner
           return {
             ...m,
             team1: [pickerId, playerId],
-            team2: [...m.team2.filter(id => id !== playerId), m.team1[1]],
+            team2: [...m.team2.filter(id => id !== playerId), partnerId],
           };
         }
+        
+        return m;
       }),
     }));
   };
@@ -344,9 +348,26 @@ export default function Home() {
         const won = myScore > opponentScore && myScore > 0;
         const playedMatch = myScore > 0 || opponentScore > 0;
 
-        // Apply court bonus: winners subtract, losers add
-        const courtBonus = won ? -config.courtBonus : config.courtBonus;
-        const reason = won ? `win (${myScore}-${opponentScore})` : `loss (${myScore}-${opponentScore})`;
+        // Determine court position (top = lower baseOrder, bottom = higher baseOrder)
+        const matchCourt = match.court;
+        
+        // Calculate court bonus for balanced average:
+        // Top court (lower order): win -courtBonus, loss +courtBonus
+        // Bottom court (higher order): win +courtBonus, loss -courtBonus
+        let courtBonus: number;
+        let courtType: string;
+        
+        if (matchCourt === 1) {
+          // Top court - winners go down (better), losers go up
+          courtBonus = won ? -config.courtBonus : config.courtBonus;
+          courtType = "top";
+        } else {
+          // Bottom court - winners go up (catch up), losers go down
+          courtBonus = won ? config.courtBonus : -config.courtBonus;
+          courtType = "bottom";
+        }
+        
+        const reason = `${courtType} court ${won ? 'win' : 'loss'} (${myScore}-${opponentScore})`;
 
         return {
           ...entry,
@@ -362,8 +383,7 @@ export default function Home() {
       return entry;
     }));
 
-    // Recalculate adjusted order based on win percentage
-    recalculateAdjustedOrder();
+    // No need to recalculate - we update adjustedOrder directly in the loop above
 
     // Mark first round as completed (for late join bonus)
     setHasCompletedFirstRound(true);
@@ -1332,7 +1352,7 @@ export default function Home() {
                         </td>
                         <td className="p-2 text-center font-mono text-blue-600 cursor-help" 
                           title={`base: ${entry.baseOrder.toFixed(2)}\n${entry.orderHistory.map(h => `R${h.round}: ${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)} (${h.reason})`).join('\n')}`}>
-                          {entry.baseOrder.toFixed(2)}
+                          {entry.adjustedOrder.toFixed(2)}
                         </td>
                         <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
                         <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
