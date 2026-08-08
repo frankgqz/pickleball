@@ -182,11 +182,13 @@ export default function Home() {
       .filter(p => !byePlayerIds.includes(p.id))
       .map(p => p.id);
     
-    // Sort remaining by seed
+    // Sort remaining by seedTotal (seed + seedAdjustment)
     const remainingOrdered = remainingPlayers.sort((aId, bId) => {
       const aEntry = standings.find(s => s.id === aId);
       const bEntry = standings.find(s => s.id === bId);
-      return (aEntry?.seed || 999) - (bEntry?.seed || 999);
+      const aTotal = (aEntry?.seed || 999) + (aEntry?.seedAdjustment || 0);
+      const bTotal = (bEntry?.seed || 999) + (bEntry?.seedAdjustment || 0);
+      return aTotal - bTotal;
     });
     
     // STEP 3: Create matches - fill courts with remaining players by order#
@@ -632,7 +634,26 @@ export default function Home() {
   };
 
   // --- Derived Values (Logic) ---
+  
+  // Helper to calculate seedTotal and byeTotal
+  const getSeedTotal = (entry: StandingsEntry) => entry.seed + entry.seedAdjustment;
+  const getByeTotal = (entry: StandingsEntry) => entry.byeBase + entry.byeCount + (entry.sitOutCount * config.sitProtection) + entry.byeMod;
+  
   const sortedStandings = standings.slice().sort((a, b) => {
+    // Special handling for seed and seedAdjustment - use seedTotal for comparison
+    if (sortColumn === "seed" || sortColumn === "seedAdjustment") {
+      const aTotal = getSeedTotal(a);
+      const bTotal = getSeedTotal(b);
+      return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
+    }
+    
+    // Special handling for byeBase - use byeTotal
+    if (sortColumn === "byeBase") {
+      const aTotal = getByeTotal(a);
+      const bTotal = getByeTotal(b);
+      return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
+    }
+
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
 
@@ -1268,8 +1289,8 @@ export default function Home() {
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="p-2 text-left">Name</th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("seed")}>
-                      Order# {sortColumn === "seed" && (sortDirection === "asc" ? "↑" : "↓")}
+                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("seedAdjustment")}>
+                      Order# {sortColumn === "seedAdjustment" && (sortDirection === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
                       W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -1300,7 +1321,8 @@ export default function Home() {
                 <tbody>
                   {sortedStandings.map((entry) => {
                     const pointDiff = entry.pointsFor - entry.pointsAgainst;
-                    const totalBye = entry.byeBase + entry.byeCount + (entry.sitOutCount * config.sitProtection) + entry.byeMod;
+                    const seedTotal = getSeedTotal(entry);
+                    const byeTotal = getByeTotal(entry);
                     const ptsPct = entry.pointsFor + entry.pointsAgainst > 0
                       ? ((entry.pointsFor / (entry.pointsFor + entry.pointsAgainst)) * 100).toFixed(0)
                       : "0";
@@ -1312,7 +1334,7 @@ export default function Home() {
                         </td>
                         <td className="p-2 text-center font-mono text-blue-600 cursor-help" 
                           title={`seed: ${entry.seed.toFixed(2)}\nadjustment: ${entry.seedAdjustment >= 0 ? '+' : ''}${entry.seedAdjustment.toFixed(2)}\n${entry.orderHistory.map(h => `R${h.round}: ${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)} (${h.reason})`).join('\n')}`}>
-                          {(entry.seed + entry.seedAdjustment).toFixed(2)}
+                          {seedTotal.toFixed(2)}
                         </td>
                         <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
                         <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
@@ -1328,10 +1350,10 @@ export default function Home() {
                         </td>
                         <td className="p-2 text-center">
                           <span 
-                            className={`font-mono ${totalBye >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
+                            className={`font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
                             title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${(entry.sitOutCount * config.sitProtection).toFixed(2)} sit outs${entry.byeMod > 0 ? ` + ${entry.byeMod.toFixed(2)} late join` : ''}`}
                           >
-                            {totalBye >= 0 ? "+" : ""}{totalBye.toFixed(2)}
+                            {byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}
                           </span>
                         </td>
                         <td className="p-2 text-center">
