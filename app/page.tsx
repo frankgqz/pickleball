@@ -323,6 +323,8 @@ export default function Home() {
   // Submit round results
   const submitRoundResults = () => {
     const currentRound = standings.reduce((max, e) => Math.max(max, e.orderHistory.length), 0) + 1;
+    const activePlayers = eventPool.filter(p => !p.isSitting);
+    const byePlayerIds = roundState.matches.filter(m => m.bye).map(m => m.byePlayerId).filter(Boolean) as string[];
     
     // Update standings with results and apply court bonuses
     setStandings(prev => prev.map(entry => {
