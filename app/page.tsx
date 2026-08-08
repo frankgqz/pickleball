@@ -178,11 +178,11 @@ export default function Home() {
       .filter(p => !byePlayerIds.includes(p.id))
       .map(p => p.id);
     
-    // Sort remaining by order# (adjustedOrder)
+    // Sort remaining by baseOrder
     const remainingOrdered = remainingPlayers.sort((aId, bId) => {
       const aEntry = standings.find(s => s.id === aId);
       const bEntry = standings.find(s => s.id === bId);
-      return (aEntry?.adjustedOrder || 999) - (bEntry?.adjustedOrder || 999);
+      return (aEntry?.baseOrder || 999) - (bEntry?.baseOrder || 999);
     });
     
     // STEP 3: Create matches - fill courts with remaining players by order#
@@ -276,27 +276,36 @@ export default function Home() {
     }));
   };
 
-  // Swap player between teams (picker can't be removed, but partner can be swapped)
+  // Swap player between teams (only partner can be swapped, picker stays)
   const swapPlayerTeam = (matchId: string, playerId: string) => {
     setRoundState(prev => ({
       ...prev,
       matches: prev.matches.map(m => {
         if (m.id !== matchId) return m;
         
-        const isOnTeam1 = m.team1.includes(playerId);
-        const isPicker = m.team1[0] === playerId; // Picker is always first in team1
+        const pickerId = m.team1[0];
+        const isPicker = pickerId === playerId;
+        const isPartner = m.team1.length > 1 && m.team1[1] === playerId;
         
-        // Picker can't be removed from team1
-        if (isOnTeam1 && isPicker) return m;
+        // Only partner (not picker) can be swapped with someone from team2
+        if (isPicker) return m; // Picker stays on team1
+        if (!isPartner && !m.team2.includes(playerId)) return m; // Can only swap partner with team2
         
-        const newTeam1 = isOnTeam1 
-          ? m.team1.filter(id => id !== playerId)
-          : [...m.team1, playerId];
-        const newTeam2 = isOnTeam1 
-          ? [...m.team2, playerId]
-          : m.team2.filter(id => id !== playerId);
-        
-        return { ...m, team1: newTeam1, team2: newTeam2 };
+        if (isPartner) {
+          // Partner leaves team1, playerId joins team1
+          return {
+            ...m,
+            team1: [pickerId, playerId],
+            team2: [...m.team2, m.team1[1]].filter(id => id !== playerId),
+          };
+        } else {
+          // Someone from team2 swaps with partner
+          return {
+            ...m,
+            team1: [pickerId, playerId],
+            team2: [...m.team2.filter(id => id !== playerId), m.team1[1]],
+          };
+        }
       }),
     }));
   };
@@ -1323,7 +1332,7 @@ export default function Home() {
                         </td>
                         <td className="p-2 text-center font-mono text-blue-600 cursor-help" 
                           title={`base: ${entry.baseOrder.toFixed(2)}\n${entry.orderHistory.map(h => `R${h.round}: ${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)} (${h.reason})`).join('\n')}`}>
-                          {entry.adjustedOrder.toFixed(2)}
+                          {entry.baseOrder.toFixed(2)}
                         </td>
                         <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
                         <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
