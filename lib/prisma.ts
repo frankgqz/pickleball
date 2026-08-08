@@ -1,17 +1,25 @@
-import { PrismaClient } from ".prisma/client";
+// We need to use require() for the generated Prisma client
+// because the import path doesn't work with TypeScript in Next.js
 
-class PrismaClientSingleton {
-  private static instance: PrismaClient | null = null;
+const { PrismaPg } = require("@prisma/adapter-pg");
 
-  static getClient(): PrismaClient {
-    if (!this.instance) {
-      const { PrismaPg } = require("@prisma/adapter-pg");
-      const connectionString = process.env.DATABASE_URL!;
-      const adapter = new PrismaPg({ connectionString });
-      this.instance = new PrismaClient({ adapter });
-    }
-    return this.instance;
-  }
+interface GlobalThis {
+  prisma: any;
 }
 
-export const prisma = PrismaClientSingleton.getClient();
+const globalForPrisma = globalThis as GlobalThis;
+
+function createPrismaClient() {
+  const connectionString = process.env.DATABASE_URL!;
+  const adapter = new PrismaPg({ connectionString });
+  
+  // Use require to bypass TypeScript's path resolution
+  const { PrismaClient } = require("@prisma/client");
+  return new PrismaClient({ adapter });
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
