@@ -41,12 +41,11 @@ interface StandingsEntry {
 interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
   orderGap: number;
-  padding: number;
+  band: number;           // Rubberband buffer zone (was padding)
   winLossMagnitude: number;
   courtBonus: number;
   byeTopProtection: number;
   byeBonusTop: number;
-  byeIncrement: number;
   sitProtection: number;
   lateJoinBonus: number;
   courts: number;
@@ -110,12 +109,11 @@ export default function Home() {
   const [config, setConfig] = useState<TournamentConfig>({
     format: "STANDARD",
     orderGap: 0.25,
-    padding: 1,
+    band: 1,
     winLossMagnitude: 1,
     courtBonus: 0.5,
     byeTopProtection: 8,
     byeBonusTop: 0.5,
-    byeIncrement: 1,
     sitProtection: 0.5,
     lateJoinBonus: 0.75,
     courts: 4, // Default to 4 courts
@@ -302,9 +300,8 @@ export default function Home() {
 
   // Submit round results
   const submitRoundResults = () => {
-    const maxPlayers = Math.max(...standings.map(p => p.baseOrder)) / config.orderGap;
-    const minAdjusted = 1 - config.padding;
-    const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.padding;
+    // No minimum - order# can go negative
+    // Band creates rubberband effect at extremes
     
     // Update standings with results and apply court bonuses
     setStandings(prev => prev.map(entry => {
@@ -334,9 +331,8 @@ export default function Home() {
         const won = myScore > opponentScore && myScore > 0;
         const playedMatch = myScore > 0 || opponentScore > 0;
 
-        // Apply court bonus: winners subtract, losers add
+        // Apply court bonus: winners subtract, losers add (no bounds clamping)
         const courtBonus = won ? -config.courtBonus : config.courtBonus;
-        const newAdjusted = Math.max(minAdjusted, Math.min(maxAdjusted, entry.adjustedOrder + courtBonus));
 
         return {
           ...entry,
@@ -344,7 +340,7 @@ export default function Home() {
           losses: entry.losses + (playedMatch && !won ? 1 : 0),
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
-          adjustedOrder: newAdjusted,
+          adjustedOrder: entry.adjustedOrder + courtBonus,
         };
       }
       
@@ -363,27 +359,17 @@ export default function Home() {
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
 
-  // Recalculate adjusted order based on performance
+  // Recalculate adjusted order based on win percentage
+  // Clamped within band boundaries: (1 - band) to (1 + orderGap * maxPlayers + band)
   const recalculateAdjustedOrder = () => {
     setStandings(prev => {
-      // Get max players count for clamping
-      const maxPlayers = Math.max(...prev.map(p => p.baseOrder)) / config.orderGap;
-      const minAdjusted = 1 - config.padding;
-      const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.padding;
-      
       return prev.map(entry => {
-        // Base adjusted order from baseOrder minus wins bonus
         const gamesPlayed = entry.wins + entry.losses;
         const winPct = gamesPlayed > 0 ? entry.wins / gamesPlayed : 0.5;
-        const adjustment = winPct * config.winLossMagnitude;
-        let newAdjusted = entry.baseOrder - adjustment;
-        
-        // Clamp to min/max bounds
-        newAdjusted = Math.max(minAdjusted, Math.min(maxAdjusted, newAdjusted));
-        
+        // Adjust based on win percentage, clamped within band boundaries
         return {
           ...entry,
-          adjustedOrder: newAdjusted,
+          adjustedOrder: Math.max(1 - config.band, Math.min(1 + (config.orderGap * Math.max(...prev.map(p => p.baseOrder)) / config.orderGap) + config.band, entry.baseOrder - (winPct * config.winLossMagnitude))),
         };
       });
     });
@@ -751,10 +737,11 @@ export default function Home() {
                   <p className="text-xs text-gray-400 mt-1">Top win/Bottom loss reduction</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Padding</label>
-                  <input type="number" step="0.25" min="0" value={config.padding}
-                    onChange={(e) => updateConfig("padding", parseFloat(e.target.value) || 0)}
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Band</label>
+                  <input type="number" step="0.25" min="0" value={config.band}
+                    onChange={(e) => updateConfig("band", parseFloat(e.target.value) || 0)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <p className="text-xs text-gray-400 mt-1">Rubberband buffer zone</p>
                 </div>
               </div>
 
