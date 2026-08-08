@@ -124,6 +124,9 @@ export default function Home() {
 
   // Track if first round has been completed (for late join bonus)
   const [hasCompletedFirstRound, setHasCompletedFirstRound] = useState(false);
+  
+  // Track players sitting out this round
+  const [sittingOutThisRound, setSittingOutThisRound] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -163,6 +166,10 @@ export default function Home() {
     const activeStandings = standings.filter(s => activePlayers.some(p => p.id === s.id));
     const sortedByBye = [...activeStandings].sort((a, b) => (a.byeBase + a.byeMod) - (b.byeBase + b.byeMod));
     const byePlayerIds: string[] = sortedByBye.slice(0, byeCount).map(s => s.id);
+    
+    // Track who is sitting out this round (for byeMod calculation)
+    const sittingOutIds = eventPool.filter(p => p.isSitting).map(p => p.id);
+    setSittingOutThisRound(sittingOutIds);
     
     // STEP 2: Get remaining players (sorted by order# for court assignment)
     const remainingPlayers = activePlayers
@@ -267,7 +274,7 @@ export default function Home() {
     }));
   };
 
-  // Swap player between teams
+  // Swap player between teams (picker can't be removed, but partner can be swapped)
   const swapPlayerTeam = (matchId: string, playerId: string) => {
     setRoundState(prev => ({
       ...prev,
@@ -275,8 +282,10 @@ export default function Home() {
         if (m.id !== matchId) return m;
         
         const isOnTeam1 = m.team1.includes(playerId);
+        const isPicker = m.team1[0] === playerId; // Picker is always first in team1
         
-        if (isOnTeam1 && m.team1.length <= 2) return m; // Can't remove if only 1-2 players
+        // Picker can't be removed from team1
+        if (isOnTeam1 && isPicker) return m;
         
         const newTeam1 = isOnTeam1 
           ? m.team1.filter(id => id !== playerId)
@@ -296,9 +305,7 @@ export default function Home() {
     setStandings(prev => prev.map(entry => {
       const match = roundState.matches.find(m => m.team1.includes(entry.id) || m.team2.includes(entry.id));
       
-      if (!match) return entry;
-      
-      if (match.bye && match.byePlayerId === entry.id) {
+      if (match && match.bye && match.byePlayerId === entry.id) {
         // Player got a bye - increment byeMod and byeCount
         return { 
           ...entry, 
@@ -306,21 +313,33 @@ export default function Home() {
           byeCount: entry.byeCount + 1 
         };
       }
-
+      
+      // Check if player was sitting out this round
+      if (sittingOutThisRound.includes(entry.id)) {
+        return { 
+          ...entry, 
+          byeMod: entry.byeMod + config.sitProtection // Add sit protection penalty
+        };
+      }
+      
       // Player played a match
-      const isOnTeam1 = match.team1.includes(entry.id);
-      const myScore = isOnTeam1 ? (match.team1Score || 0) : (match.team2Score || 0);
-      const opponentScore = isOnTeam1 ? (match.team2Score || 0) : (match.team1Score || 0);
-      const won = myScore > opponentScore && myScore > 0;
-      const playedMatch = myScore > 0 || opponentScore > 0;
+      if (match) {
+        const isOnTeam1 = match.team1.includes(entry.id);
+        const myScore = isOnTeam1 ? (match.team1Score || 0) : (match.team2Score || 0);
+        const opponentScore = isOnTeam1 ? (match.team2Score || 0) : (match.team1Score || 0);
+        const won = myScore > opponentScore && myScore > 0;
+        const playedMatch = myScore > 0 || opponentScore > 0;
 
-      return {
-        ...entry,
-        wins: entry.wins + (won ? 1 : 0),
-        losses: entry.losses + (playedMatch && !won ? 1 : 0),
-        pointsFor: entry.pointsFor + myScore,
-        pointsAgainst: entry.pointsAgainst + opponentScore,
-      };
+        return {
+          ...entry,
+          wins: entry.wins + (won ? 1 : 0),
+          losses: entry.losses + (playedMatch && !won ? 1 : 0),
+          pointsFor: entry.pointsFor + myScore,
+          pointsAgainst: entry.pointsAgainst + opponentScore,
+        };
+      }
+      
+      return entry;
     }));
 
     // Recalculate adjusted order based on new standings
@@ -328,6 +347,9 @@ export default function Home() {
 
     // Mark first round as completed (for late join bonus)
     setHasCompletedFirstRound(true);
+    
+    // Clear sitting out tracking
+    setSittingOutThisRound([]);
 
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
@@ -1100,29 +1122,57 @@ export default function Home() {
             )}
 
             {/* Bye List - who has byes based on total bye score */}
-            {roundState.matches.some(m => m.bye) && (
-              <div className="mt-6 bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
-                <h3 className="font-bold text-orange-700 mb-3">😴 Byes This Round (Lowest Bye Scores)</h3>
-                <div className="flex flex-wrap gap-3">
-                  {roundState.matches.filter(m => m.bye && m.byePlayerId).map(match => {
-                    const player = eventPool.find(p => p.id === match.byePlayerId);
-                    const standingsEntry = standings.find(s => s.id === match.byePlayerId);
-                    if (!standingsEntry) return null;
-                    const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
-                    const sitOutCount = Math.max(0, (standingsEntry.byeMod - standingsEntry.byeCount - config.lateJoinBonus) / config.sitProtection);
-                    return (
-                      <div key={match.id} className="bg-white rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-3">
-                        <span className="text-xl">😴</span>
-                        <div>
-                          <p className="font-medium">{player?.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {standingsEntry.byeBase.toFixed(2)} + {standingsEntry.byeCount} byes + {sitOutCount.toFixed(0)} sit outs = {totalBye.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            {(roundState.matches.some(m => m.bye) || sittingOutThisRound.length > 0) && (
+              <div className="mt-6 rounded-xl p-4 border-2">
+                <h3 className="font-bold mb-3">😴 Off Court This Round</h3>
+                
+                {/* Forced Byes */}
+                {roundState.matches.some(m => m.bye) && (
+                  <div className="mb-4">
+                    <p className="text-sm text-orange-700 font-medium mb-2">Forced Byes (Lowest Bye Scores):</p>
+                    <div className="flex flex-wrap gap-3">
+                      {roundState.matches.filter(m => m.bye && m.byePlayerId).map(match => {
+                        const player = eventPool.find(p => p.id === match.byePlayerId);
+                        const standingsEntry = standings.find(s => s.id === match.byePlayerId);
+                        if (!standingsEntry) return null;
+                        const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
+                        return (
+                          <div key={match.id} className="bg-orange-100 rounded-lg px-4 py-2 border border-orange-300 flex items-center gap-3">
+                            <span className="text-xl">😴</span>
+                            <div>
+                              <p className="font-medium text-orange-800">{player?.name}</p>
+                              <p className="text-xs text-orange-600">Total bye: {totalBye.toFixed(2)}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Sitting Out */}
+                {sittingOutThisRound.length > 0 && (
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium mb-2">Sitting Out This Round:</p>
+                    <div className="flex flex-wrap gap-3">
+                      {sittingOutThisRound.map(playerId => {
+                        const player = eventPool.find(p => p.id === playerId);
+                        const standingsEntry = standings.find(s => s.id === playerId);
+                        if (!standingsEntry) return null;
+                        const totalBye = standingsEntry.byeBase + standingsEntry.byeMod;
+                        return (
+                          <div key={playerId} className="bg-gray-200 rounded-lg px-4 py-2 border border-gray-400 flex items-center gap-3">
+                            <span className="text-xl">💤</span>
+                            <div>
+                              <p className="font-medium text-gray-700">{player?.name}</p>
+                              <p className="text-xs text-gray-500">Total bye: {totalBye.toFixed(2)} (+sit out penalty)</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
