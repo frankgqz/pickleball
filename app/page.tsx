@@ -1,4 +1,6 @@
+export const dynamic = "force-dynamic";
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { addPlayer, getPlayers, deletePlayer } from "./actions";
