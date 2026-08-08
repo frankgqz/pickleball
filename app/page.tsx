@@ -142,14 +142,27 @@ export default function Home() {
     const activePlayers = eventPool.filter(p => !p.isSitting);
     const playersPerCourt = 4;
     
-    // Calculate byes needed: active_players - (num_courts * 4)
+    // Calculate byes needed:
+    // If active > courts*4: byes = active - courts*4
+    // If active <= courts*4: byes = active % 4 (remainder - can't fill a full court)
     const maxPlayersForCourts = config.courts * playersPerCourt;
-    const byeCount = Math.max(0, activePlayers.length - maxPlayersForCourts);
+    let byeCount = 0;
+    
+    if (activePlayers.length > maxPlayersForCourts) {
+      // Too many players - some get byes
+      byeCount = activePlayers.length - maxPlayersForCourts;
+    } else {
+      // Can fit on courts, but may not fill all courts perfectly
+      byeCount = activePlayers.length % playersPerCourt;
+      // If remainder is 0, no byes needed
+      // If remainder is 1, 2, or 3, those players get byes (can't form full court)
+      if (byeCount === 0) byeCount = 0;
+    }
     
     // STEP 1: Determine who gets byes (lowest total bye scores first)
     const activeStandings = standings.filter(s => activePlayers.some(p => p.id === s.id));
     const sortedByBye = [...activeStandings].sort((a, b) => (a.byeBase + a.byeMod) - (b.byeBase + b.byeMod));
-    const byePlayerIds = sortedByBye.slice(0, byeCount).map(s => s.id);
+    const byePlayerIds: string[] = sortedByBye.slice(0, byeCount).map(s => s.id);
     
     // STEP 2: Get remaining players (sorted by order# for court assignment)
     const remainingPlayers = activePlayers
@@ -164,15 +177,16 @@ export default function Home() {
     });
     
     // STEP 3: Create matches - fill courts with remaining players by order#
+    // Only create matches if we have a FULL court of 4
     const matches: Match[] = [];
     let courtNum = 1;
     
-    // Group remaining players into courts of 4
+    // Group remaining players into courts of 4 - ONLY full courts
     for (let i = 0; i < remainingOrdered.length; i += playersPerCourt) {
       const courtPlayers = remainingOrdered.slice(i, i + playersPerCourt);
       
       if (courtPlayers.length === playersPerCourt) {
-        // Full court of 4
+        // Full court of 4 - create match
         if (format === "PICK_PARTNER") {
           matches.push({
             id: `match-${courtNum}`,
@@ -192,30 +206,8 @@ export default function Home() {
           });
         }
         courtNum++;
-      } else if (courtPlayers.length >= 2) {
-        // Partial court - if we can't form 2v2, give everyone byes
-        if (format === "PICK_PARTNER") {
-          matches.push({
-            id: `match-${courtNum}`,
-            court: courtNum,
-            team1: [courtPlayers[0]],
-            team2: courtPlayers.slice(1),
-            bye: false,
-          });
-        } else {
-          matches.push({
-            id: `match-${courtNum}`,
-            court: courtNum,
-            team1: [courtPlayers[0]],
-            team2: courtPlayers.slice(1),
-            bye: false,
-          });
-        }
-        courtNum++;
-      } else {
-        // Only 1 player left - they get a bye
-        byePlayerIds.push(courtPlayers[0]);
       }
+      // If less than 4 players remain, they don't create a match - they already got byes
     }
     
     // STEP 4: Add bye matches for all bye players
@@ -1244,7 +1236,7 @@ export default function Home() {
                         <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
                         <td className="p-2 text-center">{entry.pointsFor}</td>
                         <td className="p-2 text-center">{entry.pointsAgainst}</td>
-                        <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                        <td className={`p-2 text-center font-mono cursor-pointer hover:bg-gray-100 ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`} onClick={() => handleSort("pointsFor")}>
                           {pointDiff >= 0 ? "+" : ""}{pointDiff}
                         </td>
                         <td className="p-2 text-center">
@@ -1261,7 +1253,9 @@ export default function Home() {
                           </span>
                         </td>
                         <td className="p-2 text-center">
-                          <span className="text-purple-600 font-bold">{entry.byeCount}</span>
+                          <span className="text-purple-600 font-bold cursor-pointer hover:bg-gray-100" onClick={() => handleSort("byeCount")}>
+                            {entry.byeCount}
+                          </span>
                         </td>
                       </tr>
                     );
