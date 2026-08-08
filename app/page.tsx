@@ -5,7 +5,10 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "./actions";
 
-// Player interface
+// ==========================================
+// === TYPES ===
+// ==========================================
+
 interface Player {
   id: string;
   name: string;
@@ -15,7 +18,6 @@ interface Player {
   isSitting?: boolean;
 }
 
-// Standings entry for each player
 interface StandingsEntry {
   id: string;
   name: string;
@@ -30,27 +32,28 @@ interface StandingsEntry {
   pointsAgainst: number;
 }
 
-// Tournament configuration interface
 interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
-  orderGap: number;         // First variable
-  padding: number;          // Renamed from orderBuffer
+  orderGap: number;
+  padding: number;
   winLossMagnitude: number;
   courtBonus: number;
   byeTopProtection: number;
   byeBonusTop: number;
   byeIncrement: number;
   sitProtection: number;
-  x: number;d
+  lateJoinBonus: number;  // ← was missing!
   courts: number;
   teamsPerPool: number;
   finalsFormat: "top2" | "top4" | "all";
 }
 
-
+// ==========================================
+// === LOGIC ===
+// ==========================================
 
 export default function Home() {
-  // === STATE VARIABLES ===
+  // --- State Variables ---
   const [players, setPlayers] = useState<Player[]>([]);
   const [eventPool, setEventPool] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,6 @@ export default function Home() {
   const [standings, setStandings] = useState<StandingsEntry[]>([]);
   const [sortColumn, setSortColumn] = useState<keyof StandingsEntry>("orderNumber");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
 
   // Add player form state
   const [name, setName] = useState("");
@@ -74,32 +76,30 @@ export default function Home() {
   const [editDuprNumericId, setEditDuprNumericId] = useState("");
   const [editDuprScore, setEditDuprScore] = useState("");
 
-  // Tournament configuration - all settings in one object
+  // Config state
   const [config, setConfig] = useState<TournamentConfig>({
     format: "STANDARD",
-    orderGap: 0.25,           // Order gap (spacing between players)
-    padding: 1,               // Padding for min/max order# (default: 1)
+    orderGap: 0.25,
+    padding: 1,
     winLossMagnitude: 1,
     courtBonus: 0.5,
-    byeTopProtection: 8,      // How many top players get better bye values
-    byeBonusTop: 0.5,         // Bonus for top players' bye values
-    byeIncrement: 1,          // Value added to bye count after a bye
-    sitProtection: 0.5,       // Value added after sitting out
-    lateJoinBonus: 0.25,      // Value added to late joiners
-    courts: 2,                // Moved to bye settings area
+    byeTopProtection: 8,
+    byeBonusTop: 0.5,
+    byeIncrement: 1,
+    sitProtection: 0.5,
+    lateJoinBonus: 0.75,
+    courts: 2,
     teamsPerPool: 4,
     finalsFormat: "top2",
   });
 
-  // Helper to update config values
+  // --- Config Helper ---
   const updateConfig = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     setConfig({ ...config, [key]: value });
   };
 
-  // Load players from database
-  useEffect(() => {
-    loadPlayers();
-  }, []);
+  // --- Player Functions ---
+  useEffect(() => { loadPlayers(); }, []);
 
   async function loadPlayers() {
     try {
@@ -115,7 +115,6 @@ export default function Home() {
     setLoading(false);
   }
 
-  // === PLAYER FUNCTIONS ===
   const handleAddPlayer = async () => {
     if (!name.trim()) return;
     setSubmitting(true);
@@ -127,10 +126,7 @@ export default function Home() {
     const result = await addPlayer(formData);
     if (result.success && result.player) {
       setPlayers([result.player, ...players]);
-      setName("");
-      setDuprId("");
-      setDuprNumericId("");
-      setDuprScore("");
+      setName(""); setDuprId(""); setDuprNumericId(""); setDuprScore("");
     }
     setSubmitting(false);
   };
@@ -166,62 +162,43 @@ export default function Home() {
       setEditingPlayerId(null);
     }
   };
-  
 
-  // === EVENT POOL FUNCTIONS ===
+  // --- Event Pool Functions ---
   const addToPool = (player: Player) => {
     if (eventPool.find(p => p.id === player.id)) return;
-    const newPool = [...eventPool, player];
-    setEventPool(newPool);
+    setEventPool([...eventPool, player]);
     initializeStandings(player);
   };
 
-  // Initialize standings for a player when added to event pool
   const initializeStandings = (player: Player) => {
     const existingEntry = standings.find(s => s.id === player.id);
     if (existingEntry) return;
-    
-    // Calculate initial order# based on DUPR score (lower score = better order)
+
     const sortedByDupr = eventPool
       .filter(p => p.duprScore !== null)
       .sort((a, b) => (a.duprScore || 5) - (b.duprScore || 5));
     const rank = sortedByDupr.findIndex(p => p.id === player.id);
     const initialOrder = 1 + (rank >= 0 ? rank * config.orderGap : 0);
-    
-    // Assign random bye value based on protection rules
+
     let byeValue = 0;
     if (rank < config.byeTopProtection / 2) {
-      // Top players get better bye range: -byeBonusTop to +byeBonusTop
       byeValue = (Math.random() * 2 - 1) * config.byeBonusTop;
     } else if (rank < config.byeTopProtection) {
-      // Next tier: -byeBonusTop-0.25 to +byeBonusTop-0.25
       byeValue = (Math.random() * 2 - 1) * (config.byeBonusTop + 0.25);
     } else {
-      // Everyone else: -1 to 0
       byeValue = -Math.random();
     }
-    
-    const newEntry: StandingsEntry = {
-      id: player.id,
-      name: player.name,
-      duprId: player.duprId,
-      duprScore: player.duprScore,
-      orderNumber: initialOrder,
-      byeValue: byeValue,
-      byeCount: 0,
-      wins: 0,
-      losses: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-    };
-    
-    setStandings([...standings, newEntry]);
+
+    setStandings([...standings, {
+      id: player.id, name: player.name, duprId: player.duprId,
+      duprScore: player.duprScore, orderNumber: initialOrder,
+      byeValue, byeCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
+    }]);
   };
 
   const removeFromPool = (playerId: string) => {
     setEventPool(eventPool.filter(p => p.id !== playerId));
   };
-
 
   const handleSort = (column: keyof StandingsEntry) => {
     if (sortColumn === column) {
@@ -248,31 +225,39 @@ export default function Home() {
 
   const cancelEditPlayer = () => {
     setEditingPlayerId(null);
-    setEditName("");
-    setEditDuprId("");
-    setEditDuprNumericId("");
-    setEditDuprScore("");
+    setEditName(""); setEditDuprId(""); setEditDuprNumericId(""); setEditDuprScore("");
   };
 
-  // === RENDER ===
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl text-center max-w-md">
-          <p className="text-red-600 font-bold mb-2">Database Error</p>
-          <p className="text-gray-700 text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // --- Derived Values ---
+  const sortedStandings = standings.slice().sort((a, b) => {
+    const aVal = a[sortColumn];
+    const bVal = b[sortColumn];
+    if (aVal === null || aVal === undefined) return 1;
+    if (bVal === null || bVal === undefined) return -1;
+    if (typeof aVal === "string") {
+      return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+  });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-        <p className="text-white text-xl">Loading...</p>
+  // ==========================================
+  // === UI ===
+  // ==========================================
+
+  if (error) return (
+    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-xl text-center max-w-md">
+        <p className="text-red-600 font-bold mb-2">Database Error</p>
+        <p className="text-gray-700 text-sm">{error}</p>
       </div>
-    );
-  }
+    </div>
+  );
+
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+      <p className="text-white text-xl">Loading...</p>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
@@ -283,90 +268,96 @@ export default function Home() {
 
       <div className="max-w-6xl mx-auto space-y-8">
 
-        {/* === TOURNAMENT FORMAT SECTION === */}
+        {/* --- Tournament Format --- */}
         <section className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">⚙️ Tournament Format</h2>
-
-          {/* Format Buttons */}
+          
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <button
-              onClick={() => updateConfig("format", "STANDARD")}
-              className={`p-4 rounded-xl border-2 transition-all ${config.format === "STANDARD" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"}`}
-            >
-              <div className="text-2xl mb-2">👑</div>
-              <div className="font-semibold">Standard</div>
-              <div className="text-xs mt-1">King of Court</div>
-            </button>
-            <button
-              onClick={() => updateConfig("format", "FIXED_PARTNER")}
-              className={`p-4 rounded-xl border-2 transition-all ${config.format === "FIXED_PARTNER" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"}`}
-            >
-              <div className="text-2xl mb-2">🤝</div>
-              <div className="font-semibold">Fixed Partner</div>
-              <div className="text-xs mt-1">Stay with partner</div>
-            </button>
-            <button
-              onClick={() => updateConfig("format", "POOL_PLAY")}
-              className={`p-4 rounded-xl border-2 transition-all ${config.format === "POOL_PLAY" ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"}`}
-            >
-              <div className="text-2xl mb-2">🏊</div>
-              <div className="font-semibold">Pool Play</div>
-              <div className="text-xs mt-1">Groups + Finals</div>
-            </button>
+            {(["STANDARD", "FIXED_PARTNER", "POOL_PLAY"] as const).map(fmt => (
+              <button key={fmt} onClick={() => updateConfig("format", fmt)}
+                className={`p-4 rounded-xl border-2 transition-all ${config.format === fmt ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 hover:border-gray-300 text-gray-600"}`}>
+                <div className="text-2xl mb-2">{fmt === "STANDARD" ? "👑" : fmt === "FIXED_PARTNER" ? "🤝" : "🏊"}</div>
+                <div className="font-semibold">{fmt.replace("_", " ")}</div>
+              </button>
+            ))}
           </div>
 
-          {/* Standard/Fixed Options */}
+          {/* Standard / Fixed Options */}
           {(config.format === "STANDARD" || config.format === "FIXED_PARTNER") && (
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-medium text-gray-700">Order & Match Settings</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
-                  <input type="number" step="0.25" min="0.25" value={config.orderGap} onChange={(e) => updateConfig("orderGap", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" step="0.25" min="0.25" value={config.orderGap}
+                    onChange={(e) => updateConfig("orderGap", parseFloat(e.target.value) || 0.25)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">W/L Mag</label>
-                  <input type="number" step="0.25" min="0.25" value={config.winLossMagnitude} onChange={(e) => updateConfig("winLossMagnitude", parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" step="0.25" min="0.25" value={config.winLossMagnitude}
+                    onChange={(e) => updateConfig("winLossMagnitude", parseFloat(e.target.value) || 1)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                   <p className="text-xs text-gray-400 mt-1">Win/Loss impact</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">± Top Bottom Court</label>
-                  <input type="number" step="0.25" min="0" max="2" value={config.courtBonus} onChange={(e) => updateConfig("courtBonus", parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-600 mb-1">± Top/Bottom Court</label>
+                  <input type="number" step="0.25" min="0" max="2" value={config.courtBonus}
+                    onChange={(e) => updateConfig("courtBonus", parseFloat(e.target.value) || 0.5)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                   <p className="text-xs text-gray-400 mt-1">Top win/Bottom loss reduction</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Order minmax Padding</label>
-                  <input type="number" step="0.25" min="0" value={config.padding} onChange={(e) => updateConfig("padding", parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Order Padding</label>
+                  <input type="number" step="0.25" min="0" value={config.padding}
+                    onChange={(e) => updateConfig("padding", parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Late Join Bonus</label>
+                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus}
+                    onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.75)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
 
-              {/* Bye Settings */}
               <h3 className="font-medium text-gray-700 mt-4">Bye Settings</h3>
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
-                  <input type="number" min="1" max="16" value={config.courts} onChange={(e) => updateConfig("courts", parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" min="1" max="16" value={config.courts}
+                    onChange={(e) => updateConfig("courts", parseInt(e.target.value) || 2)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Players Bye Bonus</label>
-                  <input type="number" min="0" max="20" value={config.byeTopProtection} onChange={(e) => updateConfig("byeTopProtection", parseInt(e.target.value) || 8)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Bye Top Protection</label>
+                  <input type="number" min="0" max="20" value={config.byeTopProtection}
+                    onChange={(e) => updateConfig("byeTopProtection", parseInt(e.target.value) || 8)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Bye Bonus</label>
-                  <input type="number" step="0.25" min="0" max="2" value={config.byeBonusTop} onChange={(e) => updateConfig("byeBonusTop", parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                  <p className="text-xs text-gray-400 mt-1">Top player bonus</p>
+                  <input type="number" step="0.25" min="0" max="2" value={config.byeBonusTop}
+                    onChange={(e) => updateConfig("byeBonusTop", parseFloat(e.target.value) || 0.5)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Bye Incr.</label>
-                  <input type="number" step="0.25" min="0.5" value={config.byeIncrement} onChange={(e) => updateConfig("byeIncrement", parseFloat(e.target.value) || 1)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Bye Increment</label>
+                  <input type="number" step="0.25" min="0.5" value={config.byeIncrement}
+                    onChange={(e) => updateConfig("byeIncrement", parseFloat(e.target.value) || 1)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Sit Prot.</label>
-                  <input type="number" step="0.25" min="0" value={config.sitProtection} onChange={(e) => updateConfig("sitProtection", parseFloat(e.target.value) || 0.5)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Sit Protection</label>
+                  <input type="number" step="0.25" min="0" value={config.sitProtection}
+                    onChange={(e) => updateConfig("sitProtection", parseFloat(e.target.value) || 0.5)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Late Prot.</label>
-                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus} onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" step="0.25" min="0.25" value={config.lateJoinBonus}
+                    onChange={(e) => updateConfig("lateJoinBonus", parseFloat(e.target.value) || 0.75)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
             </div>
@@ -379,11 +370,15 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Per Pool</label>
-                  <input type="number" min="3" max="8" value={config.teamsPerPool} onChange={(e) => updateConfig("teamsPerPool", parseInt(e.target.value) || 4)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" min="3" max="8" value={config.teamsPerPool}
+                    onChange={(e) => updateConfig("teamsPerPool", parseInt(e.target.value) || 4)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Finals</label>
-                  <select value={config.finalsFormat} onChange={(e) => updateConfig("finalsFormat", e.target.value as "top2" | "top4" | "all")} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                  <select value={config.finalsFormat}
+                    onChange={(e) => updateConfig("finalsFormat", e.target.value as "top2" | "top4" | "all")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg">
                     <option value="top2">Top 2 → Semis</option>
                     <option value="top4">Top 4 → Quarters</option>
                     <option value="all">Everyone</option>
@@ -391,48 +386,57 @@ export default function Home() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
-                  <input type="number" min="1" max="10" value={config.courts} onChange={(e) => updateConfig("courts", parseInt(e.target.value) || 2)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" min="1" max="10" value={config.courts}
+                    onChange={(e) => updateConfig("courts", parseInt(e.target.value) || 2)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
-                  <input type="number" step="0.25" min="0.25" value={config.orderGap} onChange={(e) => updateConfig("orderGap", parseFloat(e.target.value) || 0.25)} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <input type="number" step="0.25" min="0.25" value={config.orderGap}
+                    onChange={(e) => updateConfig("orderGap", parseFloat(e.target.value) || 0.25)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
               </div>
             </div>
           )}
         </section>
 
-        {/* === ADD PLAYER FORM === */}
+        {/* --- Add Player Form --- */}
         <section className="bg-white rounded-2xl shadow-xl p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">➕ Add New Player</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Smith" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="John Smith" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">DUPR ID</label>
-              <input type="text" value={duprId} onChange={(e) => setDuprId(e.target.value)} placeholder="5E64ZL" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <input type="text" value={duprId} onChange={(e) => setDuprId(e.target.value)}
+                placeholder="5E64ZL" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Numeric ID</label>
-              <input type="text" value={duprNumericId} onChange={(e) => setDuprNumericId(e.target.value)} placeholder="7438750465" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <input type="text" value={duprNumericId} onChange={(e) => setDuprNumericId(e.target.value)}
+                placeholder="7438750465" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-              <input type="number" step="0.1" min="1" max="6" value={duprScore} onChange={(e) => setDuprScore(e.target.value)} placeholder="3.5" className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <input type="number" step="0.1" min="1" max="6" value={duprScore}
+                onChange={(e) => setDuprScore(e.target.value)} placeholder="3.5"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
           </div>
           <div className="mt-4">
-            <button onClick={handleAddPlayer} disabled={submitting || !name.trim()} className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400">
+            <button onClick={handleAddPlayer} disabled={submitting || !name.trim()}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-400">
               {submitting ? "Adding..." : "Add Player"}
             </button>
           </div>
         </section>
 
-        {/* === PLAYER DATABASE & EVENT POOL === */}
+        {/* --- Player Database & Event Pool --- */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Player Database */}
           <section className="bg-white rounded-2xl shadow-xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">📋 Player Database</h2>
@@ -446,15 +450,21 @@ export default function Home() {
                   <div key={player.id} className="p-3 bg-gray-50 rounded-lg">
                     {editingPlayerId === player.id ? (
                       <div className="space-y-2">
-                        <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                        <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg" />
                         <div className="grid grid-cols-3 gap-2">
-                          <input type="text" value={editDuprId} onChange={(e) => setEditDuprId(e.target.value)} placeholder="DUPR ID" className="px-3 py-2 border rounded-lg text-sm" />
-                          <input type="text" value={editDuprNumericId} onChange={(e) => setEditDuprNumericId(e.target.value)} placeholder="Numeric ID" className="px-3 py-2 border rounded-lg text-sm" />
-                          <input type="number" step="0.1" value={editDuprScore} onChange={(e) => setEditDuprScore(e.target.value)} placeholder="Rating" className="px-3 py-2 border rounded-lg text-sm" />
+                          <input type="text" value={editDuprId} onChange={(e) => setEditDuprId(e.target.value)}
+                            placeholder="DUPR ID" className="px-3 py-2 border rounded-lg text-sm" />
+                          <input type="text" value={editDuprNumericId} onChange={(e) => setEditDuprNumericId(e.target.value)}
+                            placeholder="Numeric ID" className="px-3 py-2 border rounded-lg text-sm" />
+                          <input type="number" step="0.1" value={editDuprScore} onChange={(e) => setEditDuprScore(e.target.value)}
+                            placeholder="Rating" className="px-3 py-2 border rounded-lg text-sm" />
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={handleUpdatePlayer} className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm">Save</button>
-                          <button onClick={cancelEditPlayer} className="flex-1 bg-gray-300 py-2 rounded-lg text-sm">Cancel</button>
+                          <button onClick={handleUpdatePlayer}
+                            className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm">Save</button>
+                          <button onClick={cancelEditPlayer}
+                            className="flex-1 bg-gray-300 py-2 rounded-lg text-sm">Cancel</button>
                         </div>
                       </div>
                     ) : (
@@ -466,7 +476,8 @@ export default function Home() {
                           {player.duprScore && <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded text-sm">{player.duprScore.toFixed(1)}</span>}
                         </div>
                         <div className="flex gap-2">
-                          <button onClick={() => addToPool(player)} disabled={eventPool.some(p => p.id === player.id)} className={`w-8 h-8 rounded-full font-bold text-sm ${eventPool.some(p => p.id === player.id) ? "bg-gray-200 text-gray-400" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
+                          <button onClick={() => addToPool(player)} disabled={eventPool.some(p => p.id === player.id)}
+                            className={`w-8 h-8 rounded-full font-bold text-sm ${eventPool.some(p => p.id === player.id) ? "bg-gray-200 text-gray-400" : "bg-blue-600 text-white hover:bg-blue-700"}`}>
                             {eventPool.some(p => p.id === player.id) ? "✓" : "+"}
                           </button>
                           <button onClick={() => startEditPlayer(player)} className="text-yellow-600 hover:text-yellow-800 px-2">✏️</button>
@@ -481,7 +492,6 @@ export default function Home() {
             )}
           </section>
 
-          {/* Event Pool */}
           <section className="bg-white rounded-2xl shadow-xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-800">🎯 Event Pool</h2>
@@ -508,13 +518,12 @@ export default function Home() {
           </section>
         </div>
 
-        {/* === STANDINGS TABLE === */}
+        {/* --- Standings Table --- */}
         <section className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-800">📊 Standings</h2>
             <span className="text-sm text-gray-500">{standings.length} players</span>
           </div>
-          
           {standings.length === 0 ? (
             <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
           ) : (
@@ -522,89 +531,45 @@ export default function Home() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="p-2 text-left cursor-pointer hover:bg-gray-200" onClick={() => handleSort("name")}>
-                      Name {sortColumn === "name" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("orderNumber")}>
-                      Order# {sortColumn === "orderNumber" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeValue")}>
-                      Bye# {sortColumn === "byeValue" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
-                      W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("losses")}>
-                      L {sortColumn === "losses" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("wins")}>
-                      Win% {sortColumn === "wins" && sortDirection === "desc" ? "↓" : ""}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
-                      PF {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
-                      PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
-                      +/- {sortColumn === "pointsFor" && sortDirection === "desc" ? "↓" : ""}
-                    </th>
-                    <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeCount")}>
-                      Byes {sortColumn === "byeCount" && (sortDirection === "asc" ? "↑" : "↓")}
-                    </th>
+                    {(["name", "orderNumber", "byeValue", "wins", "losses", "wins", "pointsFor", "pointsAgainst", "pointsFor", "byeCount"] as const).map((col, i) => (
+                      <th key={col} className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort(col)}>
+                        {["Name", "Order#", "Bye#", "W", "L", "Win%", "PF", "PA", "+/-", "Byes"][i]}
+                        {sortColumn === col && (sortDirection === "asc" ? " ↑" : " ↓")}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {standings
-                    .slice()
-                    .sort((a, b) => {
-                      const aVal = a[sortColumn];
-                      const bVal = b[sortColumn];
-                      if (aVal === null || aVal === undefined) return 1;
-                      if (bVal === null || bVal === undefined) return -1;
-                      if (typeof aVal === "string") {
-                        return sortDirection === "asc" 
-                          ? aVal.localeCompare(bVal as string)
-                          : (bVal as string).localeCompare(aVal);
-                      }
-                      return sortDirection === "asc" 
-                        ? (aVal as number) - (bVal as number)
-                        : (bVal as number) - (aVal as number);
-                    })
-                    .map((entry, index) => {
-                      const winPct = entry.wins + entry.losses > 0 
-                        ? ((entry.wins / (entry.wins + entry.losses)) * 100).toFixed(1)
-                        : "0.0";
-                      const pointDiff = entry.pointsFor - entry.pointsAgainst;
-                      return (
-                        <tr key={entry.id} className="border-t hover:bg-gray-50">
-                          <td className="p-2">
-                            <div className="font-medium">{entry.name}</div>
-                            {entry.duprId && <div className="text-xs text-gray-500">DUPR: {entry.duprId}</div>}
-                          </td>
-                          <td className="p-2 text-center font-mono">{entry.orderNumber.toFixed(2)}</td>
-                          <td className="p-2 text-center font-mono">{entry.byeValue.toFixed(2)}</td>
-                          <td className="p-2 text-center">{entry.wins}</td>
-                          <td className="p-2 text-center">{entry.losses}</td>
-                          <td className="p-2 text-center">{winPct}%</td>
-                          <td className="p-2 text-center">{entry.pointsFor}</td>
-                          <td className="p-2 text-center">{entry.pointsAgainst}</td>
-                          <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
-                            {pointDiff >= 0 ? "+" : ""}{pointDiff}
-                          </td>
-                          <td className="p-2 text-center">{entry.byeCount}</td>
-                        </tr>
-                      );
-                    })}
+                  {sortedStandings.map((entry) => {
+                    const winPct = entry.wins + entry.losses > 0 ? ((entry.wins / (entry.wins + entry.losses)) * 100).toFixed(1) : "0.0";
+                    const pointDiff = entry.pointsFor - entry.pointsAgainst;
+                    return (
+                      <tr key={entry.id} className="border-t hover:bg-gray-50">
+                        <td className="p-2">
+                          <div className="font-medium">{entry.name}</div>
+                          {entry.duprId && <div className="text-xs text-gray-500">DUPR: {entry.duprId}</div>}
+                        </td>
+                        <td className="p-2 text-center font-mono">{entry.orderNumber.toFixed(2)}</td>
+                        <td className="p-2 text-center font-mono">{entry.byeValue.toFixed(2)}</td>
+                        <td className="p-2 text-center">{entry.wins}</td>
+                        <td className="p-2 text-center">{entry.losses}</td>
+                        <td className="p-2 text-center">{winPct}%</td>
+                        <td className="p-2 text-center">{entry.pointsFor}</td>
+                        <td className="p-2 text-center">{entry.pointsAgainst}</td>
+                        <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {pointDiff >= 0 ? "+" : ""}{pointDiff}
+                        </td>
+                        <td className="p-2 text-center">{entry.byeCount}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </section>
 
-
-
-        {/* === START ROUND BUTTON === */}
+        {/* --- Start Round Button --- */}
         {eventPool.filter(p => !p.isSitting).length >= 4 && (
           <section className="text-center">
             <button className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-12 py-4 rounded-xl text-xl shadow-lg hover:scale-105">
