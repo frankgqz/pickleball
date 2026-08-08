@@ -391,53 +391,11 @@ export default function Home() {
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
 
-  // Recalculate adjusted order based on win percentage
-  // Clamped within band boundaries: (1 - band) to (1 + orderGap * maxPlayers + band)
-  const recalculateAdjustedOrder = () => {
-    setStandings(prev => {
-      return prev.map(entry => {
-        const gamesPlayed = entry.wins + entry.losses;
-        const winPct = gamesPlayed > 0 ? entry.wins / gamesPlayed : 0.5;
-        // Adjust based on win percentage, clamped within band boundaries
-        return {
-          ...entry,
-          adjustedOrder: Math.max(1 - config.band, Math.min(1 + (config.orderGap * (Math.max(...prev.map(p => p.baseOrder)) / config.orderGap - 1)) + config.band, entry.baseOrder - (winPct * config.winLossMagnitude))),
-        };
-      });
-    });
-  };
+  // seedAdjustment is updated directly in submitRoundResults, no need for this function anymore
 
-  // Calculate court bonus adjustment for a match result
-  const calculateCourtBonus = (baseOrder: number, won: boolean, isTopCourt: boolean): number => {
-    const bonus = config.courtBonus;
-    
-    if (won) {
-      // Winners subtract bonus from their adjusted order (move up)
-      return -bonus;
-    } else {
-      // Losers add bonus to their adjusted order (move down)
-      return bonus;
-    }
-  };
+  // calculateCourtBonus - no longer used
 
-  // Apply court bonus to all players after a round
-  const applyCourtBonuses = (matchResults: { playerId: string; won: boolean; isTopCourt: boolean }[]) => {
-    setStandings(prev => {
-      const maxPlayers = Math.max(...prev.map(p => p.baseOrder)) / config.orderGap;
-      const minAdjusted = 1 - config.band;
-      const maxAdjusted = 1 + (config.orderGap * maxPlayers) + config.band;
-      
-      return prev.map(entry => {
-        const result = matchResults.find(r => r.playerId === entry.id);
-        if (!result) return entry;
-        
-        const bonus = calculateCourtBonus(entry.baseOrder, result.won, result.isTopCourt);
-        const newAdjusted = Math.max(minAdjusted, Math.min(maxAdjusted, entry.adjustedOrder + bonus));
-        
-        return { ...entry, adjustedOrder: newAdjusted };
-      });
-    });
-  };
+  // applyCourtBonuses - no longer used
 
   // End round
   const endRound = () => {
@@ -524,8 +482,8 @@ export default function Home() {
     if (eventPool.find(p => p.id === player.id)) return;
     setEventPool([...eventPool, player]);
     initializeStandings(player);
-    // Recalculate baseOrder for all after pool change
-    setTimeout(() => recalculateBaseOrders(), 0);
+    // Recalculate seed for all after pool change
+    setTimeout(() => recalculateSeeds(), 0);
   };
 
   const initializeStandings = (player: Player) => {
