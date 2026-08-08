@@ -23,8 +23,8 @@ interface StandingsEntry {
   name: string;
   duprId: string | null;
   duprScore: number | null;
-  baseOrder: number;       // Order# based on DUPR ranking (highest DUPR = 1)
-  adjustedOrder: number;   // baseOrder adjusted by wins/losses (ranking for pairings)
+  seed: number;            // Base seed based on DUPR ranking (updates when players leave/join)
+  seedAdjustment: number;  // Cumulative from rounds (win/loss/bye effects), starts at 0
   
   // Order history: track each round's impact
   orderHistory: { round: number; change: number; reason: string }[];
@@ -88,7 +88,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [standings, setStandings] = useState<StandingsEntry[]>([]);
-  const [sortColumn, setSortColumn] = useState<keyof StandingsEntry>("baseOrder");
+  const [sortColumn, setSortColumn] = useState<keyof StandingsEntry>("seed");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Add player form state
@@ -178,11 +178,11 @@ export default function Home() {
       .filter(p => !byePlayerIds.includes(p.id))
       .map(p => p.id);
     
-    // Sort remaining by baseOrder
+    // Sort remaining by seed
     const remainingOrdered = remainingPlayers.sort((aId, bId) => {
       const aEntry = standings.find(s => s.id === aId);
       const bEntry = standings.find(s => s.id === bId);
-      return (aEntry?.baseOrder || 999) - (bEntry?.baseOrder || 999);
+      return (aEntry?.seed || 999) - (bEntry?.seed || 999);
     });
     
     // STEP 3: Create matches - fill courts with remaining players by order#
@@ -372,7 +372,7 @@ export default function Home() {
           losses: entry.losses + (playedMatch && !won ? 1 : 0),
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
-          adjustedOrder: entry.adjustedOrder + orderChange,
+          seedAdjustment: entry.seedAdjustment + orderChange,
           orderHistory: [...entry.orderHistory, { round: currentRound, change: orderChange, reason }],
         };
       }
@@ -547,6 +547,7 @@ export default function Home() {
     // If no DUPR, put at end with unique index
     const effectiveIndex = playerIndex >= 0 ? playerIndex : standings.length;
     const initialOrder = 1 + (effectiveIndex * config.orderGap);
+    // initialOrder is the seed
 
     const byeBase = generateByeBase(player.duprScore);
     // Late joiners only get bonus if first round has been completed
@@ -554,8 +555,8 @@ export default function Home() {
 
     setStandings([...standings, {
       id: player.id, name: player.name, duprId: player.duprId,
-      duprScore: player.duprScore, baseOrder: initialOrder,
-      adjustedOrder: initialOrder,
+      duprScore: player.duprScore, seed: initialOrder,
+      seedAdjustment: 0,
       orderHistory: [],
       byeBase, byeMod, byeCount: 0, sitOutCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
     }]);
@@ -575,8 +576,8 @@ export default function Home() {
       });
       return sorted.map((entry, index) => ({
         ...entry,
-        baseOrder: Math.max(1, 1 + (index * config.orderGap)), // Never below 1
-        adjustedOrder: Math.max(1, 1 + (index * config.orderGap)),
+        seed: 1 + (index * config.orderGap),
+        // seedAdjustment stays (round effects accumulate)
       }));
     });
   };
@@ -611,8 +612,8 @@ export default function Home() {
 
   // --- Recalculation Functions ---
   
-  // Recalculate baseOrder for all players based on DUPR (highest = 1)
-  const recalculateBaseOrders = () => {
+  // Recalculate seed for all players based on DUPR (highest = 1)
+  const recalculateSeeds = () => {
     setStandings(prev => {
       // Sort by DUPR score (highest first), null scores go last
       const sorted = [...prev].sort((a, b) => {
@@ -622,13 +623,13 @@ export default function Home() {
         return b.duprScore - a.duprScore;
       });
 
-      // Assign baseOrder and byeBase based on position in sorted list (keep adjustedOrder)
-      // Each player gets a unique baseOrder: 1, 1.25, 1.5, 1.75, etc.
+      // Assign seed based on position in sorted list
+      // Each player gets a unique seed: 1, 1.25, 1.5, 1.75, etc.
       return sorted.map((entry, index) => ({
         ...entry,
-        baseOrder: 1 + (index * config.orderGap),
+        seed: 1 + (index * config.orderGap),
         byeBase: generateByeBase(entry.duprScore),
-        // Don't reset byeCount, sitOutCount, adjustedOrder, or orderHistory on pool change
+        // seedAdjustment stays (round effects accumulate)
       }));
     });
   };
@@ -1348,8 +1349,8 @@ export default function Home() {
                           {entry.duprScore && <div className="text-xs text-green-600">{entry.duprScore.toFixed(1)}</div>}
                         </td>
                         <td className="p-2 text-center font-mono text-blue-600 cursor-help" 
-                          title={`base: ${entry.baseOrder.toFixed(2)}\n${entry.orderHistory.map(h => `R${h.round}: ${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)} (${h.reason})`).join('\n')}`}>
-                          {entry.adjustedOrder.toFixed(2)}
+                          title={`seed: ${entry.seed.toFixed(2)}\nadjustment: ${entry.seedAdjustment >= 0 ? '+' : ''}${entry.seedAdjustment.toFixed(2)}\n${entry.orderHistory.map(h => `R${h.round}: ${h.change >= 0 ? '+' : ''}${h.change.toFixed(2)} (${h.reason})`).join('\n')}`}>
+                          {(entry.seed + entry.seedAdjustment).toFixed(2)}
                         </td>
                         <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
                         <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
