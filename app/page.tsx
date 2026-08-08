@@ -331,27 +331,52 @@ const handleUpdatePlayer = async () => {
                             </span>
                           )}
                         </div>
+                        {/* ===== PART 1B: PLAYER ACTION BUTTONS ===== */}
+                        {/* These buttons allow adding players to event, editing, fetching DUPR data, or deleting */}
                         <div className="flex gap-2">
+                          
+                          {/* Button: Add player to current event pool */}
+                          {/* State: Shows "In Pool" if already added, or "Add to Event" if not */}
+                          <button
+                            onClick={() => addToPool(player)}
+                            disabled={eventPool.some(p => p.id === player.id)}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                              eventPool.some(p => p.id === player.id)
+                                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}
+                            title={eventPool.some(p => p.id === player.id) ? "Already in event pool" : "Add to current event"}
+                          >
+                            {eventPool.some(p => p.id === player.id) ? "✓ In Pool" : "+ Event"}
+                          </button>
+                          
+                          {/* Button: Edit player details (name, DUPR IDs, rating) */}
                           <button
                             onClick={() => startEditPlayer(player)}
                             className="text-yellow-600 hover:text-yellow-800 font-medium text-sm px-2"
-                            title="Edit player"
+                            title="Edit player details"
                           >
                             ✏️
                           </button>
+                          
+                          {/* Button: Fetch player data from DUPR API using their numeric ID */}
+                          {/* Only shows if player has a numeric DUPR ID (for API lookup) */}
                           {player.duprNumericId && (
                             <button
                               onClick={() => handleFetchDupr(player.id)}
                               className="text-blue-600 hover:text-blue-800 font-medium text-sm px-2"
-                              title="Fetch from DUPR"
+                              title="Fetch latest data from DUPR"
                             >
                               🔍
                             </button>
                           )}
+                          
+                          {/* Button: Delete player from database */}
+                          {/* Warning: This removes the player from both database and event pool */}
                           <button
                             onClick={() => handleDeletePlayer(player.id)}
                             className="text-red-500 hover:text-red-700 font-medium text-sm px-2"
-                            title="Delete player"
+                            title="Delete player from database"
                           >
                             🗑️
                           </button>
