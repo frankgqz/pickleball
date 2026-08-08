@@ -36,7 +36,7 @@ export default function Home() {
   const [editDuprNumericId, setEditDuprNumericId] = useState("");
   const [editDuprScore, setEditDuprScore] = useState("");
 
-  {/* === PART 2A-1: STATE VARIABLES FOR FORMAT SELECTION === */}
+  
   /* These control the tournament format configuration */
 
   /* Format type: 'STANDARD' = King of Court, 'FIXED_PARTNER' = Fixed pairs, 'POOL_PLAY' = Group stage + finals */
@@ -91,7 +91,7 @@ export default function Home() {
     setLoading(false);
   }
 
-  {/* === PART 2A-2: FORMAT SELECTION SECTION === */}
+  
   /* Configure the tournament format: Standard, Fixed Partner, or Pool Play */
   /* Contains format type selector + format-specific options */
 
@@ -464,8 +464,7 @@ const handleUpdatePlayer = async () => {
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
       {/* Header */}
       <header className="text-center mb-8">
-        {/* === PART 1A: PAGE HEADER === */}
-        {/* Main title and subtitle for the app */}
+                {/* Main title and subtitle for the app */}
         <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
         <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
       </header>
@@ -831,8 +830,6 @@ const handleUpdatePlayer = async () => {
         )}
         
         {eventPool.length > 0 && eventPool.length < 4 && (
-          {/* === PART 2A-3: PLAYER COUNT WARNING === */}
-          {/* Shows message when not enough players to start a round */}
           <p className="text-center text-white text-lg">
             Need at least 4 active players to start a round. You have {eventPool.filter(p => !p.isSitting).length}.
           </p>
