@@ -17,6 +17,17 @@ export default function SettingsPanel({ config, updateConfig, onSettingsChange, 
   const handleChange = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     updateConfig(key, value);
     if (onSettingsChange) onSettingsChange([key]);
+
+    // Auto-set order gap based on format
+    if (key === "format" && onFormatSelect) {
+      const fmt = value as TournamentConfig["format"];
+      if (fmt === "STANDARD") {
+        updateConfig("orderGap", 0.25);
+      } else if (fmt === "FIXED_PARTNER") {
+        updateConfig("orderGap", 0.5);
+      }
+      onFormatSelect(fmt as MatchFormat);
+    }
   };
 
   const handlePoolConfigChange = <K extends keyof PoolFinalsConfig>(key: K, value: PoolFinalsConfig[K]) => {
@@ -52,7 +63,10 @@ export default function SettingsPanel({ config, updateConfig, onSettingsChange, 
           <label className="text-sm font-medium text-gray-600">Format:</label>
           <select
             value={config.format}
-            onChange={(e) => handleChange("format", e.target.value as TournamentConfig["format"])}
+            onChange={(e) => {
+              const val = e.target.value as TournamentConfig["format"];
+              handleChange("format", val);
+            }}
             className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
           >
             <option value="STANDARD">Standard</option>

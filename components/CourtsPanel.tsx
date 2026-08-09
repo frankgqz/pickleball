@@ -211,9 +211,22 @@ export default function CourtsPanel({
             </>
           ) : (
             <>
-              <h3 className="text-lg font-semibold mb-4 text-gray-700">Waiting to start Round {currentRoundNumber}</h3>
-              <p className="text-gray-500 text-sm">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
-              <p className="text-gray-400 text-xs mt-2">Use the format buttons in Tournament Settings to start</p>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">Ready to start Round {currentRoundNumber}?</h3>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
+                  className="bg-purple-400 hover:bg-purple-500 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
+                >
+                  🤝 Standard
+                </button>
+                <button
+                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
+                  className="bg-blue-400 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
+                >
+                  ⚔️ Teams
+                </button>
+              </div>
+              <p className="text-gray-500 text-sm mt-3">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
             </>
           )}
         </div>
