@@ -5,7 +5,6 @@ import { StandingsEntry } from "./Types";
 
 interface Props {
   standings: StandingsEntry[];
-  // helpers supplied by parent (so sorting logic remains centralized)
   getSeedTotal: (e: StandingsEntry) => number;
   getByeTotal: (e: StandingsEntry) => number;
   getPointDiff: (e: StandingsEntry) => number;
@@ -13,6 +12,7 @@ interface Props {
   sortColumn: string;
   sortDirection: "asc" | "desc";
   handleSort: (key: string) => void;
+  onRegenerateByes?: () => void;
 }
 
 export default function StandingsTable({
@@ -24,12 +24,22 @@ export default function StandingsTable({
   sortColumn,
   sortDirection,
   handleSort,
+  onRegenerateByes,
 }: Props) {
   return (
     <section className="bg-white rounded-2xl shadow-xl p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-gray-800">📊 Standings</h2>
-        <span className="text-sm text-gray-500">{standings.length} players</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onRegenerateByes}
+            className="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg text-sm hover:bg-orange-200 border border-orange-300 transition-colors"
+            title="Regenerate bye base scores"
+          >
+            🎲 Regenerate Bye Base
+          </button>
+          <span className="text-sm text-gray-500">{standings.length} players</span>
+        </div>
       </div>
 
       {standings.length === 0 ? (
@@ -96,9 +106,7 @@ export default function StandingsTable({
 
                     <td
                       className="p-2 text-center font-mono text-blue-600 cursor-help"
-                      title={`seed: ${entry.seed.toFixed(2)}\nadjustment: ${entry.seedAdjustment >= 0 ? "+" : ""}${entry.seedAdjustment.toFixed(
-                        2
-                      )}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}`}
+                      title={`seed: ${entry.seed.toFixed(2)}\nadjustment: ${entry.seedAdjustment >= 0 ? "+" : ""}${entry.seedAdjustment.toFixed(2)}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}`}
                     >
                       {seedTotal.toFixed(2)}
                     </td>
@@ -127,9 +135,7 @@ export default function StandingsTable({
                     <td className="p-2 text-center">
                       <span
                         className={`font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
-                        title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${(entry.sitOutCount * 1).toFixed(
-                          2
-                        )} sit outs${entry.byeMod > 0 ? ` + ${entry.byeMod.toFixed(2)} late join` : ""}`}
+                        title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${(entry.sitOutCount * 1).toFixed(2)} sit outs${entry.byeMod > 0 ? ` + ${entry.byeMod.toFixed(2)} late join` : ""}`}
                       >
                         {byeTotal >= 0 ? "+" : ""}
                         {byeTotal.toFixed(2)}

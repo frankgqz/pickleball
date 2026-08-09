@@ -11,10 +11,11 @@ interface Props {
   onSettingsChange?: (keys: (keyof TournamentConfig)[]) => void;
   onFormatSelect?: (format: MatchFormat) => void;
   onStartRound?: () => void;
+  onRestartEvent?: () => void;
   canStartRound?: boolean;
 }
 
-export default function SettingsPanel({ config, updateConfig, onSettingsChange, onFormatSelect, onStartRound, canStartRound = false }: Props) {
+export default function SettingsPanel({ config, updateConfig, onSettingsChange, onFormatSelect, onStartRound, onRestartEvent, canStartRound = false }: Props) {
   const handleChange = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     updateConfig(key, value);
     if (onSettingsChange) onSettingsChange([key]);
@@ -68,6 +69,16 @@ export default function SettingsPanel({ config, updateConfig, onSettingsChange, 
           className="px-4 py-2 rounded-lg bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           🚀 Start Round 1
+        </button>
+        <button
+          onClick={() => {
+            if (confirm("Restart event? This will clear all rounds but keep players in the database.")) {
+              onRestartEvent && onRestartEvent();
+            }
+          }}
+          className="px-4 py-2 rounded-lg bg-red-100 text-red-600 font-medium text-sm hover:bg-red-200 border border-red-300 transition-colors"
+        >
+          🔄 Restart Event
         </button>
       </div>
 

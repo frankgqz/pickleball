@@ -180,6 +180,7 @@ export default function Page() {
 
     const result = await addPlayer(formData);
     if (result.success && result.player) {
+      // Add to top of list (newest first)
       setPlayers(prev => [result.player, ...prev]);
       // Automatically add to event pool and standings
       addToPool(result.player);
@@ -305,6 +306,82 @@ export default function Page() {
     });
 
     setRoundState({ active: true, format, matches, submitted: false });
+  };
+
+  // --- Pool/Finals match generation ---------------------- //
+  const generatePoolMatches = () => {
+    const poolConfig = config.poolFinals || {
+      poolsCount: 2,
+      finalistsPerPool: 2,
+      finalsFormat: "top2_to_semis",
+      advancementCriteria: "wins",
+      groupStageWinsFor: 1,
+      finalsWinsFor: 1,
+    };
+
+    // Get active players sorted by DUPR (highest first)
+    const activePlayers = eventPool
+      .filter(p => !p.isSitting)
+      .sort((a, b) => {
+        const aScore = a.duprScore ?? 0;
+        const bScore = b.duprScore ?? 0;
+        return bScore - aScore;
+      });
+
+    const poolsCount = poolConfig.poolsCount;
+    const playersPerPool = Math.ceil(activePlayers.length / poolsCount);
+
+    // Distribute players into pools (seeding based on DUPR)
+    const pools: Player[][] = Array.from({ length: poolsCount }, () => []);
+    activePlayers.forEach((player, idx) => {
+      const poolIdx = idx % poolsCount;
+      pools[poolIdx].push(player);
+    });
+
+    // Generate round-robin matches within each pool
+    const allMatches: Match[] = [];
+    let globalCourtNum = 1;
+
+    pools.forEach((pool, poolIdx) => {
+      const poolId = `pool-${poolIdx + 1}`;
+      const poolMatches = generateRoundRobin(pool, poolId, globalCourtNum);
+      allMatches.push(...poolMatches);
+      globalCourtNum += poolMatches.filter(m => !m.bye).length;
+    });
+
+    setRoundState({ 
+      active: true, 
+      format: "POOL_PLAY", 
+      matches: allMatches, 
+      submitted: false,
+      poolId: undefined,
+      stage: "pool"
+    });
+  };
+
+  // Generate round-robin matches for a pool of players
+  const generateRoundRobin = (players: Player[], poolId: string, startCourt: number): Match[] => {
+    const matches: Match[] = [];
+    const n = players.length;
+    let courtNum = startCourt;
+
+    // Simple round-robin: each player plays every other player once
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        matches.push({
+          id: `pool-${poolId}-m${courtNum}`,
+          court: courtNum,
+          team1: [players[i].id],
+          team2: [players[j].id],
+          team1Score: undefined,
+          team2Score: undefined,
+          bye: false,
+        });
+        courtNum++;
+      }
+    }
+
+    return matches;
   };
 
   // --- match helpers ---------------------- //
@@ -452,10 +529,18 @@ export default function Page() {
           config={config}
           updateConfig={updateConfig}
           onSettingsChange={(keys)=>{ /* handled above */ }}
-          onFormatSelect={(format) => {
+          onStartRound={() => {
             if (currentRoundNumber === 1) regenerateByes();
-            generateMatches(format as "PICK_PARTNER" | "FIXED_14V23");
+            if (config.format === "POOL_PLAY") {
+              // Pool/Finals format - distribute players into pools
+              generatePoolMatches();
+            } else if (config.format === "FIXED_PARTNER") {
+              generateMatches("FIXED_14V23");
+            } else {
+              generateMatches("PICK_PARTNER");
+            }
           }}
+          canStartRound={eventPool.filter(p => !p.isSitting).length >= 2}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -476,43 +561,90 @@ export default function Page() {
           />
         </div>
 
+        // --- Restart event handler ---------------------- //
+  const handleRestartEvent = useCallback(() => {
+    setRoundHistory([]);
+    saveRoundsToStorage([]);
+    setStandings(prev => prev.map(s => ({
+      ...s,
+      seedAdjustment: 0,
+      byeCount: 0,
+      sitOutCount: 0,
+      wins: 0,
+      losses: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      orderHistory: [],
+    })));
+    setUndoStack([]);
+    setCurrentHistoryIndex(-1);
+    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+    const newSession: GameSession = {
+      sessionId: Date.now().toString(),
+      startDate: new Date().toISOString(),
+    };
+    setCurrentSession(newSession);
+    saveSessionToStorage(newSession);
+  }, []);
+
+  const handleCancelRound = useCallback(() => {
+    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
+
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
+        <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
+      </header>
+
+      <div className="max-w-6xl mx-auto space-y-8">
+        <SettingsPanel
+          config={config}
+          updateConfig={updateConfig}
+          onSettingsChange={(keys)=>{}}
+          onStartRound={() => {
+            if (currentRoundNumber === 1) regenerateByes();
+            if (config.format === "POOL_PLAY") {
+              generatePoolMatches();
+            } else if (config.format === "FIXED_PARTNER") {
+              generateMatches("FIXED_14V23");
+            } else {
+              generateMatches("PICK_PARTNER");
+            }
+          }}
+          onRestartEvent={handleRestartEvent}
+          canStartRound={eventPool.filter(p => !p.isSitting).length >= 2}
+        />
+
         <RoundHistoryPanel
           roundHistory={roundHistory}
           currentSessionId={currentSession.sessionId}
           eventPool={eventPool}
           onEditRound={(updated: CompletedRound) => {
-            // replace and recompute session standings if needed (simple replace)
             setRoundHistory(prev => prev.map(r => r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId ? updated : r));
             saveRoundsToStorage(roundHistory);
           }}
           onDeleteRound={(roundNumber, sessionId)=> {
-            // delete and if same session as current, recompute seedAdjustment/byeCount by replay
             const newHistory = roundHistory.filter(r => !(r.roundNumber===roundNumber && r.sessionId===sessionId));
             setRoundHistory(newHistory);
             saveRoundsToStorage(newHistory);
             if (sessionId === currentSession.sessionId) {
-              // recompute: reset seedAdjustment/byeCount/sitOutCount/wins/losses/points then replay
               setStandings((prev: StandingsEntry[]) => {
                 const baseMap = new Map<string, StandingsEntry>();
                 prev.forEach(s => {
                   baseMap.set(s.id, { ...s, seedAdjustment: 0, byeCount: 0, sitOutCount: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, orderHistory: [] });
                 });
-                // reapply rounds in order for current session
                 const sessionRoundsSorted = newHistory.filter(r => r.sessionId===sessionId).sort((a,b)=>a.roundNumber-b.roundNumber);
                 sessionRoundsSorted.forEach(r => {
                   r.matches.forEach(m => {
                     if (m.bye && m.byePlayerId) {
                       const s = baseMap.get(m.byePlayerId);
-                      if (s) {
-                        s.byeCount = (s.byeCount||0)+1;
-                        s.orderHistory.push({ round: r.roundNumber, change: 0, reason: 'bye' });
-                      }
+                      if (s) { s.byeCount = (s.byeCount||0)+1; s.orderHistory.push({ round: r.roundNumber, change: 0, reason: 'bye' }); }
                     } else {
-                      // apply simple wins/points and order changes as earlier logic (omitted detailed here for brevity)
-                      const team1Ids = m.team1;
-                      const team2Ids = m.team2;
-                      const t1score = m.team1Score || 0;
-                      const t2score = m.team2Score || 0;
+                      const team1Ids = m.team1, team2Ids = m.team2;
+                      const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
                       [...team1Ids, ...team2Ids].forEach(pid => {
                         const s = baseMap.get(pid);
                         if (s) {
@@ -545,6 +677,7 @@ export default function Page() {
           onUpdateMatchScore={updateMatchScore}
           onSwapPlayerTeam={swapPlayerTeam}
           onSubmitRound={submitRoundResults}
+          onCancelRound={handleCancelRound}
         />
 
         <StandingsTable
@@ -555,6 +688,7 @@ export default function Page() {
           getPtsPct={getPtsPct}
           sortColumn={sortColumn as string}
           sortDirection={sortDirection}
+          onRegenerateByes={regenerateByes}
           handleSort={(k) => {
             // map keys to actual properties (some keys refer to computed fields)
             if (k === "seedAdjustment") {
