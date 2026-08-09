@@ -162,7 +162,7 @@ export default function PlayerDatabase({
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`p-2 rounded-lg border border-gray-300 flex items-center gap-3 ${hasDupr ? (inPool ? 'bg-green-50' : 'bg-white') : 'bg-yellow-50'}`}>
+            <div key={player.id} className={`p-2 rounded-lg border border-gray-300 flex items-center gap-3 ${hasDupr ? 'bg-white' : 'bg-yellow-50'}`}>
               <div className="flex-none">
                 {player.imageUrl ? (
                   <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
