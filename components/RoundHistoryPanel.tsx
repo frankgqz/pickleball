@@ -1,17 +1,21 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { RoundHistory, StandingsEntry } from "./Types";
+import { CompletedRound, Player } from "./Types";
 
 interface Props {
-  roundHistory: RoundHistory[];
+  roundHistory: CompletedRound[];
   currentSessionId: string;
+  eventPool?: Player[];
+  onEditRound?: (updated: CompletedRound) => void;
   onDeleteRound?: (roundNumber: number, sessionId: string) => void;
 }
 
 export default function RoundHistoryPanel({
   roundHistory,
   currentSessionId,
+  eventPool = [],
+  onEditRound,
   onDeleteRound,
 }: Props) {
   const sessionRounds = useMemo(
@@ -51,7 +55,7 @@ export default function RoundHistoryPanel({
             <option value="">Select a round...</option>
             {sessionRounds.map(r => (
               <option key={r.roundNumber} value={r.roundNumber}>
-                Round {r.roundNumber} — {new Date(r.timestamp).toLocaleString()}
+                Round {r.roundNumber} — {new Date(r.date).toLocaleString()}
               </option>
             ))}
           </select>
@@ -71,11 +75,22 @@ export default function RoundHistoryPanel({
         <p className="text-slate-400 text-sm">Select a round to view its matches.</p>
       ) : (
         <div className="space-y-4">
+          {selectedRound.sittingOut && selectedRound.sittingOut.length > 0 && (
+            <div className="text-sm text-orange-400 mb-2">
+              Sitting out: {selectedRound.sittingOut.map(id => {
+                const player = eventPool.find(p => p.id === id);
+                return player?.name || id;
+              }).join(", ")}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {selectedRound.matches.map((m) => {
-              const p1Name = m.player1Name || m.player1Id || "Unknown";
-              const p2Name = m.player2Name || m.player2Id || "BYE";
-              
+              const getPlayerName = (id: string) => {
+                const p = eventPool.find(e => e.id === id);
+                return p?.name || id;
+              };
+
               return (
                 <div
                   key={m.id}
@@ -87,24 +102,35 @@ export default function RoundHistoryPanel({
                     <div className="font-semibold text-white">
                       {m.bye ? "BYE" : `Court ${m.court ?? "-"}`}
                     </div>
-                    {m.result && (
-                      <div className="text-xs text-green-400">✓ Recorded</div>
+                    {m.team1Score !== undefined && m.team2Score !== undefined && (
+                      <div className="text-xs text-green-400">
+                        {m.team1Score} – {m.team2Score}
+                      </div>
                     )}
                   </div>
 
-                  <div className="text-sm text-slate-300 mb-2">
-                    <div className="font-medium">{p1Name}</div>
-                    <div className="text-slate-500 text-center my-1">vs</div>
-                    <div className="font-medium">{p2Name}</div>
-                  </div>
+                  {!m.bye && (
+                    <>
+                      <div className="text-sm text-slate-300 mb-2">
+                        <div className="font-medium">
+                          {m.team1.map(id => getPlayerName(id)).join(" / ")}
+                        </div>
+                        <div className="text-slate-500 text-center my-1">vs</div>
+                        <div className="font-medium">
+                          {m.team2.map(id => getPlayerName(id)).join(" / ")}
+                        </div>
+                      </div>
+                      {m.team1Score !== undefined && m.team2Score !== undefined && (
+                        <div className="text-xs text-slate-400 mt-2">
+                          {m.team1Score > m.team2Score ? "Team 1" : "Team 2"} wins
+                        </div>
+                      )}
+                    </>
+                  )}
 
-                  {m.result && !m.bye && (
-                    <div className="text-xs text-slate-400 mt-2">
-                      {m.result.winnerId ? (
-                        <span>Winner: {m.result.winnerId}</span>
-                      ) : m.result.tie ? (
-                        <span>Tie recorded</span>
-                      ) : null}
+                  {m.bye && (
+                    <div className="text-sm text-orange-300">
+                      {m.byePlayerId ? getPlayerName(m.byePlayerId) : "Unknown"}
                     </div>
                   )}
                 </div>

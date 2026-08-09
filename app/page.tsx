@@ -391,7 +391,7 @@ export default function Page() {
           roundHistory={roundHistory}
           currentSessionId={currentSession.sessionId}
           eventPool={eventPool}
-          onEditRound={(updated)=> {
+          onEditRound={(updated: CompletedRound) => {
             // replace and recompute session standings if needed (simple replace)
             setRoundHistory(prev => prev.map(r => r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId ? updated : r));
             saveRoundsToStorage(roundHistory);
