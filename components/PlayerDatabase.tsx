@@ -6,7 +6,6 @@ import { Player } from "./Types";
 interface Props {
   players: Player[];
   eventPool?: Player[];
-  // Handlers supplied by page (or parent)
   onAddPlayer?: (p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => Promise<void> | void;
   onUpdatePlayer?: (id: string, p: Partial<Player>) => Promise<void> | void;
   onDeletePlayer?: (id: string) => Promise<void> | void;
@@ -139,16 +138,8 @@ export default function PlayerDatabase({
           filteredPlayers.map((player) => {
             const hasDupr = !!player.duprId || !!player.duprNumericId;
             const inPool = isInPool(player.id);
-            const bgClass = player.isSitting
-              ? "bg-orange-50 border-orange-200"
-              : hasDupr
-              ? "bg-white border-gray-100"
-              : "bg-yellow-50 border-yellow-200";
-            const avatarClass = player.isSitting
-              ? "bg-orange-200 text-orange-700"
-              : hasDupr
-              ? "bg-green-600 text-white"
-              : "bg-yellow-200 text-yellow-800";
+            const bgClass = hasDupr ? "bg-white border-gray-100" : "bg-yellow-50 border-yellow-200";
+
             return (
               <div
                 key={player.id}
@@ -156,9 +147,11 @@ export default function PlayerDatabase({
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${avatarClass}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      hasDupr ? "bg-green-600 text-white" : "bg-yellow-200 text-yellow-800"
+                    }`}
                   >
-                    {player.isSitting ? "💤" : hasDupr ? "🎾" : "⚠️"}
+                    {hasDupr ? "🎾" : "⚠️"}
                   </div>
                   <div>
                     <div className="font-medium text-sm">{player.name}</div>
@@ -180,42 +173,50 @@ export default function PlayerDatabase({
                   )}
                 </div>
 
+                {/* Icon buttons in order: Add/Minus → Edit → DUPR → Delete */}
                 <div className="flex gap-1 items-center">
-                  <button
-                    onClick={() => onFetchDupr && onFetchDupr(player.id)}
-                    className="text-blue-600 hover:text-blue-800 px-2 py-1 text-sm"
-                    title="Fetch DUPR"
-                  >
-                    🔍
-                  </button>
+                  {/* Add to Pool / Remove from Pool */}
                   {onAddToPool && !inPool && (
                     <button
                       onClick={() => onAddToPool(player)}
-                      className="text-green-600 hover:text-green-800 px-2 py-1 text-sm"
+                      className="w-7 h-7 rounded bg-green-500 hover:bg-green-600 text-white flex items-center justify-center text-sm font-bold shadow-sm"
                       title="Add to event pool"
                     >
-                      ➕
+                      +
                     </button>
                   )}
                   {onRemoveFromPool && inPool && (
                     <button
                       onClick={() => onRemoveFromPool(player.id)}
-                      className="text-orange-600 hover:text-orange-800 px-2 py-1 text-sm"
+                      className="w-7 h-7 rounded bg-gray-400 hover:bg-red-500 text-white flex items-center justify-center text-sm font-bold shadow-sm transition-colors"
                       title="Remove from pool"
                     >
-                      ➖
+                      −
                     </button>
                   )}
+
+                  {/* Edit */}
                   <button
                     onClick={() => onUpdatePlayer && onUpdatePlayer(player.id, { isSitting: !player.isSitting } as Partial<Player>)}
-                    className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm"
+                    className="w-7 h-7 rounded bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center text-xs shadow-sm"
                     title="Edit"
                   >
                     ✏️
                   </button>
+
+                  {/* Fetch DUPR */}
+                  <button
+                    onClick={() => onFetchDupr && onFetchDupr(player.id)}
+                    className="w-7 h-7 rounded bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center text-xs shadow-sm"
+                    title="Fetch DUPR"
+                  >
+                    🔍
+                  </button>
+
+                  {/* Delete */}
                   <button
                     onClick={() => onDeletePlayer && onDeletePlayer(player.id)}
-                    className="text-red-400 hover:text-red-600 px-2 py-1 text-sm"
+                    className="w-7 h-7 rounded bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-xs shadow-sm"
                     title="Delete"
                   >
                     🗑️
