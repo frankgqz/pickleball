@@ -132,19 +132,19 @@ export default function PlayerDatabase({
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className="px-2 py-1 border border-gray-300 rounded w-24" 
+          className="px-2 py-1 border border-gray-300 rounded w-20 text-xs" 
           placeholder="DUPR ID" 
           value={duprId} 
           onChange={e => setDuprId(e.target.value)} 
         />
         <input 
-          className="px-2 py-1 border border-gray-300 rounded w-28" 
-          placeholder="webNumericID" 
+          className="px-2 py-1 border border-gray-300 rounded w-22 text-xs" 
+          placeholder="webNumID" 
           value={duprNumericId} 
           onChange={e => setDuprNumericId(e.target.value)} 
         />
         <input 
-          className="px-2 py-1 border border-gray-300 rounded w-20" 
+          className="px-2 py-1 border border-gray-300 rounded w-16 text-xs" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
@@ -162,12 +162,12 @@ export default function PlayerDatabase({
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`p-2 rounded-lg border border-gray-300 ${inPool ? 'bg-green-50' : 'bg-white'} flex items-center gap-3`}>
+            <div key={player.id} className={`p-2 rounded-lg border border-gray-300 flex items-center gap-3 ${hasDupr ? (inPool ? 'bg-green-50' : 'bg-white') : 'bg-yellow-50'}`}>
               <div className="flex-none">
                 {player.imageUrl ? (
                   <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
                 ) : (
-                  <div className={`w-9 h-9 rounded flex items-center justify-center font-bold text-sm border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-100 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
+                  <div className={`w-9 h-9 rounded flex items-center justify-center font-bold text-sm border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
                 )}
               </div>
 
