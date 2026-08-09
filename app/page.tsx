@@ -17,6 +17,7 @@ import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } fr
 // --- localStorage helpers (browser-only) ---------------------- //
 const STORAGE_KEY_ROUNDS = "pickleball_rounds_v1";
 const STORAGE_KEY_PLAYERS = "pickleball_players_v1";
+const STORAGE_KEY_EVENT_POOL = "pickleball_event_pool_v1";
 const isBrowser = typeof window !== "undefined";
 
 const saveRoundsToStorage = (rounds: CompletedRound[]) => {
@@ -41,6 +42,16 @@ const savePlayersToStorage = (players: Player[]) => {
 const loadPlayersFromStorage = (): Player[] => {
   if (!isBrowser) return [];
   const s = localStorage.getItem(STORAGE_KEY_PLAYERS);
+  if (!s) return [];
+  try { return JSON.parse(s) as Player[]; } catch { return []; }
+};
+const saveEventPoolToStorage = (pool: Player[]) => {
+  if (!isBrowser) return;
+  localStorage.setItem(STORAGE_KEY_EVENT_POOL, JSON.stringify(pool));
+};
+const loadEventPoolFromStorage = (): Player[] => {
+  if (!isBrowser) return [];
+  const s = localStorage.getItem(STORAGE_KEY_EVENT_POOL);
   if (!s) return [];
   try { return JSON.parse(s) as Player[]; } catch { return []; }
 };
@@ -69,7 +80,7 @@ export default function Page() {
 
   // Players & pool
   const [players, setPlayers] = useState<Player[]>(() => loadPlayersFromStorage());
-  const [eventPool, setEventPool] = useState<Player[]>([]);
+  const [eventPool, setEventPool] = useState<Player[]>(() => loadEventPoolFromStorage());
 
   // Standings entries
   const [standings, setStandings] = useState<StandingsEntry[]>([]);
@@ -267,6 +278,15 @@ export default function Page() {
       localStorage.setItem("pickleball_session_v1", JSON.stringify(currentSession));
     }
   }, [currentSession]);
+
+  // Auto-save eventPool to localStorage when it changes
+  useEffect(() => {
+    if (!isBrowser) return;
+    // Only save if it's been initialized (not initial empty state)
+    if (eventPool.length > 0 || localStorage.getItem(STORAGE_KEY_EVENT_POOL)) {
+      saveEventPoolToStorage(eventPool);
+    }
+  }, [eventPool]);
 
   // --- Match generation ---------------------- //
   const doGenerateMatches = useCallback((format: MatchFormat) => {

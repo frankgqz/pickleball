@@ -106,12 +106,9 @@ export default function RoundHistoryPanel({
         const pB1 = match.team2[0] ? getPlayerInfo(match.team2[0]) : { name: "", duprId: "" };
         const pB2 = match.team2[1] ? getPlayerInfo(match.team2[1]) : { name: "", duprId: "" };
 
-        // Format date as M/D/YYYY
-        const dateStr = new Date(round.date).toLocaleDateString('en-US', {
-          month: 'numeric',
-          day: 'numeric',
-          year: 'numeric'
-        });
+        // Format date as YYYY-MM-DD
+        const dateObj = new Date(round.date);
+        const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
 
         // Build event name with round
         const eventWithRound = `${eventName} - Round ${round.roundNumber}`;
