@@ -276,11 +276,7 @@ export default function Page() {
   }, [eventPool, standings, config, currentRoundNumber]);
 
   const doGeneratePoolMatches = useCallback(() => {
-    const matches = (async () => {
-      const { generatePoolMatches } = await import("../components/MatchEngine");
-      return generatePoolMatches(eventPool, config);
-    })();
-    // For now, generate simple pool matches
+    // Generate simple pool matches (round-robin within each pool)
     const activePlayers = eventPool.filter(p => !p.isSitting);
     const poolsCount = config.poolFinals?.poolsCount || 2;
     const pools: Player[][] = Array.from({ length: poolsCount }, () => []);
@@ -289,12 +285,12 @@ export default function Page() {
       pools[idx % poolsCount].push(player);
     });
 
-    const matches: Match[] = [];
+    const generatedMatches: Match[] = [];
     let courtNum = 1;
     pools.forEach((pool, poolIdx) => {
       for (let i = 0; i < pool.length; i++) {
         for (let j = i + 1; j < pool.length; j++) {
-          matches.push({
+          generatedMatches.push({
             id: `pool-${poolIdx + 1}-m${courtNum}`,
             court: courtNum,
             team1: [pool[i].id],
@@ -308,7 +304,7 @@ export default function Page() {
       }
     });
 
-    setRoundState({ active: true, format: "POOL_PLAY", matches, submitted: false, stage: "pool" });
+    setRoundState({ active: true, format: "POOL_PLAY", matches: generatedMatches, submitted: false, stage: "pool" });
   }, [eventPool, config]);
 
   // --- Match helpers ---------------------- //
@@ -528,84 +524,116 @@ export default function Page() {
             setRoundHistory(newHistory);
             saveRoundsToStorage(newHistory);
             
-            // Recalculate standings from all rounds
+            // Recalculate standings from all rounds - BATCHED into single setStandings call
             const sessionRounds = newHistory
               .filter(r => r.sessionId === currentSession.sessionId)
               .sort((a, b) => a.roundNumber - b.roundNumber);
             
-            setStandings(prev => prev.map(s => ({
-              ...s,
-              seedAdjustment: 0,
-              byeCount: 0,
-              sitOutCount: 0,
-              wins: 0,
-              losses: 0,
-              ties: 0,
-              pointsFor: 0,
-              pointsAgainst: 0,
-              orderHistory: [],
-            })));
+            // Build all changes first
+            const changesMap = new Map<string, { wins: number; losses: number; pointsFor: number; pointsAgainst: number; byeCount: number; orderHistory: { round: number; change: number; reason: string }[] }>();
             
+            // Initialize all players
+            standings.forEach(s => {
+              changesMap.set(s.id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, byeCount: 0, orderHistory: [] });
+            });
+            
+            // Apply all rounds
             sessionRounds.forEach(r => {
               r.matches.forEach(m => {
                 if (m.bye && m.byePlayerId) {
-                  setStandings(prev => prev.map(s => {
-                    if (s.id === m.byePlayerId) {
-                      return { ...s, byeCount: (s.byeCount || 0) + 1, orderHistory: [...(s.orderHistory || []), { round: r.roundNumber, change: 0, reason: 'bye' }] };
-                    }
-                    return s;
-                  }));
+                  const changes = changesMap.get(m.byePlayerId)!;
+                  changes.byeCount++;
+                  changes.orderHistory.push({ round: r.roundNumber, change: 0, reason: 'bye' });
                 } else {
                   const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
                   [...m.team1, ...m.team2].forEach(pid => {
-                    setStandings(prev => prev.map(s => {
-                      if (s.id !== pid) return s;
-                      const isOnTeam1 = m.team1.includes(pid);
-                      const myScore = isOnTeam1 ? t1score : t2score;
-                      const oppScore = isOnTeam1 ? t2score : t1score;
-                      let wins = s.wins || 0, losses = s.losses || 0;
-                      if (myScore > oppScore) wins++;
-                      else if (oppScore > myScore) losses++;
-                      return { ...s, wins, losses, pointsFor: (s.pointsFor || 0) + myScore, pointsAgainst: (s.pointsAgainst || 0) + oppScore };
-                    }));
+                    const changes = changesMap.get(pid)!;
+                    const isOnTeam1 = m.team1.includes(pid);
+                    const myScore = isOnTeam1 ? t1score : t2score;
+                    const oppScore = isOnTeam1 ? t2score : t1score;
+                    if (myScore > oppScore) changes.wins++;
+                    else if (oppScore > myScore) changes.losses++;
+                    changes.pointsFor += myScore;
+                    changes.pointsAgainst += oppScore;
                   });
                 }
               });
             });
+            
+            // Apply all changes in ONE setStandings call
+            setStandings(prev => prev.map(s => {
+              const changes = changesMap.get(s.id)!;
+              return {
+                ...s,
+                seedAdjustment: 0,
+                byeCount: changes.byeCount,
+                sitOutCount: 0,
+                wins: changes.wins,
+                losses: changes.losses,
+                ties: 0,
+                pointsFor: changes.pointsFor,
+                pointsAgainst: changes.pointsAgainst,
+                orderHistory: changes.orderHistory,
+              };
+            }));
           }}
           onDeleteRound={(roundNumber, sessionId) => {
             const newHistory = roundHistory.filter(r => !(r.roundNumber === roundNumber && r.sessionId === sessionId));
             setRoundHistory(newHistory);
             saveRoundsToStorage(newHistory);
-            if (sessionId === currentSession.sessionId) {
-              // Replay all rounds
-              const sessionRoundsSorted = newHistory.filter(r => r.sessionId === sessionId).sort((a,b) => a.roundNumber - b.roundNumber);
-              setStandings(prev => prev.map(s => ({ ...s, seedAdjustment: 0, byeCount: 0, sitOutCount: 0, wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0, orderHistory: [] })));
-              sessionRoundsSorted.forEach(r => {
-                r.matches.forEach(m => {
-                  if (m.bye && m.byePlayerId) {
-                    setStandings(prev => prev.map(s => {
-                      if (s.id === m.byePlayerId) return { ...s, byeCount: (s.byeCount || 0) + 1, orderHistory: [...(s.orderHistory || []), { round: r.roundNumber, change: 0, reason: 'bye' }] };
-                      return s;
-                    }));
-                  } else {
-                    const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
-                    [...m.team1, ...m.team2].forEach(pid => {
-                      setStandings(prev => prev.map(s => {
-                        if (s.id !== pid) return s;
-                        const isOnTeam1 = m.team1.includes(pid);
-                        const myScore = isOnTeam1 ? t1score : t2score;
-                        const oppScore = isOnTeam1 ? t2score : t1score;
-                        let wins = s.wins || 0, losses = s.losses || 0;
-                        if (myScore > oppScore) wins++;
-                        else if (oppScore > myScore) losses++;
-                        return { ...s, wins, losses, pointsFor: (s.pointsFor || 0) + myScore, pointsAgainst: (s.pointsAgainst || 0) + oppScore };
-                      }));
-                    });
-                  }
-                });
+            
+            if (sessionId !== currentSession.sessionId) return;
+            
+            // Recalculate standings from remaining rounds - BATCHED into single setStandings call
+            const sessionRounds = newHistory
+              .filter(r => r.sessionId === sessionId)
+              .sort((a, b) => a.roundNumber - b.roundNumber);
+            
+            // Build all changes first
+            const changesMap = new Map<string, { wins: number; losses: number; pointsFor: number; pointsAgainst: number; byeCount: number; orderHistory: { round: number; change: number; reason: string }[] }>();
+            
+            standings.forEach(s => {
+              changesMap.set(s.id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, byeCount: 0, orderHistory: [] });
+            });
+            
+            sessionRounds.forEach(r => {
+              r.matches.forEach(m => {
+                if (m.bye && m.byePlayerId) {
+                  const changes = changesMap.get(m.byePlayerId)!;
+                  changes.byeCount++;
+                  changes.orderHistory.push({ round: r.roundNumber, change: 0, reason: 'bye' });
+                } else {
+                  const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
+                  [...m.team1, ...m.team2].forEach(pid => {
+                    const changes = changesMap.get(pid)!;
+                    const isOnTeam1 = m.team1.includes(pid);
+                    const myScore = isOnTeam1 ? t1score : t2score;
+                    const oppScore = isOnTeam1 ? t2score : t1score;
+                    if (myScore > oppScore) changes.wins++;
+                    else if (oppScore > myScore) changes.losses++;
+                    changes.pointsFor += myScore;
+                    changes.pointsAgainst += oppScore;
+                  });
+                }
               });
-            }
+            });
+            
+            // Apply all changes in ONE setStandings call
+            setStandings(prev => prev.map(s => {
+              const changes = changesMap.get(s.id)!;
+              return {
+                ...s,
+                seedAdjustment: 0,
+                byeCount: changes.byeCount,
+                sitOutCount: 0,
+                wins: changes.wins,
+                losses: changes.losses,
+                ties: 0,
+                pointsFor: changes.pointsFor,
+                pointsAgainst: changes.pointsAgainst,
+                orderHistory: changes.orderHistory,
+              };
+            }));
           }}
         />
       </div>
