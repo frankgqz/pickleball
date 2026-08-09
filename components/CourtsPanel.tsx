@@ -197,38 +197,41 @@ export default function CourtsPanel({
     <section className="bg-white rounded-2xl shadow-xl p-6">
       {!roundState.active ? (
         <div className="text-center py-8">
-          {submitted ? (
-            <>
-              <div className="text-4xl mb-4">✓</div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-700">Round {currentRoundNumber - 1} Complete!</h3>
+          <div className={`rounded-xl p-8 ${submitted ? "bg-purple-50 border-2 border-purple-300" : "bg-green-50 border-2 border-green-300"}`}>
+            <div className={`text-4xl mb-4 ${submitted ? "text-purple-500" : "text-green-500"}`}>
+              {submitted ? "✓" : "🎾"}
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-gray-800">
+              {submitted ? `Round ${currentRoundNumber - 1} Complete!` : `Ready to start Round ${currentRoundNumber}?`}
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">{eventPool.filter(p => !p.isSitting).length} active players</p>
+
+            <p className="text-gray-500 text-xs mb-3 uppercase tracking-wide font-medium">Choose format:</p>
+
+            <div className="flex flex-col gap-3 max-w-xs mx-auto">
               <button
-                onClick={onStartNextRound}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
+                onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
               >
-                🚀 Start Round {currentRoundNumber}
+                📊 Standard (1v4, 2v3 by seed)
+                <span className="block text-xs font-normal opacity-75 mt-1">Sorted by order # total</span>
               </button>
-              <p className="text-gray-500 text-sm mt-3">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
-            </>
-          ) : (
-            <>
-              <h3 className="text-lg font-semibold mb-4 text-gray-700">Ready to start Round {currentRoundNumber}?</h3>
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
-                  className="bg-purple-400 hover:bg-purple-500 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
-                >
-                  🤝 Standard
-                </button>
-                <button
-                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
-                  className="bg-blue-400 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
-                >
-                  ⚔️ Teams
-                </button>
-              </div>
-              <p className="text-gray-500 text-sm mt-3">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
-            </>
-          )}
+              <button
+                onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
+              >
+                🤝 New Partners
+                <span className="block text-xs font-normal opacity-75 mt-1">Pick your partner for next round</span>
+              </button>
+              <button
+                onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
+              >
+                🎯 By DUPR (1v4, 2v3)
+                <span className="block text-xs font-normal opacity-75 mt-1">Highest DUPR vs lowest</span>
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -279,24 +282,15 @@ export default function CourtsPanel({
           )}
 
           <div className="mt-6 text-center">
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={onSubmitRound}
-                disabled={roundState.submitted}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                ✓ Submit Round Results
-              </button>
-              <button
-                onClick={onStartNextRound}
-                disabled={!roundState.submitted}
-                className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                🚀 Start Next Round
-              </button>
-            </div>
+            <button
+              onClick={onSubmitRound}
+              disabled={roundState.submitted}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              ✓ Submit Round Results
+            </button>
             {roundState.submitted && (
-              <p className="text-green-600 text-sm mt-2">Round submitted!</p>
+              <p className="text-green-600 text-sm mt-2">Round submitted! Choose a format above to continue.</p>
             )}
           </div>
         </>
