@@ -152,6 +152,8 @@ export default function Page() {
       duprScore: p.duprScore ?? null,
     };
     setPlayers(prev => [newPlayer, ...prev]);
+    // Automatically add to event pool and standings
+    addToPool(newPlayer);
   };
   const handleDeletePlayer = (id: string) => {
     setPlayers(prev => prev.filter(p => p.id !== id));
