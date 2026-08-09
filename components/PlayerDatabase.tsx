@@ -123,13 +123,33 @@ export default function PlayerDatabase({
         </div>
       </div>
 
-      {/* Add form compact */}
-      <div className="mb-3 grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-2 items-end text-sm">
-        <input className="px-2 py-1 border border-gray-300 rounded" placeholder="Name *" value={name} onChange={e => setName(e.target.value)} />
-        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-24" placeholder="DUPR ID" value={duprId} onChange={e => setDuprId(e.target.value)} />
-        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-24" placeholder="webNumericID" value={duprNumericId} onChange={e => setDuprNumericId(e.target.value)} />
-        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-20" placeholder="Rating" value={duprScore} onChange={e => setDuprScore(e.target.value)} />
-        <button className="text-sm text-white bg-green-600 px-3 py-1 rounded" onClick={handleAdd}>+ Add</button>
+      {/* Add form - all inputs on same row */}
+      <div className="mb-3 flex flex-wrap items-end gap-2 text-sm">
+        <input 
+          className="px-2 py-1 border border-gray-300 rounded min-w-[120px]" 
+          placeholder="Name *" 
+          value={name} 
+          onChange={e => setName(e.target.value)} 
+        />
+        <input 
+          className="px-2 py-1 border border-gray-300 rounded w-24" 
+          placeholder="DUPR ID" 
+          value={duprId} 
+          onChange={e => setDuprId(e.target.value)} 
+        />
+        <input 
+          className="px-2 py-1 border border-gray-300 rounded w-28" 
+          placeholder="webNumericID" 
+          value={duprNumericId} 
+          onChange={e => setDuprNumericId(e.target.value)} 
+        />
+        <input 
+          className="px-2 py-1 border border-gray-300 rounded w-20" 
+          placeholder="Rating" 
+          value={duprScore} 
+          onChange={e => setDuprScore(e.target.value)} 
+        />
+        <button className="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700" onClick={handleAdd}>+ Add</button>
       </div>
       {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
 
@@ -142,12 +162,12 @@ export default function PlayerDatabase({
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`p-2 rounded-lg border ${inPool ? 'bg-green-50' : 'bg-white'} flex items-center gap-3`}> 
+            <div key={player.id} className={`p-2 rounded-lg border border-gray-300 ${inPool ? 'bg-green-50' : 'bg-white'} flex items-center gap-3`}>
               <div className="flex-none">
                 {player.imageUrl ? (
-                  <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded-full object-cover ${player.isSitting ? 'opacity-50' : ''}`} />
+                  <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
                 ) : (
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${hasDupr ? 'bg-gradient-to-br from-green-500 to-green-700 text-white' : 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
+                  <div className={`w-9 h-9 rounded flex items-center justify-center font-bold text-sm border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-100 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
                 )}
               </div>
 
@@ -160,21 +180,21 @@ export default function PlayerDatabase({
                     {fetchFeedback?.playerId === player.id && (<div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>{fetchFeedback.message}</div>)}
                   </div>
 
-                  {/* compact actions: + first, then edit/fetch/delete */}
+                  {/* compact actions */}
                   <div className="flex-none flex items-center gap-1">
                     {inPool ? (
-                      <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-8 h-8 rounded text-orange-600 bg-white border">−</button>
+                      <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-8 h-8 rounded bg-gray-200 text-gray-500 border border-gray-300 hover:bg-red-100 hover:text-red-600 hover:border-red-300 transition-colors">−</button>
                     ) : (
-                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-8 h-8 rounded bg-transparent border border-green-600 text-green-600">+</button>
+                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-8 h-8 rounded bg-transparent border border-green-600 text-green-600 hover:bg-green-100 transition-colors">+</button>
                     )}
 
-                    <button onClick={() => startEditing(player)} aria-label="Edit" className="px-2 py-0.5 bg-white border rounded text-xs text-blue-600 hover:bg-blue-50" title="Edit">✏️</button>
-                    <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-2 py-0.5 bg-white border rounded text-xs text-purple-600 hover:bg-purple-50" title="Fetch DUPR">🔍</button>
-                    <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-2 py-0.5 bg-white border rounded text-xs text-red-500 hover:bg-red-50" title="Delete">🗑️</button>
+                    <button onClick={() => startEditing(player)} aria-label="Edit" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" title="Edit">✏️</button>
+                    <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-purple-600 hover:bg-purple-100 hover:border-purple-300 transition-colors" title="Fetch DUPR">🔍</button>
+                    <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" title="Delete">🗑️</button>
                   </div>
                 </div>
 
-                {/* compact inline edit appears below (rare) */}
+                {/* compact inline edit appears below */}
                 {editingId === player.id && (
                   <div className="mt-2 bg-slate-50 p-2 rounded">
                     <div className="flex gap-2">
