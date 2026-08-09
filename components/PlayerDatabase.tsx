@@ -107,7 +107,7 @@ export default function PlayerDatabase({
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow p-2">
+    <section className="bg-white rounded-2xl shadow px-3 py-2">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Player Database</h2>
@@ -116,7 +116,7 @@ export default function PlayerDatabase({
 
         <div className="flex items-center gap-2 w-full md:w-auto -ml-1">
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="w-40 md:w-52 px-2 h-7 border border-gray-300 rounded text-sm" />
-          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="h-7 px-2 border border-gray-300 rounded text-sm">
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="h-7 px-1 border border-gray-300 rounded text-xs w-24">
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
           </select>
@@ -149,11 +149,11 @@ export default function PlayerDatabase({
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
         />
-        <button className="h-7 px-5 text-xs text-white bg-green-600 rounded hover:bg-green-700 whitespace-nowrap" onClick={handleAdd}>+ Add</button>
+        <button className="h-7 px-4 text-xs text-white bg-green-600 rounded hover:bg-green-700 whitespace-nowrap flex-1" onClick={handleAdd}>+ Add</button>
       </div>
       {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
 
-      <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: 6 }} className="space-y-2">
+      <div style={{ maxHeight: '35vh', overflowY: 'auto', paddingRight: 6 }} className="space-y-1">
         {filtered.length === 0 ? (
           <div className="text-center text-gray-400 py-6 text-sm">No players</div>
         ) : filtered.map(player => {
@@ -162,35 +162,35 @@ export default function PlayerDatabase({
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`p-1.5 rounded-lg border border-gray-300 flex items-center gap-2 ${hasDupr ? 'bg-white' : 'bg-yellow-50'}`}>
+            <div key={player.id} className={`px-2 py-1 rounded border border-gray-300 flex items-center gap-2 ${hasDupr ? 'bg-white' : 'bg-yellow-50'}`}>
               <div className="flex-none">
                 {player.imageUrl ? (
-                  <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded-full object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
+                  <img src={player.imageUrl} alt={player.name} className={`w-8 h-8 rounded-full object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
                 ) : (
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
                 )}
               </div>
 
               {/* single-line compact info */}
               <div className="flex-1 min-w-0 text-sm">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-2">
                   <div className="truncate">
-                    <div className="font-medium truncate">{player.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{player.duprId || player.duprNumericId || ''}{player.duprScore != null && <span className="ml-2 font-semibold">{player.duprScore}</span>}</div>
+                    <div className="font-medium text-sm truncate">{player.name}</div>
+                    <div className="text-xs text-gray-500 truncate">{player.duprId || player.duprNumericId || ''}{player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}</div>
                     {fetchFeedback?.playerId === player.id && (<div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>{fetchFeedback.message}</div>)}
                   </div>
 
                   {/* compact actions */}
-                  <div className="flex-none flex items-center gap-1">
+                  <div className="flex-none flex items-center gap-3">
                     {inPool ? (
-                      <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-8 h-8 rounded bg-gray-200 text-gray-500 border border-gray-300 hover:bg-red-100 hover:text-red-600 hover:border-red-300 transition-colors">−</button>
+                      <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded bg-gray-200 text-gray-500 border border-gray-300 hover:bg-red-100 hover:text-red-600 hover:border-red-300 transition-colors text-sm">−</button>
                     ) : (
-                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-8 h-8 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors">+</button>
+                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm">+</button>
                     )}
 
-                    <button onClick={() => startEditing(player)} aria-label="Edit" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" title="Edit">✏️</button>
-                    <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-purple-600 hover:bg-purple-100 hover:border-purple-300 transition-colors" title="Fetch DUPR">🔍</button>
-                    <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" title="Delete">🗑️</button>
+                    <button onClick={() => startEditing(player)} aria-label="Edit" className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" title="Edit">✏️</button>
+                    <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-purple-600 hover:bg-purple-100 hover:border-purple-300 transition-colors" title="Fetch DUPR">🔍</button>
+                    <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" title="Delete">🗑️</button>
                   </div>
                 </div>
 
