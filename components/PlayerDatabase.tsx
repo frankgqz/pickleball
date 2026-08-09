@@ -345,14 +345,15 @@ export default function PlayerDatabase({
                       if (onFetchDupr) {
                         setFetchFeedback({ playerId: player.id, message: "Fetching...", success: true });
                         try {
-                          const result = await onFetchDupr(player.id);
-                          if (result && typeof result === 'object' && 'success' in result) {
-                            const r = result as { success: boolean; message?: string; error?: string };
-                            if (r.success) {
-                              setFetchFeedback({ playerId: player.id, message: r.message || "✓ Done", success: true });
-                            } else {
-                              setFetchFeedback({ playerId: player.id, message: r.error || "Failed", success: false });
-                            }
+                          await onFetchDupr(player.id);
+                          // Check if player now has an imageUrl
+                          const updatedPlayer = players.find(p => p.id === player.id);
+                          if (updatedPlayer?.imageUrl) {
+                            setFetchFeedback({ playerId: player.id, message: "✓ Avatar fetched!", success: true });
+                          } else if (updatedPlayer?.duprScore) {
+                            setFetchFeedback({ playerId: player.id, message: `✓ ${updatedPlayer.duprScore}`, success: true });
+                          } else {
+                            setFetchFeedback({ playerId: player.id, message: "No rating", success: false });
                           }
                         } catch (err) {
                           setFetchFeedback({ playerId: player.id, message: "Error", success: false });
