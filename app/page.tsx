@@ -90,18 +90,23 @@ interface RoundState {
 // ==========================================
 
 export default function Home() {
-  // --- localStorage helpers ---
+  // --- localStorage helpers (only run in browser) ---
   const STORAGE_KEY_ROUNDS = "pickleball_rounds";
   const STORAGE_KEY_STANDINGS = "pickleball_standings";
   const STORAGE_KEY_CONFIG = "pickleball_config";
 
+  const isBrowser = typeof window !== 'undefined';
+
   // Save round history to localStorage
   const saveRoundsToStorage = (rounds: CompletedRound[]) => {
-    localStorage.setItem(STORAGE_KEY_ROUNDS, JSON.stringify(rounds));
+    if (isBrowser) {
+      localStorage.setItem(STORAGE_KEY_ROUNDS, JSON.stringify(rounds));
+    }
   };
 
   // Load round history from localStorage
   const loadRoundsFromStorage = (): CompletedRound[] => {
+    if (!isBrowser) return [];
     const stored = localStorage.getItem(STORAGE_KEY_ROUNDS);
     if (stored) {
       try {
@@ -119,11 +124,14 @@ export default function Home() {
 
   // Save standings to localStorage (for player pool retention)
   const saveStandingsToStorage = (standingsData: any[]) => {
-    localStorage.setItem(STORAGE_KEY_STANDINGS, JSON.stringify(standingsData));
+    if (isBrowser) {
+      localStorage.setItem(STORAGE_KEY_STANDINGS, JSON.stringify(standingsData));
+    }
   };
 
   // Load standings from localStorage
   const loadStandingsFromStorage = () => {
+    if (!isBrowser) return [];
     const stored = localStorage.getItem(STORAGE_KEY_STANDINGS);
     if (stored) {
       try {
@@ -137,9 +145,11 @@ export default function Home() {
 
   // Clear all storage (new game)
   const clearAllStorage = () => {
-    localStorage.removeItem(STORAGE_KEY_ROUNDS);
-    localStorage.removeItem(STORAGE_KEY_STANDINGS);
-    localStorage.removeItem(STORAGE_KEY_CONFIG);
+    if (isBrowser) {
+      localStorage.removeItem(STORAGE_KEY_ROUNDS);
+      localStorage.removeItem(STORAGE_KEY_STANDINGS);
+      localStorage.removeItem(STORAGE_KEY_CONFIG);
+    }
   };
 
   // --- State Variables ---
