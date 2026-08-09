@@ -453,10 +453,19 @@ export default function Page() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 <PlayerDatabase
           players={players}
+          eventPool={eventPool}
           onAddPlayer={handleAddPlayer}
           onDeletePlayer={handleDeletePlayer}
           onFetchDupr={handleFetchDupr}
           onUpdatePlayer={handleUpdatePlayer}
+          onAddToPool={addToPool}
+          onRemoveFromPool={removeFromPool}
+          onToggleSitting={toggleSitting}
+          formatOptions={[
+            { label: "Standard", value: "standard", onClick: () => generateMatches("PICK_PARTNER") },
+            { label: "Teams", value: "teams", onClick: () => generateMatches("FIXED_14V23") },
+            { label: "Pool / Finals", value: "pool", onClick: () => { /* TODO: implement pool/finals format */ } },
+          ]}
         />
           <EventPool
             eventPool={eventPool}
