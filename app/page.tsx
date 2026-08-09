@@ -161,6 +161,32 @@ export default function Page() {
       const result = await getPlayers();
       if (result.success) {
         setPlayers(result.players || []);
+
+        // Also load rounds from localStorage
+        const savedRounds = loadRoundsFromStorage();
+        if (savedRounds.length > 0) {
+          setRoundHistory(savedRounds);
+        }
+
+        // Also load current session from localStorage
+        const savedSession = localStorage.getItem("pickleball_session_v1");
+        if (savedSession) {
+          try {
+            setCurrentSession(JSON.parse(savedSession));
+          } catch {
+            // Invalid session, keep default
+          }
+        }
+
+        // Also load standings from localStorage
+        const savedStandings = localStorage.getItem("pickleball_standings_v1");
+        if (savedStandings) {
+          try {
+            setStandings(JSON.parse(savedStandings));
+          } catch {
+            // Invalid standings, will be recreated
+          }
+        }
       } else {
         setError(result.error || "Failed to load players");
       }
@@ -495,6 +521,20 @@ export default function Page() {
 
   // --- Simple UI wiring for components ---------------------- //
 
+  // Auto-save standings to localStorage when they change
+  useEffect(() => {
+    if (standings.length > 0 && isBrowser) {
+      localStorage.setItem("pickleball_standings_v1", JSON.stringify(standings));
+    }
+  }, [standings]);
+
+  // Auto-save session to localStorage when it changes
+  useEffect(() => {
+    if (currentSession && isBrowser) {
+      localStorage.setItem("pickleball_session_v1", JSON.stringify(currentSession));
+    }
+  }, [currentSession]);
+
   // --- Restart event handler ---------------------- //
   const handleRestartEvent = useCallback(() => {
     setRoundHistory([]);
@@ -511,11 +551,15 @@ export default function Page() {
       orderHistory: [],
     })));
     setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
-    // Start fresh session
-    setCurrentSession({
+    // Start fresh session and save to localStorage
+    const newSession: GameSession = {
       sessionId: Date.now().toString(),
       startDate: new Date().toISOString(),
-    });
+    };
+    setCurrentSession(newSession);
+    if (isBrowser) {
+      localStorage.setItem("pickleball_session_v1", JSON.stringify(newSession));
+    }
   }, []);
 
   const handleCancelRound = useCallback(() => {
@@ -648,7 +692,14 @@ export default function Page() {
           onSubmitRound={submitRoundResults}
           onCancelRound={handleCancelRound}
           onStartNextRound={() => {
-            setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+            // Generate next round matchups based on current format
+            if (config.format === "POOL_PLAY") {
+              generatePoolMatches();
+            } else if (config.format === "FIXED_PARTNER") {
+              generateMatches("FIXED_14V23" as MatchFormat);
+            } else {
+              generateMatches("PICK_PARTNER" as MatchFormat);
+            }
           }}
           submitted={roundState.submitted}
         />
