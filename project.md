@@ -12,7 +12,6 @@ Partner variety scoring, rally or sideout
 Handle game scores (best of 3)
 Mobile responsive design
 
-Veto a player having a bye this round in the round option by adding 0.25 to their bye score and refreshing the matchups
 
 ## Login System
 Login system, to differentiate player pool, access records
@@ -28,4 +27,4 @@ Migrate to database tables, users table for login, players table with userId for
 - [ ] Tooltip showing incorrect court label
 
 
-
+did a git thingy
