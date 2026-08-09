@@ -28,6 +28,7 @@ export interface Player {
   duprId?: string | null;         // letter ID
   duprNumericId?: string | null;  // numeric ID for API lookups
   duprScore?: number | null;
+  imageUrl?: string | null;        // DUPR profile avatar image URL
   isSitting?: boolean;
 }
 
