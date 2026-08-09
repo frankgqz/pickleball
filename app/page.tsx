@@ -70,12 +70,19 @@ interface Match {
   byePlayerId?: string; // Who gets the bye
 }
 
+interface GameSession {
+  sessionId: string;
+  startDate: Date;
+  endDate?: Date;
+}
+
 interface CompletedRound {
   roundNumber: number;
   date: Date;
   format: MatchFormat;
   matches: Match[];
   sittingOut: string[];
+  sessionId: string;
 }
 
 interface RoundState {
@@ -212,9 +219,17 @@ export default function Home() {
 
   // --- Round History ---
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(() => loadRoundsFromStorage());
+  const [currentSession, setCurrentSession] = useState<GameSession>(() => ({
+    sessionId: Date.now().toString(),
+    startDate: new Date(),
+  }));
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [editingRound, setEditingRound] = useState<number | null>(null);
   const [isNewGame, setIsNewGame] = useState(false);
+
+  // Get rounds for current session only
+  const currentSessionRounds = roundHistory.filter(r => r.sessionId === currentSession.sessionId);
+  const currentRoundNumber = currentSessionRounds.length + 1;
 
   // --- Match Generation ---
   
@@ -398,7 +413,6 @@ export default function Home() {
 
   // Submit round results
   const submitRoundResults = () => {
-    const currentRound = standings.reduce((max, e) => Math.max(max, e.orderHistory.length), 0) + 1;
     const activePlayers = eventPool.filter(p => !p.isSitting);
     const byePlayerIds = roundState.matches.filter(m => m.bye).map(m => m.byePlayerId).filter(Boolean) as string[];
     
@@ -488,11 +502,12 @@ export default function Home() {
 
     // Save to round history
     const completedRound: CompletedRound = {
-      roundNumber: currentRound,
+      roundNumber: currentRoundNumber,
       date: new Date(),
       format: roundState.format,
       matches: roundState.matches,
       sittingOut: sittingOutThisRound,
+      sessionId: currentSession.sessionId,
     };
     const newHistory = [...roundHistory, completedRound];
     setRoundHistory(newHistory);
@@ -849,7 +864,7 @@ export default function Home() {
           {(config.format === "STANDARD" || config.format === "FIXED_PARTNER") && (
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-medium text-gray-700">Match Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">W/L Magnitude</label>
                   <input type="number" step="0.25" min="0.25" value={config.winLossMagnitude}
@@ -869,6 +884,13 @@ export default function Home() {
                     onChange={(e) => updateConfig("courtBonus", parseFloat(e.target.value) || 1)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                   <p className="text-xs text-gray-400 mt-1">Top win/Bottom loss reduction</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Band</label>
+                  <input type="number" step="0.25" min="0" value={config.band}
+                    onChange={(e) => updateConfig("band", parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <p className="text-xs text-gray-400 mt-1">Seed cap buffer</p>
                 </div>
               </div>
 
