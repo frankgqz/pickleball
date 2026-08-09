@@ -56,8 +56,6 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 ? "flex items-center gap-3 p-3 rounded-lg border bg-green-50 border-green-200"
                 : "flex items-center gap-3 p-3 rounded-lg border bg-yellow-50 border-yellow-200";
 
-            const hasDupr = !!player.duprId || !!player.duprNumericId;
-
             return (
               <div key={player.id} className={containerClass}>
                 {/* CSS Initials Avatar */}
