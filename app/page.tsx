@@ -402,7 +402,7 @@ export default function Page() {
             if (sessionId === currentSession.sessionId) {
               // recompute: reset seedAdjustment/byeCount/sitOutCount/wins/losses/points then replay
               setStandings(prev => {
-                const baseMap = new Map(prev.map(s => ([s.id, { ...s, seedAdjustment:0, byeCount:0, sitOutCount:0, wins:0, losses:0, pointsFor:0, pointsAgainst:0, orderHistory:[] }] as any))));
+                const baseMap = new Map(prev.map(s => ([s.id, { ...s, seedAdjustment:0, byeCount:0, sitOutCount:0, wins:0, losses:0, pointsFor:0, pointsAgainst:0, orderHistory:[] }] as any)));
                 // reapply rounds in order for current session
                 const sessionRoundsSorted = newHistory.filter(r => r.sessionId===sessionId).sort((a,b)=>a.roundNumber-b.roundNumber);
                 sessionRoundsSorted.forEach(r => {
