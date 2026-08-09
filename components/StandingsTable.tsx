@@ -152,19 +152,61 @@ export default function StandingsTable({
           <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="bg-gray-100">
-                <th className="p-2 text-left cursor-pointer hover:bg-gray-200" onClick={() => headerClick("name")}>Name{getSortIcon("name")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("wins")}>W{getSortIcon("wins")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("losses")}>L{getSortIcon("losses")}</th>
-                <th className="p-2 text-center text-xs text-gray-500 hidden sm:table-cell" onClick={() => headerClick("winPct")}>Win%{getSortIcon("winPct")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden sm:table-cell" onClick={() => headerClick("pointsFor")}>PF{getSortIcon("pointsFor")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden sm:table-cell" onClick={() => headerClick("pointsAgainst")}>PA{getSortIcon("pointsAgainst")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden md:table-cell" onClick={() => headerClick("pointDiff")}>+/-{getSortIcon("pointDiff")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("ptsPct")}>Pts%{getSortIcon("ptsPct")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("byeCount")}>Byes{getSortIcon("byeCount")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden md:table-cell" onClick={() => headerClick("byeTotal")} title="Total bye score">Bye{getSortIcon("byeTotal")}</th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden lg:table-cell" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">Order#{getSortIcon("seedTotal")}</th>
+                <th
+                  className="p-2 text-left cursor-pointer hover:bg-gray-200 w-1/3"
+                  onClick={() => headerClick("name")}
+                >
+                  Name{getSortIcon("name")}
+                </th>
+
+                <th
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200 w-12"
+                  onClick={() => headerClick("wins")}
+                >
+                  W{getSortIcon("wins")}
+                </th>
+
+                <th
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200 w-12"
+                  onClick={() => headerClick("losses")}
+                >
+                  L{getSortIcon("losses")}
+                </th>
+
+                <th className="p-2 text-center text-xs text-gray-500 hidden sm:table-cell" onClick={() => headerClick("winPct")}>
+                  Win%{getSortIcon("winPct")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden sm:table-cell" onClick={() => headerClick("pointsFor")}>
+                  PF{getSortIcon("pointsFor")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden sm:table-cell" onClick={() => headerClick("pointsAgainst")}>
+                  PA{getSortIcon("pointsAgainst")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden md:table-cell" onClick={() => headerClick("pointDiff")}>
+                  +/-{getSortIcon("pointDiff")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("ptsPct")}>
+                  Pts%{getSortIcon("ptsPct")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("byeCount")}>
+                  Byes{getSortIcon("byeCount")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden md:table-cell" onClick={() => headerClick("byeTotal")} title="Total bye score">
+                  Bye{getSortIcon("byeTotal")}
+                </th>
+
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden lg:table-cell" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
+                  Order#{getSortIcon("seedTotal")}
+                </th>
               </tr>
             </thead>
+
             <tbody>
               {sorted.map((entry) => {
                 const seedTotal = entry.seedTotal;
