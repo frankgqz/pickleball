@@ -65,7 +65,7 @@ const initialConfig: TournamentConfig = {
   byeBonusTop: 0.5,
   sitProtection: 0.5,
   lateJoinBonus: 1, // default late join bonus = 1
-  courts: 4,
+  courts: 5, // default 5 courts
   teamsPerPool: 4,
   finalsFormat: "top2",
 };
@@ -134,10 +134,9 @@ export default function Page() {
   };
 
   const regenerateByes = () => {
-    // Only regenerate byeBase (random roll + top bonuses), keep byeCount and byeMod
+    // Regenerate byeBase (random roll + top bonuses), keep byeCount and byeMod
     setStandings(prev => {
       const updated = [...prev].sort((a,b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
-      // compute base roll and top bonuses using byeTopProtection
       const topHalf = Math.floor(config.byeTopProtection / 2);
       return updated.map((entry, idx) => {
         const baseRoll = -Math.random(); // -1..0
@@ -314,7 +313,65 @@ export default function Page() {
       byeCount = activePlayers.length % playersPerCourt;
     }
 
-    // STEP 1: Determine forced byes using byeTotal
+    // STEP 0 (ROUND 1 ONLY): Regenerate byeBase FIRST, before determining byes
+    // This ensures top players get their bye bonus before byes are assigned
+    if (currentRoundNumber === 1) {
+      const topHalf = Math.floor(config.byeTopProtection / 2);
+      const tempByeMap = new Map<string, number>();
+      
+      // Calculate new byeBase values for all standings entries (sorted by DUPR)
+      const sortedStandings = [...standings].sort((a,b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
+      sortedStandings.forEach((entry, idx) => {
+        const baseRoll = -Math.random();
+        let byeBase = baseRoll;
+        if (idx < topHalf) byeBase = baseRoll + config.byeBonusTop;
+        else if (idx < config.byeTopProtection) byeBase = baseRoll + (config.byeBonusTop / 2);
+        tempByeMap.set(entry.id, byeBase);
+      });
+
+      // Update standings with new byeBase values
+      setStandings(prev => prev.map(entry => ({
+        ...entry,
+        byeBase: tempByeMap.get(entry.id) ?? entry.byeBase,
+      })));
+
+      // Use the NEW byeBase values for bye determination immediately
+      const activeStandings = standings.filter(s => activePlayers.some(p => p.id === s.id));
+      const sortedByBye = [...activeStandings].sort((a, b) => {
+        const aBye = tempByeMap.get(a.id) ?? a.byeBase ?? 0;
+        const bBye = tempByeMap.get(b.id) ?? b.byeBase ?? 0;
+        return aBye - bBye;
+      });
+      const byePlayerIds = sortedByBye.slice(0, byeCount).map(s => s.id);
+
+      // ... rest of match generation using byePlayerIds
+      const remainingPlayers = activePlayers.filter(p => !byePlayerIds.includes(p.id));
+      const remainingOrdered = remainingPlayers.sort((a,b) => {
+        const aEntry = standings.find(s => s.id === a.id)!, bEntry = standings.find(s => s.id === b.id)!;
+        return getSeedTotal(aEntry) - getSeedTotal(bEntry);
+      }).map(p => p.id);
+
+      const matches: Match[] = [];
+      let courtNum = 1;
+      for (let i=0;i < remainingOrdered.length; i += playersPerCourt) {
+        const group = remainingOrdered.slice(i, i + playersPerCourt);
+        if (group.length === playersPerCourt) {
+          matches.push({ id: `m-${courtNum}`, court: courtNum, team1: [group[0], group[3]], team2: [group[1], group[2]], team1Score: undefined, team2Score: undefined, bye: false });
+          courtNum++;
+        } else {
+          group.forEach(pid => byePlayerIds.push(pid));
+        }
+      }
+
+      byePlayerIds.forEach((pid, idx) => {
+        matches.push({ id: `bye-${idx+1}`, court: 0, team1: [pid], team2: [], bye: true, byePlayerId: pid });
+      });
+
+      setRoundState({ active: true, format, matches, submitted: false });
+      return;
+    }
+
+    // STEP 1 (ROUND 2+): Determine forced byes using byeTotal
     const activeStandings = standings.filter(s => activePlayers.some(p => p.id === s.id));
     const sortedByBye = [...activeStandings].sort((a,b) => getByeTotal(a) - getByeTotal(b));
     const byePlayerIds = sortedByBye.slice(0, byeCount).map(s => s.id);
