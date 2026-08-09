@@ -425,7 +425,7 @@ export default function Home() {
         return { 
           ...entry, 
           byeCount: entry.byeCount + 1,
-          orderHistory: [...entry.orderHistory, { round: currentRound, change: 0, reason: "bye" }],
+          orderHistory: [...entry.orderHistory, { round: currentRoundNumber, change: 0, reason: "bye" }],
         };
       }
       
@@ -434,7 +434,7 @@ export default function Home() {
         return { 
           ...entry, 
           sitOutCount: entry.sitOutCount + 1,
-          orderHistory: [...entry.orderHistory, { round: currentRound, change: 0, reason: "sit out" }],
+          orderHistory: [...entry.orderHistory, { round: currentRoundNumber, change: 0, reason: "sit out" }],
         };
       }
       
@@ -485,7 +485,7 @@ export default function Home() {
           pointsFor: entry.pointsFor + myScore,
           pointsAgainst: entry.pointsAgainst + opponentScore,
           seedAdjustment: clampedAdjustment,
-          orderHistory: [...entry.orderHistory, { round: currentRound, change: clampedAdjustment - entry.seedAdjustment, reason }],
+          orderHistory: [...entry.orderHistory, { round: currentRoundNumber, change: clampedAdjustment - entry.seedAdjustment, reason }],
         };
       }
       
