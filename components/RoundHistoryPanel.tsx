@@ -45,6 +45,90 @@ export default function RoundHistoryPanel({
   const [editMode, setEditMode] = useState(false);
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
 
+  // --- CSV Export ---------------------- //
+  const exportToCSV = () => {
+    if (sessionRounds.length === 0) {
+      alert("No rounds to export");
+      return;
+    }
+
+    // CSV Header
+    const headers = [
+      "Round",
+      "Date",
+      "Format",
+      "Court",
+      "Team1_P1",
+      "Team1_P2",
+      "Team1_Score",
+      "Team2_P1",
+      "Team2_P2",
+      "Team2_Score",
+      "Winner",
+      "Bye"
+    ];
+
+    // Build CSV rows
+    const rows: string[][] = [];
+    
+    sessionRounds.forEach(round => {
+      round.matches.forEach(match => {
+        const getPlayerName = (id: string) => {
+          const player = eventPool.find(p => p.id === id);
+          return player?.name || id;
+        };
+
+        const t1p1 = match.team1[0] ? getPlayerName(match.team1[0]) : "";
+        const t1p2 = match.team1[1] ? getPlayerName(match.team1[1]) : "";
+        const t2p1 = match.team2[0] ? getPlayerName(match.team2[0]) : "";
+        const t2p2 = match.team2[1] ? getPlayerName(match.team2[1]) : "";
+
+        let winner = "";
+        if (!match.bye && match.team1Score !== undefined && match.team2Score !== undefined) {
+          if (match.team1Score > match.team2Score) {
+            winner = "Team1";
+          } else if (match.team2Score > match.team1Score) {
+            winner = "Team2";
+          } else {
+            winner = "Tie";
+          }
+        }
+
+        rows.push([
+          String(round.roundNumber),
+          new Date(round.date).toLocaleString(),
+          round.format,
+          match.bye ? "BYE" : String(match.court || ""),
+          t1p1,
+          t1p2,
+          match.team1Score !== undefined ? String(match.team1Score) : "",
+          t2p1,
+          t2p2,
+          match.team2Score !== undefined ? String(match.team2Score) : "",
+          winner,
+          match.bye ? "Yes" : "No"
+        ]);
+      });
+    });
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `pickleball_matches_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const startEditing = () => {
     if (selectedRound) {
       setEditMatches(JSON.parse(JSON.stringify(selectedRound.matches)));
@@ -90,7 +174,16 @@ export default function RoundHistoryPanel({
     <section className="bg-slate-800/50 backdrop-blur rounded-2xl border border-slate-700/50 p-4">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-white">📜 Past Rounds</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {sessionRounds.length > 0 && (
+            <button
+              onClick={exportToCSV}
+              className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+              title="Export to CSV"
+            >
+              📥 Export CSV
+            </button>
+          )}
           <select
             value={selectedRoundNumber === "" ? "" : selectedRoundNumber}
             onChange={(e) => setSelectedRoundNumber(e.target.value ? parseInt(e.target.value) : "")}
