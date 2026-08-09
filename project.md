@@ -1,12 +1,5 @@
 # Pickleball Tournament Manager - Roadmap
 
-### View/Edit Previous Round
-Store completed rounds in state
-Add dropdown selector
-Display match details
-Allow score editing with recalculation, round deletion
-allow seeds to go up and down on edit and also on settings modification
-
 ### CSV Import/Export
 Parse into DUPR format
 DUPR CSV format requires: playerA1DuprId, playerB1DuprId, teamAGame1, teamBGame1, etc.

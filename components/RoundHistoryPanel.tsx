@@ -220,27 +220,39 @@ export default function RoundHistoryPanel({
                       
                       {editMode ? (
                         <div className="flex items-center justify-center gap-2 mt-2">
-                          <input
-                            type="number"
-                            value={m.team1Score ?? ""}
-                            onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
-                            className="w-16 px-2 py-1 border rounded text-center bg-slate-800 text-white"
-                            placeholder="T1"
-                          />
-                          <span className="text-slate-400">vs</span>
-                          <input
-                            type="number"
-                            value={m.team2Score ?? ""}
-                            onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
-                            className="w-16 px-2 py-1 border rounded text-center bg-slate-800 text-white"
-                            placeholder="T2"
-                          />
+                          <div className="text-center">
+                            <div className="text-xs text-purple-400 mb-1">T1</div>
+                            <input
+                              type="number"
+                              value={m.team1Score ?? ""}
+                              onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
+                              className="w-14 px-2 py-1 border-2 border-purple-500 rounded text-center bg-purple-900/50 text-white"
+                              placeholder="0"
+                            />
+                          </div>
+                          <span className="text-slate-400 self-end mb-1">vs</span>
+                          <div className="text-center">
+                            <div className="text-xs text-green-400 mb-1">T2</div>
+                            <input
+                              type="number"
+                              value={m.team2Score ?? ""}
+                              onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
+                              className="w-14 px-2 py-1 border-2 border-green-500 rounded text-center bg-green-900/50 text-white"
+                              placeholder="0"
+                            />
+                          </div>
                         </div>
-                      ) : m.team1Score !== undefined && m.team2Score !== undefined && (
-                        <div className="text-xs text-slate-400 mt-2">
-                          {m.team1Score > m.team2Score ? "Team 1" : "Team 2"} wins
+                      ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                          <div className={`px-3 py-1 rounded ${m.team1Score > m.team2Score ? "bg-purple-600 text-white" : "bg-purple-900/50 text-purple-300"}`}>
+                            {m.team1Score}
+                          </div>
+                          <span className="text-slate-400">-</span>
+                          <div className={`px-3 py-1 rounded ${m.team2Score > m.team1Score ? "bg-green-600 text-white" : "bg-green-900/50 text-green-300"}`}>
+                            {m.team2Score}
+                          </div>
                         </div>
-                      )}
+                      ) : null}
                     </>
                   )}
 
