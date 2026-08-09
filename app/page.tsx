@@ -70,6 +70,14 @@ interface Match {
   byePlayerId?: string; // Who gets the bye
 }
 
+interface CompletedRound {
+  roundNumber: number;
+  date: Date;
+  format: MatchFormat;
+  matches: Match[];
+  sittingOut: string[];
+}
+
 interface RoundState {
   active: boolean;
   format: MatchFormat;
@@ -139,6 +147,11 @@ export default function Home() {
     matches: [],
     submitted: false,
   });
+
+  // --- Round History ---
+  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>([]);
+  const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const [editingRound, setEditingRound] = useState<number | null>(null);
 
   // --- Match Generation ---
   
@@ -409,6 +422,16 @@ export default function Home() {
     
     // Clear sitting out tracking
     setSittingOutThisRound([]);
+
+    // Save to round history
+    const completedRound: CompletedRound = {
+      roundNumber: currentRound,
+      date: new Date(),
+      format: roundState.format,
+      matches: roundState.matches,
+      sittingOut: sittingOutThisRound,
+    };
+    setRoundHistory(prev => [...prev, completedRound]);
 
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
@@ -760,8 +783,15 @@ export default function Home() {
           {/* Standard / Fixed Options */}
           {(config.format === "STANDARD" || config.format === "FIXED_PARTNER") && (
             <div className="space-y-4 border-t pt-4">
-              <h3 className="font-medium text-gray-700">Order & Match Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <h3 className="font-medium text-gray-700">Match Settings</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">W/L Magnitude</label>
+                  <input type="number" step="0.25" min="0.25" value={config.winLossMagnitude}
+                    onChange={(e) => updateConfig("winLossMagnitude", parseFloat(e.target.value) || 1)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  <p className="text-xs text-gray-400 mt-1">Win/Loss impact</p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Order Gap</label>
                   <input type="number" step="0.25" min="0.25" value={config.orderGap}
@@ -769,30 +799,16 @@ export default function Home() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">W/L Mag</label>
-                  <input type="number" step="0.25" min="0.25" value={config.winLossMagnitude}
-                    onChange={(e) => updateConfig("winLossMagnitude", parseFloat(e.target.value) || 1)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                  <p className="text-xs text-gray-400 mt-1">Win/Loss impact</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">± Top/Bottom Court</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Wtop Lbottom Magnitude</label>
                   <input type="number" step="0.25" min="0" max="2" value={config.courtBonus}
-                    onChange={(e) => updateConfig("courtBonus", parseFloat(e.target.value) || 0.5)}
+                    onChange={(e) => updateConfig("courtBonus", parseFloat(e.target.value) || 1)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                   <p className="text-xs text-gray-400 mt-1">Top win/Bottom loss reduction</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Band</label>
-                  <input type="number" step="0.25" min="0" value={config.band}
-                    onChange={(e) => updateConfig("band", parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-                  <p className="text-xs text-gray-400 mt-1">Rubberband buffer zone</p>
                 </div>
               </div>
 
               <h3 className="font-medium text-gray-700 mt-4">Bye Settings</h3>
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
                   <input type="number" min="1" max="16" value={config.courts}
@@ -800,19 +816,19 @@ export default function Home() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Bye Top Protection</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Top Players Bonus</label>
                   <input type="number" min="0" max="20" value={config.byeTopProtection}
                     onChange={(e) => updateConfig("byeTopProtection", parseInt(e.target.value) || 8)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Bye Bonus</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Top Bye Bonus</label>
                   <input type="number" step="0.25" min="0" max="2" value={config.byeBonusTop}
                     onChange={(e) => updateConfig("byeBonusTop", parseFloat(e.target.value) || 0.5)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Sit Protection</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Sit Bonus</label>
                   <input type="number" step="0.25" min="0" value={config.sitProtection}
                     onChange={(e) => updateConfig("sitProtection", parseFloat(e.target.value) || 0.5)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
@@ -1017,6 +1033,112 @@ export default function Home() {
             )}
           </section>
         </div>
+
+        {/* --- Past Rounds History --- */}
+        {roundHistory.length > 0 && !roundState.active && (
+          <section className="bg-white rounded-2xl shadow-xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">📜 Past Rounds</h2>
+              <select
+                value={selectedRound ?? ""}
+                onChange={(e) => setSelectedRound(e.target.value ? parseInt(e.target.value) : null)}
+                className="px-4 py-2 border rounded-lg"
+              >
+                <option value="">Select a round...</option>
+                {roundHistory.map((round) => (
+                  <option key={round.roundNumber} value={round.roundNumber}>
+                    Round {round.roundNumber} - {round.date.toLocaleDateString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {selectedRound !== null && (
+              <div className="mt-4">
+                {(() => {
+                  const round = roundHistory.find(r => r.roundNumber === selectedRound);
+                  if (!round) return null;
+                  return (
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold">Round {round.roundNumber} Details</h3>
+                        <button
+                          onClick={() => setEditingRound(round.roundNumber)}
+                          className="bg-yellow-500 text-black px-4 py-2 rounded-lg text-sm hover:bg-yellow-600"
+                        >
+                          Edit Scores
+                        </button>
+                      </div>
+                      
+                      {/* Matches */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {round.matches.filter(m => !m.bye).map((match) => {
+                          const team1Players = match.team1.map(id => eventPool.find(p => p.id === id)).filter(Boolean);
+                          const team2Players = match.team2.map(id => eventPool.find(p => p.id === id)).filter(Boolean);
+                          return (
+                            <div key={match.id} className="bg-gray-50 rounded-lg p-4 border">
+                              <div className="flex justify-between mb-2">
+                                <span className="font-bold text-sm">Court {match.court}</span>
+                                <span className={`px-2 py-0.5 rounded text-xs ${round.format === "PICK_PARTNER" ? "bg-purple-100" : "bg-blue-100"}`}>
+                                  {round.format === "PICK_PARTNER" ? "Pick Partner" : "1v4 vs 2v3"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <div className="text-center">
+                                  <p className="font-medium text-sm">{team1Players.map(p => p?.name).join(", ")}</p>
+                                  <p className="text-2xl font-bold">{match.team1Score ?? "-"}</p>
+                                </div>
+                                <span className="text-gray-400 text-xl">vs</span>
+                                <div className="text-center">
+                                  <p className="font-medium text-sm">{team2Players.map(p => p?.name).join(", ")}</p>
+                                  <p className="text-2xl font-bold">{match.team2Score ?? "-"}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* Byes */}
+                      {round.matches.some(m => m.bye) && (
+                        <div className="mt-4">
+                          <h4 className="font-semibold text-orange-700 mb-2">😴 Byes</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {round.matches.filter(m => m.bye).map(match => {
+                              const player = eventPool.find(p => p.id === match.byePlayerId);
+                              return (
+                                <span key={match.id} className="bg-orange-100 px-3 py-1 rounded-lg text-sm">
+                                  {player?.name}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Sitting Out */}
+                      {round.sittingOut.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="font-semibold text-gray-600 mb-2">💤 Sitting Out</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {round.sittingOut.map(id => {
+                              const player = eventPool.find(p => p.id === id);
+                              return (
+                                <span key={id} className="bg-gray-200 px-3 py-1 rounded-lg text-sm">
+                                  {player?.name}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* --- Round / Courts UI (above standings) --- */}
         {roundState.active ? (
