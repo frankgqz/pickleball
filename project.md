@@ -1,8 +1,5 @@
 # Pickleball Tournament Manager - Roadmap
 
-### CSV Import/Export
-Parse into DUPR format
-DUPR CSV format requires: playerA1DuprId, playerB1DuprId, teamAGame1, teamBGame1, etc.
 
 ### Matching settings
 Gauntlet style 
@@ -14,6 +11,8 @@ Pool play bracket system
 Partner variety scoring, rally or sideout
 Handle game scores (best of 3)
 Mobile responsive design
+
+Veto a player having a bye this round in the round option by adding 0.25 to their bye score and refreshing the matchups
 
 ## Login System
 Login system, to differentiate player pool, access records

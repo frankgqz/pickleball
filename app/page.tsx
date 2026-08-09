@@ -253,6 +253,19 @@ export default function Page() {
     });
   };
 
+  // Veto a bye for a specific player - add 0.25 to their byeMod and regenerate matches
+  const handleVetoBye = (playerId: string) => {
+    setStandings(prev => prev.map(entry => {
+      if (entry.id === playerId) {
+        return { ...entry, byeMod: (entry.byeMod || 0) + 0.25 };
+      }
+      return entry;
+    }));
+    // Regenerate matches with the updated bye scores
+    const roundFmt = config.roundFormat || "FIXED_14V23";
+    doGenerateMatches(roundFmt as MatchFormat);
+  };
+
   // --- Persistence: save players on change ---------------------- //
   useEffect(() => {
     savePlayersToStorage(players);
@@ -513,6 +526,7 @@ export default function Page() {
           onSwapPlayerTeam={swapPlayerTeam}
           onSubmitRound={submitRoundResults}
           onCancelRound={handleCancelRound}
+          onVetoBye={handleVetoBye}
           onStartNextRound={() => {
             if (config.format === "POOL_PLAY") {
               doGeneratePoolMatches();

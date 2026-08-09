@@ -17,6 +17,7 @@ interface Props {
   onSubmitRound: () => void;
   onCancelRound?: () => void;
   onStartNextRound?: () => void;
+  onVetoBye?: (playerId: string) => void;
   submitted?: boolean;
 }
 
@@ -34,6 +35,7 @@ export default function CourtsPanel({
   onSubmitRound,
   onCancelRound,
   onStartNextRound,
+  onVetoBye,
   submitted = false,
 }: Props) {
   const findPlayer = (id?: string) => eventPool.find(p => p.id === id) || null;
@@ -109,7 +111,18 @@ export default function CourtsPanel({
         {match.bye ? (
           <div className="text-center py-4">
             <div className="text-2xl mb-2">😴</div>
-            <div className="font-semibold text-gray-800">{findPlayer(match.byePlayerId || "")?.name}</div>
+            <div className="font-semibold text-gray-800 flex items-center justify-center gap-2">
+              {findPlayer(match.byePlayerId || "")?.name}
+              {onVetoBye && match.byePlayerId && (
+                <button
+                  onClick={() => onVetoBye(match.byePlayerId!)}
+                  className="px-2 py-0.5 text-xs bg-orange-100 hover:bg-orange-200 text-orange-600 rounded border border-orange-300"
+                  title="Veto this bye - add 0.25 to their bye score"
+                >
+                  ✕ Veto
+                </button>
+              )}
+            </div>
             <div className="text-sm font-mono text-blue-600 mt-1" title={formatByeBreakdown(match.byePlayerId || "")}>
               bye: {getPlayerByeTotal(match.byePlayerId || "").toFixed(2)}
             </div>
