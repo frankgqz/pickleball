@@ -41,6 +41,9 @@ export default function PlayerDatabase({
   const [duprScore, setDuprScore] = useState<string>("");
   const [validationError, setValidationError] = useState<string>("");
 
+  // Fetch DUPR feedback state
+  const [fetchFeedback, setFetchFeedback] = useState<{ playerId: string; message: string; success: boolean } | null>(null);
+
   const handleAdd = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -289,6 +292,12 @@ export default function PlayerDatabase({
                         <span className="ml-2 font-semibold">{player.duprScore}</span>
                       )}
                     </div>
+                    {/* Fetch feedback message */}
+                    {fetchFeedback?.playerId === player.id && (
+                      <div className={`text-xs mt-1 ${fetchFeedback.success ? "text-green-600" : "text-red-500"}`}>
+                        {fetchFeedback.message}
+                      </div>
+                    )}
                   </div>
                   {inPool && (
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
@@ -330,7 +339,28 @@ export default function PlayerDatabase({
 
                   {/* Fetch DUPR - white background */}
                   <button
-                    onClick={() => onFetchDupr && onFetchDupr(player.id)}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (onFetchDupr) {
+                        setFetchFeedback({ playerId: player.id, message: "Fetching...", success: true });
+                        try {
+                          const result = await onFetchDupr(player.id);
+                          if (result && typeof result === 'object' && 'success' in result) {
+                            const r = result as { success: boolean; message?: string; error?: string };
+                            if (r.success) {
+                              setFetchFeedback({ playerId: player.id, message: r.message || "✓ Done", success: true });
+                            } else {
+                              setFetchFeedback({ playerId: player.id, message: r.error || "Failed", success: false });
+                            }
+                          }
+                        } catch (err) {
+                          setFetchFeedback({ playerId: player.id, message: "Error", success: false });
+                        }
+                        // Clear feedback after 3 seconds
+                        setTimeout(() => setFetchFeedback(null), 3000);
+                      }
+                    }}
                     className="w-7 h-7 rounded bg-white border border-purple-300 hover:bg-purple-50 text-purple-600 flex items-center justify-center text-xs shadow-sm"
                     title="Fetch DUPR"
                   >
