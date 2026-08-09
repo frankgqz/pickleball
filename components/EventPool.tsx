@@ -60,27 +60,18 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
 
             return (
               <div key={player.id} className={containerClass}>
-                {player.imageUrl ? (
-                  <img
-                    src={player.imageUrl}
-                    alt={player.name}
-                    className={`w-8 h-8 rounded-full object-cover ${player.isSitting ? "opacity-50" : ""}`}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
+                {/* CSS Initials Avatar */}
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
                     player.isSitting
-                      ? "bg-orange-200 text-orange-700 hidden"
+                      ? "bg-orange-200 text-orange-700"
                       : hasDupr
-                      ? "bg-green-600 text-white hidden"
-                      : "bg-yellow-200 text-yellow-800 hidden"
-                  } ${player.imageUrl ? "" : "flex"}`}
+                      ? "bg-gradient-to-br from-green-500 to-green-700 text-white"
+                      : "bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900"
+                  }`}
+                  style={{ textTransform: 'uppercase' }}
                 >
-                  {player.isSitting ? "💤" : (hasDupr ? "🎾" : "⚠️")}
+                  {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
 
                 <div className={`flex-1 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
