@@ -107,16 +107,16 @@ export default function PlayerDatabase({
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow p-3">
+    <section className="bg-white rounded-2xl shadow p-2">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">Player Database</h2>
           <div className="text-xs text-gray-500">({players.length})</div>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="w-44 md:w-56 px-2 h-8 border border-gray-300 rounded text-sm" />
-          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="h-8 px-2 border border-gray-300 rounded text-sm">
+        <div className="flex items-center gap-2 w-full md:w-auto -ml-1">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="w-40 md:w-52 px-2 h-7 border border-gray-300 rounded text-sm" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="h-7 px-2 border border-gray-300 rounded text-sm">
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
           </select>
@@ -126,30 +126,30 @@ export default function PlayerDatabase({
       {/* Add form - all inputs on same row */}
       <div className="mb-3 flex flex-wrap items-end gap-2 text-sm">
         <input 
-          className="h-8 px-2 border border-gray-300 rounded min-w-[120px]" 
+          className="h-7 px-2 border border-gray-300 rounded min-w-[110px]" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className="h-8 px-2 border border-gray-300 rounded w-20 text-xs" 
+          className="h-7 px-1 border border-gray-300 rounded w-16 text-xs" 
           placeholder="DUPR ID" 
           value={duprId} 
           onChange={e => setDuprId(e.target.value)} 
         />
         <input 
-          className="h-8 px-2 border border-gray-300 rounded w-20 text-xs" 
+          className="h-7 px-1 border border-gray-300 rounded w-16 text-xs" 
           placeholder="webNumID" 
           value={duprNumericId} 
           onChange={e => setDuprNumericId(e.target.value)} 
         />
         <input 
-          className="h-8 px-2 border border-gray-300 rounded w-16 text-xs" 
+          className="h-7 px-1 border border-gray-300 rounded w-12 text-xs" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
         />
-        <button className="h-8 px-4 text-sm text-white bg-green-600 rounded hover:bg-green-700" onClick={handleAdd}>+ Add</button>
+        <button className="h-7 px-5 text-xs text-white bg-green-600 rounded hover:bg-green-700 whitespace-nowrap" onClick={handleAdd}>+ Add</button>
       </div>
       {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
 
@@ -162,7 +162,7 @@ export default function PlayerDatabase({
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`p-2 rounded-lg border border-gray-300 flex items-center gap-3 ${hasDupr ? 'bg-white' : 'bg-yellow-50'}`}>
+            <div key={player.id} className={`p-1.5 rounded-lg border border-gray-300 flex items-center gap-2 ${hasDupr ? 'bg-white' : 'bg-yellow-50'}`}>
               <div className="flex-none">
                 {player.imageUrl ? (
                   <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded-full object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
