@@ -258,10 +258,22 @@ export default function PlayerDatabase({
                 className={`p-3 rounded-lg border ${bgClass} flex items-center justify-between`}
               >
                 <div className="flex items-center gap-3">
+                  {player.imageUrl ? (
+                    <img
+                      src={player.imageUrl}
+                      alt={player.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-green-300"
+                      onError={(e) => {
+                        // Fallback to emoji if image fails to load
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
                       hasDupr ? "bg-green-600 text-white" : "bg-yellow-200 text-yellow-800"
-                    }`}
+                    } ${player.imageUrl ? 'hidden' : ''}`}
                   >
                     {hasDupr ? "🎾" : "⚠️"}
                   </div>

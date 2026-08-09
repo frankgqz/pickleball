@@ -29,6 +29,7 @@ interface DuprUserResponse {
     id: number;
     fullName: string;
     referralCode: string;
+    imageUrl: string;
     stats: {
       singles: string;
       doubles: string;
@@ -66,52 +67,6 @@ async function getDuprToken(): Promise<string | null> {
   }
 }
 
-// ===== Fetch Player Rating from DUPR =====
-async function fetchPlayerFromDupr(token: string, referralCode: string): Promise<{ name: string; doublesRating: string; singlesRating: string } | null> {
-  try {
-    // Try to search for the player by their referral code (DUPR ID)
-    const response = await fetch(`${DUPR_API_BASE}/user/v1.0/lookup/${referralCode}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    // If lookup doesn't work, try profile endpoint
-    if (!response.ok) {
-      // Try user profile which returns your own info - use this as fallback
-      const profileResponse = await fetch(`${DUPR_API_BASE}/user/v1.0/profile/`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-
-      if (profileResponse.ok) {
-        const data: DuprUserResponse = await profileResponse.json();
-        return {
-          name: data.result.fullName,
-          doublesRating: data.result.stats.doubles,
-          singlesRating: data.result.stats.singles,
-        };
-      }
-      return null;
-    }
-
-    const data: DuprUserResponse = await response.json();
-
-    return {
-      name: data.result.fullName,
-      doublesRating: data.result.stats.doubles,
-      singlesRating: data.result.stats.singles,
-    };
-  } catch (error) {
-    console.error("Failed to fetch player from DUPR:", error);
-    return null;
-  }
-}
-
 // ===== PLAYER ACTIONS =====
 
 // Get all players from database
@@ -130,8 +85,8 @@ export async function getPlayers() {
 // Add a new player
 export async function addPlayer(formData: FormData) {
   const name = formData.get("name") as string;
-  const duprId = formData.get("duprId") as string;      // Letter ID (e.g., "5E64ZL")
-  const duprNumericId = formData.get("duprNumericId") as string;  // Numeric ID (e.g., "7438750465")
+  const duprId = formData.get("duprId") as string; // Letter ID (e.g., "5E64ZL")
+  const duprNumericId = formData.get("duprNumericId") as string; // Numeric ID (e.g., "7438750465")
   const duprScore = formData.get("duprScore") as string;
 
   if (!name?.trim()) {
@@ -142,7 +97,7 @@ export async function addPlayer(formData: FormData) {
     const player = await prisma.player.create({
       data: {
         name: name.trim(),
-        duprId: duprId?.trim() || null,           // Letter ID
+        duprId: duprId?.trim() || null, // Letter ID
         duprNumericId: duprNumericId?.trim() || null, // Numeric ID
         duprScore: duprScore ? parseFloat(duprScore) : null,
         orderScore: duprScore ? parseFloat(duprScore) : 5,
@@ -196,8 +151,7 @@ export async function updatePlayer(playerId: string, formData: FormData) {
   }
 }
 
-
-// Fetch and update player rating from DUPR
+// Fetch and update player rating and avatar from DUPR
 export async function fetchDuprRating(playerId: string) {
   try {
     const player = await prisma.player.findUnique({
@@ -233,21 +187,25 @@ export async function fetchDuprRating(playerId: string) {
         rating = parseFloat(rating);
       }
 
-      // Update with all available data (name, letter ID, rating)
+      // Get imageUrl from response
+      const imageUrl = data.result?.imageUrl || null;
+
+      // Update with all available data (name, letter ID, rating, imageUrl)
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
           name: data.result?.fullName || player.name,
-          duprId: data.result?.duprId || player.duprId,  // Letter ID
+          duprId: data.result?.duprId || player.duprId, // Letter ID
           duprNumericId: data.result?.id?.toString() || player.duprNumericId, // Numeric ID
           duprScore: rating,
+          imageUrl: imageUrl, // NEW: Save avatar URL
         },
       });
 
       return { 
         success: true, 
         player: updatedPlayer,
-        message: rating ? `Fetched: ${data.result.fullName} - ${rating}` : "Player found but no rating (NR)"
+        message: rating ? `Fetched: ${data.result.fullName} - ${rating}${imageUrl ? " ✓" : ""}` : "Player found but no rating (NR)"
       };
     }
 
