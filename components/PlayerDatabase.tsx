@@ -13,8 +13,6 @@ interface Props {
   onFetchDupr?: (id: string) => Promise<void> | void;
   onAddToPool?: (player: Player) => void;
   onRemoveFromPool?: (id: string) => void;
-  onToggleSitting?: (id: string) => void;
-  formatOptions?: Array<{ label: string; value: string; onClick: () => void }>;
 }
 
 export default function PlayerDatabase({
@@ -26,8 +24,6 @@ export default function PlayerDatabase({
   onFetchDupr,
   onAddToPool,
   onRemoveFromPool,
-  onToggleSitting,
-  formatOptions = [],
 }: Props) {
   const [playerSearch, setPlayerSearch] = useState("");
   const [playerSortBy, setPlayerSortBy] = useState<"date" | "alpha">("date");
@@ -68,10 +64,8 @@ export default function PlayerDatabase({
 
     if (playerSortBy === "alpha") {
       list.sort((a, b) => a.name.localeCompare(b.name));
-    } else {
-      // Recent first — reversed since newest is at start of array
-      list = list.slice().reverse();
     }
+    // else: keep original order (newest first since we unshift into array)
 
     return list;
   }, [players, playerSearch, playerSortBy]);
@@ -101,69 +95,41 @@ export default function PlayerDatabase({
         </div>
       </div>
 
-      {/* Add player — inline with smaller fields */}
-      <div className="mb-6 flex flex-wrap gap-2 items-end">
-        <div className="flex-1 min-w-[140px]">
-          <label className="block text-xs text-gray-600 mb-1">Name *</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            placeholder="Player name"
-          />
-        </div>
-        <div className="w-28">
-          <label className="block text-xs text-gray-600 mb-1">DUPR ID</label>
-          <input
-            value={duprId}
-            onChange={(e) => setDuprId(e.target.value)}
-            className="w-full px-2 py-2 border rounded-lg text-sm"
-            placeholder="ID"
-          />
-        </div>
-        <div className="w-28">
-          <label className="block text-xs text-gray-600 mb-1">Num ID</label>
-          <input
-            value={duprNumericId}
-            onChange={(e) => setDuprNumericId(e.target.value)}
-            className="w-full px-2 py-2 border rounded-lg text-sm"
-            placeholder="#"
-          />
-        </div>
-        <div className="w-20">
-          <label className="block text-xs text-gray-600 mb-1">Rating</label>
-          <input
-            value={duprScore}
-            onChange={(e) => setDuprScore(e.target.value)}
-            className="w-full px-2 py-2 border rounded-lg text-sm"
-            placeholder="0.0"
-          />
-        </div>
+      {/* Add player — single line */}
+      <div className="mb-4 flex gap-1 items-end">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+          className="flex-1 px-2 py-1.5 border rounded text-sm"
+          placeholder="Name *"
+        />
+        <input
+          value={duprId}
+          onChange={(e) => setDuprId(e.target.value)}
+          className="w-20 px-2 py-1.5 border rounded text-sm"
+          placeholder="DUPR ID"
+        />
+        <input
+          value={duprNumericId}
+          onChange={(e) => setDuprNumericId(e.target.value)}
+          className="w-16 px-2 py-1.5 border rounded text-sm"
+          placeholder="#"
+        />
+        <input
+          value={duprScore}
+          onChange={(e) => setDuprScore(e.target.value)}
+          className="w-16 px-2 py-1.5 border rounded text-sm"
+          placeholder="Rating"
+        />
         <button
           onClick={handleAdd}
           disabled={!name.trim()}
-          className="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:bg-gray-400 whitespace-nowrap"
+          className="bg-green-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-green-700 disabled:bg-gray-400 whitespace-nowrap"
         >
           + Add
         </button>
       </div>
-
-      {/* Format quick-start buttons */}
-      {formatOptions.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          <span className="text-xs text-gray-500 pt-2">Quick Start:</span>
-          {formatOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={opt.onClick}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Player list */}
       <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -238,15 +204,6 @@ export default function PlayerDatabase({
                       title="Remove from pool"
                     >
                       ➖
-                    </button>
-                  )}
-                  {onToggleSitting && (
-                    <button
-                      onClick={() => onToggleSitting(player.id)}
-                      className="text-yellow-600 hover:text-yellow-800 px-2 py-1 text-sm"
-                      title={player.isSitting ? "Un-sit" : "Sit out"}
-                    >
-                      {player.isSitting ? "↩️" : "💤"}
                     </button>
                   )}
                   <button

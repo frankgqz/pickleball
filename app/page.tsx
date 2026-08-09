@@ -448,7 +448,15 @@ export default function Page() {
       </header>
 
       <div className="max-w-6xl mx-auto space-y-8">
-        <SettingsPanel config={config} updateConfig={updateConfig} onSettingsChange={(keys)=>{ /* handled above */ }} />
+        <SettingsPanel
+          config={config}
+          updateConfig={updateConfig}
+          onSettingsChange={(keys)=>{ /* handled above */ }}
+          onFormatSelect={(format) => {
+            if (currentRoundNumber === 1) regenerateByes();
+            generateMatches(format as "PICK_PARTNER" | "FIXED_14V23");
+          }}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 <PlayerDatabase
@@ -460,12 +468,6 @@ export default function Page() {
           onUpdatePlayer={handleUpdatePlayer}
           onAddToPool={addToPool}
           onRemoveFromPool={removeFromPool}
-          onToggleSitting={toggleSitting}
-          formatOptions={[
-            { label: "Standard", value: "standard", onClick: () => generateMatches("PICK_PARTNER") },
-            { label: "Teams", value: "teams", onClick: () => generateMatches("FIXED_14V23") },
-            { label: "Pool / Finals", value: "pool", onClick: () => { /* TODO: implement pool/finals format */ } },
-          ]}
         />
           <EventPool
             eventPool={eventPool}

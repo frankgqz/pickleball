@@ -1,13 +1,18 @@
+"use client";
+
 import React from "react";
 import { TournamentConfig } from "./Types";
+
+type MatchFormat = "PICK_PARTNER" | "FIXED_14V23" | "POOL_FINALS";
 
 interface Props {
   config: TournamentConfig;
   updateConfig: <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => void;
   onSettingsChange?: (keys: (keyof TournamentConfig)[]) => void;
+  onFormatSelect?: (format: MatchFormat) => void;
 }
 
-export default function SettingsPanel({ config, updateConfig, onSettingsChange }: Props) {
+export default function SettingsPanel({ config, updateConfig, onSettingsChange, onFormatSelect }: Props) {
   const handleChange = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     updateConfig(key, value);
     if (onSettingsChange) onSettingsChange([key]);
@@ -17,7 +22,30 @@ export default function SettingsPanel({ config, updateConfig, onSettingsChange }
     <section className="bg-white rounded-2xl shadow-xl p-6">
       <h2 className="text-xl font-bold text-gray-800 mb-4">⚙️ Tournament Settings</h2>
 
-      <h3 className="font-medium text-gray-700">Match Settings</h3>
+      {/* Format Selection */}
+      <div className="flex gap-2 mb-6">
+        <span className="text-sm font-medium text-gray-600 pt-2">Format:</span>
+        <button
+          onClick={() => onFormatSelect && onFormatSelect("PICK_PARTNER")}
+          className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+        >
+          Standard
+        </button>
+        <button
+          onClick={() => onFormatSelect && onFormatSelect("FIXED_14V23")}
+          className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700"
+        >
+          Teams
+        </button>
+        <button
+          onClick={() => onFormatSelect && onFormatSelect("POOL_FINALS")}
+          className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700"
+        >
+          Pool / Finals
+        </button>
+      </div>
+
+      <h3 className="font-medium text-gray-700 mb-2">Match Settings</h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">W/L Magnitude</label>
@@ -70,7 +98,7 @@ export default function SettingsPanel({ config, updateConfig, onSettingsChange }
         </div>
       </div>
 
-      <h3 className="font-medium text-gray-700">Bye Settings</h3>
+      <h3 className="font-medium text-gray-700 mb-2">Bye Settings</h3>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">Courts</label>
