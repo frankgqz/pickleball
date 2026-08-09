@@ -2,6 +2,26 @@
 
 export type MatchFormat = "PICK_PARTNER" | "FIXED_14V23" | "POOL_PLAY";
 
+export type PoolFinalsFormat = 
+  | "top2_to_semis"       // top 2 in pool go to semis
+  | "2nd_3rd_to_quarters" // top 2 go to semis, 2nd/3rd play quarters  
+  | "quarters_to_8"       // top 3 in pool + others to make 8
+  | "semis_only"          // semis only (top 4)
+  | "finals_only"         // finals only (top 2)
+  | "serial_play"         // everyone plays, 1v2, 3v4, 5v6 to determine rank
+  | "single_elimination"; // standard single elimination bracket
+
+export type AdvancementCriteria = "wins" | "sets" | "points" | "points_ratio";
+
+export interface PoolFinalsConfig {
+  poolsCount: number;
+  finalistsPerPool: number;
+  finalsFormat: PoolFinalsFormat;
+  advancementCriteria: AdvancementCriteria;
+  groupStageWinsFor: number;      // best of X games
+  finalsWinsFor: number;          // best of X games
+}
+
 export interface Player {
   id: string;
   name: string;
@@ -35,6 +55,10 @@ export interface StandingsEntry {
   losses: number;
   pointsFor: number;
   pointsAgainst: number;
+
+  // Pool play specific
+  poolId?: string;
+  poolRank?: number;
 }
 
 export interface TournamentConfig {
@@ -50,6 +74,9 @@ export interface TournamentConfig {
   courts: number;
   teamsPerPool: number;
   finalsFormat: "top2" | "top4" | "all";
+
+  // Pool/Finals specific settings
+  poolFinals?: PoolFinalsConfig;
 }
 
 export interface Match {
@@ -61,6 +88,11 @@ export interface Match {
   team2Score?: number;
   bye?: boolean;
   byePlayerId?: string;
+}
+
+export interface PoolMatch extends Match {
+  poolId: string;
+  round: number;     // round within the pool stage
 }
 
 export interface CompletedRound {
@@ -83,6 +115,8 @@ export interface RoundState {
   format: MatchFormat;
   matches: Match[];
   submitted: boolean;
+  poolId?: string;
+  stage?: "pool" | "quarters" | "semis" | "finals";
 }
 
 export interface CompletedRoundStored extends CompletedRound {
