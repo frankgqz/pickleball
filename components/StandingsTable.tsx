@@ -5,27 +5,122 @@ import { StandingsEntry } from "./Types";
 
 interface Props {
   standings: StandingsEntry[];
-  getSeedTotal: (e: StandingsEntry) => number;
-  getByeTotal: (e: StandingsEntry) => number;
-  getPointDiff: (e: StandingsEntry) => number;
-  getPtsPct: (e: StandingsEntry) => number;
-  sortColumn: string;
-  sortDirection: "asc" | "desc";
-  handleSort: (key: string) => void;
   onRegenerateByes?: () => void;
+  sortColumn?: string;
+  sortDirection?: "asc" | "desc";
+  onSortChange?: (column: string) => void;
 }
 
 export default function StandingsTable({
   standings,
-  getSeedTotal,
-  getByeTotal,
-  getPointDiff,
-  getPtsPct,
-  sortColumn,
-  sortDirection,
-  handleSort,
   onRegenerateByes,
+  sortColumn = "seedAdjustment",
+  sortDirection = "asc",
+  onSortChange,
 }: Props) {
+  // Compute derived values for each entry
+  const computeEntries = standings.map(entry => {
+    const seedTotal = (entry.seed || 0) + (entry.seedAdjustment || 0);
+    const byeBase = entry.byeBase || 0;
+    const byeCount = entry.byeCount || 0;
+    const sitOutCount = entry.sitOutCount || 0;
+    const byeMod = entry.byeMod || 0;
+    const byeTotal = byeBase + byeCount + (sitOutCount * 0.5) + byeMod;
+    const pointsFor = entry.pointsFor || 0;
+    const pointsAgainst = entry.pointsAgainst || 0;
+    const pointDiff = pointsFor - pointsAgainst;
+    const ptsPct = (pointsFor + pointsAgainst) > 0 
+      ? (pointsFor / (pointsFor + pointsAgainst)) * 100 
+      : 50;
+    
+    return {
+      ...entry,
+      seedTotal,
+      byeTotal,
+      pointDiff,
+      ptsPct,
+    };
+  });
+
+  // Sort entries based on current sort column and direction
+  const sortedEntries = [...computeEntries].sort((a, b) => {
+    let aVal: number | string = 0;
+    let bVal: number | string = 0;
+
+    switch (sortColumn) {
+      case "name":
+        aVal = a.name.toLowerCase();
+        bVal = b.name.toLowerCase();
+        break;
+      case "seedTotal":
+        aVal = a.seedTotal;
+        bVal = b.seedTotal;
+        break;
+      case "wins":
+        aVal = a.wins || 0;
+        bVal = b.wins || 0;
+        break;
+      case "losses":
+        aVal = a.losses || 0;
+        bVal = b.losses || 0;
+        break;
+      case "pointsFor":
+        aVal = a.pointsFor || 0;
+        bVal = b.pointsFor || 0;
+        break;
+      case "pointsAgainst":
+        aVal = a.pointsAgainst || 0;
+        bVal = b.pointsAgainst || 0;
+        break;
+      case "pointDiff":
+        aVal = a.pointDiff;
+        bVal = b.pointDiff;
+        break;
+      case "ptsPct":
+        aVal = a.ptsPct;
+        bVal = b.ptsPct;
+        break;
+      case "byeTotal":
+        aVal = a.byeTotal;
+        bVal = b.byeTotal;
+        break;
+      case "byeCount":
+        aVal = a.byeCount || 0;
+        bVal = b.byeCount || 0;
+        break;
+      case "byeBase":
+        aVal = a.byeBase || 0;
+        bVal = b.byeBase || 0;
+        break;
+      default:
+        aVal = a.seedTotal;
+        bVal = b.seedTotal;
+    }
+
+    // Sort direction
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortDirection === "asc" 
+        ? aVal.localeCompare(bVal) 
+        : bVal.localeCompare(aVal);
+    }
+    return sortDirection === "asc" 
+      ? (aVal as number) - (bVal as number) 
+      : (bVal as number) - (aVal as number);
+  });
+
+  const handleSort = (column: string) => {
+    if (onSortChange) {
+      onSortChange(column);
+    }
+  };
+
+  const getSortIcon = (column: string) => {
+    if (sortColumn === column) {
+      return sortDirection === "asc" ? " ↑" : " ↓";
+    }
+    return "";
+  };
+
   return (
     <section className="bg-white rounded-2xl shadow-xl p-6">
       <div className="flex justify-between items-center mb-4">
@@ -38,64 +133,90 @@ export default function StandingsTable({
           >
             🎲 Regenerate Bye Base
           </button>
-          <span className="text-sm text-gray-500">{standings.length} players</span>
+          <span className="text-sm text-gray-500">{sortedEntries.length} players</span>
         </div>
       </div>
 
-      {standings.length === 0 ? (
+      {sortedEntries.length === 0 ? (
         <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-100">
-                <th className="p-2 text-left">Name</th>
-                <th
-                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("seedAdjustment")}
-                  title="Sort by total seed (seed + adjustments)"
+                <th 
+                  className="p-2 text-left cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("name")}
                 >
-                  Order# {sortColumn === "seedAdjustment" && (sortDirection === "asc" ? "↑" : "↓")}
+                  Name{getSortIcon("name")}
                 </th>
-                <th
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("seedTotal")}
+                  title="Total seed (seed + adjustment)"
+                >
+                  Order#{getSortIcon("seedTotal")}
+                </th>
+                <th 
                   className="p-2 text-center cursor-pointer hover:bg-gray-200"
                   onClick={() => handleSort("wins")}
                 >
-                  W {sortColumn === "wins" && (sortDirection === "asc" ? "↑" : "↓")}
+                  W{getSortIcon("wins")}
                 </th>
-                <th
+                <th 
                   className="p-2 text-center cursor-pointer hover:bg-gray-200"
                   onClick={() => handleSort("losses")}
                 >
-                  L {sortColumn === "losses" && (sortDirection === "asc" ? "↑" : "↓")}
+                  L{getSortIcon("losses")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsFor")}>
-                  PF {sortColumn === "pointsFor" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("pointsFor")}
+                >
+                  PF{getSortIcon("pointsFor")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointsAgainst")}>
-                  PA {sortColumn === "pointsAgainst" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("pointsAgainst")}
+                >
+                  PA{getSortIcon("pointsAgainst")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("pointDiff")}>
-                  +/- {sortColumn === "pointDiff" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("pointDiff")}
+                >
+                  +/-{getSortIcon("pointDiff")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("ptsPct")}>
-                  Pts% {sortColumn === "ptsPct" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("ptsPct")}
+                  title="Points percentage"
+                >
+                  Pts%{getSortIcon("ptsPct")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeTotal")}>
-                  Bye {sortColumn === "byeTotal" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("byeTotal")}
+                  title="Total bye score"
+                >
+                  Bye{getSortIcon("byeTotal")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeCount")}>
-                  Byes {sortColumn === "byeCount" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th 
+                  className="p-2 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("byeCount")}
+                  title="Number of byes earned"
+                >
+                  Byes{getSortIcon("byeCount")}
                 </th>
               </tr>
             </thead>
 
             <tbody>
-              {standings.map((entry) => {
-                const seedTotal = getSeedTotal(entry);
-                const byeTotal = getByeTotal(entry);
-                const pointDiff = getPointDiff(entry);
-                const ptsPctVal = getPtsPct(entry);
+              {sortedEntries.map((entry) => {
+                const seedTotal = entry.seedTotal;
+                const byeTotal = entry.byeTotal;
+                const pointDiff = entry.pointDiff;
+                const ptsPctVal = entry.ptsPct;
 
                 return (
                   <tr key={entry.id} className="border-t hover:bg-gray-50">
@@ -103,26 +224,22 @@ export default function StandingsTable({
                       <div className="font-medium">{entry.name}</div>
                     </td>
 
-                    <td
+                    <td 
                       className="p-2 text-center font-mono text-blue-600 cursor-help"
-                      title={`seed: ${entry.seed.toFixed(2)}\nadjustment: ${entry.seedAdjustment >= 0 ? "+" : ""}${entry.seedAdjustment.toFixed(2)}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}`}
+                      title={`seed: ${(entry.seed || 0).toFixed(2)}, adj: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}
                     >
                       {seedTotal.toFixed(2)}
                     </td>
 
-                    <td className="p-2 text-center font-bold text-green-600">{entry.wins}</td>
-                    <td className="p-2 text-center font-bold text-red-500">{entry.losses}</td>
-                    <td className="p-2 text-center">{entry.pointsFor}</td>
-                    <td className="p-2 text-center">{entry.pointsAgainst}</td>
+                    <td className="p-2 text-center font-bold text-green-600">{entry.wins || 0}</td>
+                    <td className="p-2 text-center font-bold text-red-500">{entry.losses || 0}</td>
+                    <td className="p-2 text-center">{entry.pointsFor || 0}</td>
+                    <td className="p-2 text-center">{entry.pointsAgainst || 0}</td>
 
-                    <td
-                      className={`p-2 text-center font-mono cursor-pointer hover:bg-gray-100 ${
-                        pointDiff >= 0 ? "text-green-600" : "text-red-600"
-                      }`}
-                      onClick={() => handleSort("pointsFor")}
+                    <td 
+                      className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}
                     >
-                      {pointDiff >= 0 ? "+" : ""}
-                      {pointDiff}
+                      {pointDiff >= 0 ? "+" : ""}{pointDiff}
                     </td>
 
                     <td className="p-2 text-center">
@@ -131,19 +248,16 @@ export default function StandingsTable({
                       </span>
                     </td>
 
-                    <td className="p-2 text-center">
-                      <span
-                        className={`font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"} cursor-help`}
-                        title={`${entry.byeBase.toFixed(2)} base + ${entry.byeCount} byes + ${(entry.sitOutCount * 1).toFixed(2)} sit outs${entry.byeMod > 0 ? ` + ${entry.byeMod.toFixed(2)} late join` : ""}`}
-                      >
-                        {byeTotal >= 0 ? "+" : ""}
-                        {byeTotal.toFixed(2)}
-                      </span>
+                    <td 
+                      className={`p-2 text-center font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`}
+                      title={`base: ${(entry.byeBase || 0).toFixed(2)}, count: ${entry.byeCount || 0}, sit: ${(entry.sitOutCount || 0) * 0.5}, mod: ${(entry.byeMod || 0).toFixed(2)}`}
+                    >
+                      {byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}
                     </td>
 
                     <td className="p-2 text-center">
-                      <span className="text-purple-600 font-bold cursor-pointer hover:bg-gray-100" onClick={() => handleSort("byeCount")}>
-                        {entry.byeCount}
+                      <span className="text-purple-600 font-bold">
+                        {entry.byeCount || 0}
                       </span>
                     </td>
                   </tr>

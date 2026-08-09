@@ -97,8 +97,18 @@ export default function Page() {
 
   // UI helpers
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
-  const [sortColumn, setSortColumn] = useState<keyof StandingsEntry | "seedAdjustment" | "pointDiff" | "ptsPct" | "byeBase">("seedAdjustment");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [standingsSortColumn, setStandingsSortColumn] = useState("seedTotal");
+  const [standingsSortDirection, setStandingsSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Standings sorting handler
+  const handleStandingsSort = useCallback((column: string) => {
+    if (column === standingsSortColumn) {
+      setStandingsSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setStandingsSortColumn(column);
+      setStandingsSortDirection("asc");
+    }
+  }, [standingsSortColumn]);
 
   // derived: rounds in current session
   const currentSessionRounds = useMemo(() => roundHistory.filter(r => r.sessionId === currentSession.sessionId).sort((a,b)=>a.roundNumber - b.roundNumber), [roundHistory, currentSession]);
@@ -706,23 +716,10 @@ export default function Page() {
 
         <StandingsTable
           standings={standings}
-          getSeedTotal={getSeedTotal}
-          getByeTotal={getByeTotal}
-          getPointDiff={getPointDiff}
-          getPtsPct={getPtsPct}
-          sortColumn={sortColumn as string}
-          sortDirection={sortDirection}
           onRegenerateByes={regenerateByes}
-          handleSort={(k) => {
-            // map keys to actual properties (some keys refer to computed fields)
-            if (k === "seedAdjustment") {
-              setSortColumn("seedAdjustment"); setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-            } else if (k === "pointsFor") { setSortColumn("pointsFor"); setSortDirection(prev => prev === "asc" ? "desc" : "asc"); }
-            else if (k === "pointsAgainst") { setSortColumn("pointsAgainst"); setSortDirection(prev => prev === "asc" ? "desc" : "asc"); }
-            else if (k === "pointsFor") { setSortColumn("pointsFor"); }
-            else if (k === "byeCount") { setSortColumn("byeCount"); }
-            else { setSortColumn(k as any); setSortDirection(prev => prev === "asc" ? "desc" : "asc"); }
-          }}
+          sortColumn={standingsSortColumn}
+          sortDirection={standingsSortDirection}
+          onSortChange={handleStandingsSort}
         />
       </div>
     </div>

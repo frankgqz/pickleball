@@ -234,14 +234,21 @@ export default function CourtsPanel({
         <>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-700">Round {currentRoundNumber} Matches</h3>
-            {onCancelRound && (
+            {submitted && onStartNextRound ? (
+              <button
+                onClick={onStartNextRound}
+                className="px-4 py-1.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 font-semibold shadow-sm transition-colors"
+              >
+                🚀 Start Next Round
+              </button>
+            ) : onCancelRound ? (
               <button
                 onClick={onCancelRound}
                 className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors"
               >
                 ✕ Cancel Round
               </button>
-            )}
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
