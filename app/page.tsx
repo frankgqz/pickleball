@@ -188,13 +188,23 @@ export default function Page() {
           }
         }
 
-        // Also load standings from localStorage
+        // Also load standings from localStorage (only if same session)
         const savedStandings = localStorage.getItem("pickleball_standings_v1");
         if (savedStandings) {
           try {
-            setStandings(JSON.parse(savedStandings));
+            const parsed = JSON.parse(savedStandings);
+            // Only load if standings belong to current session
+            if (parsed.sessionId === result.sessionId) {
+              setStandings(parsed.entries || []);
+            } else {
+              // Different session - clear standings
+              setStandings([]);
+              localStorage.removeItem("pickleball_standings_v1");
+            }
           } catch {
-            // Invalid standings, will be recreated
+            // Invalid standings, clear and continue
+            setStandings([]);
+            localStorage.removeItem("pickleball_standings_v1");
           }
         }
       } else {
@@ -531,12 +541,15 @@ export default function Page() {
 
   // --- Simple UI wiring for components ---------------------- //
 
-  // Auto-save standings to localStorage when they change
+  // Auto-save standings to localStorage when they change (include sessionId)
   useEffect(() => {
     if (standings.length > 0 && isBrowser) {
-      localStorage.setItem("pickleball_standings_v1", JSON.stringify(standings));
+      localStorage.setItem("pickleball_standings_v1", JSON.stringify({
+        sessionId: currentSession?.sessionId,
+        entries: standings,
+      }));
     }
-  }, [standings]);
+  }, [standings, currentSession]);
 
   // Auto-save session to localStorage when it changes
   useEffect(() => {
@@ -549,17 +562,11 @@ export default function Page() {
   const handleRestartEvent = useCallback(() => {
     setRoundHistory([]);
     saveRoundsToStorage([]);
-    setStandings(prev => prev.map(s => ({
-      ...s,
-      seedAdjustment: 0,
-      byeCount: 0,
-      sitOutCount: 0,
-      wins: 0,
-      losses: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-      orderHistory: [],
-    })));
+    // Clear standings completely for new session (don't keep old data)
+    setStandings([]);
+    if (isBrowser) {
+      localStorage.removeItem("pickleball_standings_v1");
+    }
     setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
     // Start fresh session and save to localStorage
     const newSession: GameSession = {
