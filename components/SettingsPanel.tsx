@@ -64,7 +64,7 @@ export default function SettingsPanel({ config, updateConfig, onSettingsChange, 
 
         <button
           onClick={onStartRound}
-          disabled={!canStartRound || eventPool.length < 2}
+          disabled={!canStartRound}
           className="px-4 py-2 rounded-lg bg-green-600 text-white font-semibold text-sm hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           🚀 Start Round 1
