@@ -541,7 +541,6 @@ export default function Page() {
         <StandingsTable
           standings={computedStandings}
           onRegenerateByes={regenerateByes}
-          onSortChange={handleStandingsSort}
         />
 
         <RoundHistoryPanel
