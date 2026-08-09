@@ -694,6 +694,7 @@ export default function Page() {
           eventPool={eventPool}
           standings={standings}
           currentRoundNumber={currentRoundNumber}
+          defaultRoundFormat={(config as any).roundFormat || "FIXED_14V23"}
           onStartPickPartner={() => { if (currentRoundNumber === 1) regenerateByes(); generateMatches("PICK_PARTNER"); }}
           onStartFixed14v23={() => { if (currentRoundNumber === 1) regenerateByes(); generateMatches("FIXED_14V23"); }}
           onRegenerateByes={regenerateByes}
@@ -702,13 +703,12 @@ export default function Page() {
           onSubmitRound={submitRoundResults}
           onCancelRound={handleCancelRound}
           onStartNextRound={() => {
-            // Generate next round matchups based on current format
+            // Generate next round matchups based on current format and round format
             if (config.format === "POOL_PLAY") {
               generatePoolMatches();
-            } else if (config.format === "FIXED_PARTNER") {
-              generateMatches("FIXED_14V23" as MatchFormat);
             } else {
-              generateMatches("PICK_PARTNER" as MatchFormat);
+              const roundFmt = (config as any).roundFormat || "FIXED_14V23";
+              generateMatches(roundFmt as MatchFormat);
             }
           }}
           submitted={roundState.submitted}

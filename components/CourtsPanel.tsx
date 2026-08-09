@@ -8,6 +8,7 @@ interface Props {
   eventPool: Player[];
   standings: StandingsEntry[];
   currentRoundNumber: number;
+  defaultRoundFormat?: "FIXED_14V23" | "PICK_PARTNER";
   onStartPickPartner: () => void;
   onStartFixed14v23: () => void;
   onRegenerateByes: () => void;
@@ -24,6 +25,7 @@ export default function CourtsPanel({
   eventPool,
   standings,
   currentRoundNumber,
+  defaultRoundFormat = "FIXED_14V23",
   onStartPickPartner,
   onStartFixed14v23,
   onRegenerateByes,
@@ -209,27 +211,41 @@ export default function CourtsPanel({
             <p className="text-gray-500 text-xs mb-3 uppercase tracking-wide font-medium">Choose format:</p>
 
             <div className="flex flex-col gap-3 max-w-xs mx-auto">
-              <button
-                onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
-              >
-                📊 Standard (1v4, 2v3 by seed)
-                <span className="block text-xs font-normal opacity-75 mt-1">Sorted by order # total</span>
-              </button>
-              <button
-                onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
-                className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
-              >
-                🤝 New Partners
-                <span className="block text-xs font-normal opacity-75 mt-1">Pick your partner for next round</span>
-              </button>
-              <button
-                onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
-              >
-                🎯 By DUPR (1v4, 2v3)
-                <span className="block text-xs font-normal opacity-75 mt-1">Highest DUPR vs lowest</span>
-              </button>
+              {defaultRoundFormat === "PICK_PARTNER" ? (
+                <button
+                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
+                >
+                  📊 Standard
+                  <span className="block text-xs font-normal opacity-75 mt-1">New Partners (your pick)</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
+                >
+                  📊 Standard (1v4, 2v3 by seed)
+                  <span className="block text-xs font-normal opacity-75 mt-1">Sorted by order # total</span>
+                </button>
+              )}
+              
+              {defaultRoundFormat === "PICK_PARTNER" ? (
+                <button
+                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
+                  className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
+                >
+                  ⚡ Fixed (1v4, 2v3)
+                  <span className="block text-xs font-normal opacity-75 mt-1">By seed order</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
+                  className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-3 rounded-xl text-base shadow-sm hover:shadow-md transition-all"
+                >
+                  🤝 New Partners
+                  <span className="block text-xs font-normal opacity-75 mt-1">Pick your partner for next round</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -281,18 +297,25 @@ export default function CourtsPanel({
             </div>
           )}
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 flex justify-center gap-4">
             <button
               onClick={onSubmitRound}
               disabled={roundState.submitted}
-              className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-base disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              ✓ Submit Round Results
+              ✓ Submit Scores
             </button>
-            {roundState.submitted && (
-              <p className="text-green-600 text-sm mt-2">Round submitted! Choose a format above to continue.</p>
-            )}
+            <button
+              onClick={onStartNextRound}
+              disabled={!roundState.submitted}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-3 rounded-xl text-base disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              🚀 Start Next Round
+            </button>
           </div>
+          {roundState.submitted && (
+            <p className="text-center text-green-600 text-sm mt-2">Round submitted! Click "Start Next Round" to continue.</p>
+          )}
         </>
       )}
     </section>
