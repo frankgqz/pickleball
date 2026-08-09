@@ -90,6 +90,58 @@ interface RoundState {
 // ==========================================
 
 export default function Home() {
+  // --- localStorage helpers ---
+  const STORAGE_KEY_ROUNDS = "pickleball_rounds";
+  const STORAGE_KEY_STANDINGS = "pickleball_standings";
+  const STORAGE_KEY_CONFIG = "pickleball_config";
+
+  // Save round history to localStorage
+  const saveRoundsToStorage = (rounds: CompletedRound[]) => {
+    localStorage.setItem(STORAGE_KEY_ROUNDS, JSON.stringify(rounds));
+  };
+
+  // Load round history from localStorage
+  const loadRoundsFromStorage = (): CompletedRound[] => {
+    const stored = localStorage.getItem(STORAGE_KEY_ROUNDS);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed.map((r: any) => ({
+          ...r,
+          date: new Date(r.date),
+        }));
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Save standings to localStorage (for player pool retention)
+  const saveStandingsToStorage = (standingsData: any[]) => {
+    localStorage.setItem(STORAGE_KEY_STANDINGS, JSON.stringify(standingsData));
+  };
+
+  // Load standings from localStorage
+  const loadStandingsFromStorage = () => {
+    const stored = localStorage.getItem(STORAGE_KEY_STANDINGS);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Clear all storage (new game)
+  const clearAllStorage = () => {
+    localStorage.removeItem(STORAGE_KEY_ROUNDS);
+    localStorage.removeItem(STORAGE_KEY_STANDINGS);
+    localStorage.removeItem(STORAGE_KEY_CONFIG);
+  };
+
   // --- State Variables ---
   const [players, setPlayers] = useState<Player[]>([]);
   const [eventPool, setEventPool] = useState<Player[]>([]);
@@ -149,9 +201,10 @@ export default function Home() {
   });
 
   // --- Round History ---
-  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>([]);
+  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(() => loadRoundsFromStorage());
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [editingRound, setEditingRound] = useState<number | null>(null);
+  const [isNewGame, setIsNewGame] = useState(false);
 
   // --- Match Generation ---
   
@@ -431,7 +484,9 @@ export default function Home() {
       matches: roundState.matches,
       sittingOut: sittingOutThisRound,
     };
-    setRoundHistory(prev => [...prev, completedRound]);
+    const newHistory = [...roundHistory, completedRound];
+    setRoundHistory(newHistory);
+    saveRoundsToStorage(newHistory);
 
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
