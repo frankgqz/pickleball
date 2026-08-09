@@ -64,15 +64,29 @@ export default function CourtsPanel({
     return entry?.byeBase ?? 0;
   };
 
-  const formatByeReason = (playerId: string) => {
+  const getPlayerByeTotal = (playerId: string) => {
+    const entry = standings.find(s => s.id === playerId);
+    if (!entry) return 0;
+    const byeBase = entry.byeBase ?? 0;
+    const byeCount = entry.byeCount ?? 0;
+    const sitOutCount = entry.sitOutCount ?? 0;
+    const byeMod = entry.byeMod ?? 0;
+    return byeBase + byeCount + (sitOutCount * 0.5) + byeMod;
+  };
+
+  const formatByeBreakdown = (playerId: string) => {
     const entry = standings.find(s => s.id === playerId);
     if (!entry) return "";
     const parts = [];
-    if (entry.byeBase > 0) parts.push(`base: ${entry.byeBase.toFixed(2)}`);
-    if (entry.byeCount > 0) parts.push(`${entry.byeCount} bye(s)`);
-    if (entry.sitOutCount > 0) parts.push(`${entry.sitOutCount} sit-out(s)`);
-    if (entry.byeMod > 0) parts.push(`late join: ${entry.byeMod.toFixed(2)}`);
-    return parts.length > 0 ? parts.join(" + ") : `base: ${entry.byeBase.toFixed(2)}`;
+    const byeBase = entry.byeBase ?? 0;
+    const byeCount = entry.byeCount ?? 0;
+    const sitOutCount = entry.sitOutCount ?? 0;
+    const byeMod = entry.byeMod ?? 0;
+    if (byeBase !== 0) parts.push(`base: ${byeBase >= 0 ? "+" : ""}${byeBase.toFixed(2)}`);
+    if (byeCount > 0) parts.push(`+${byeCount} byes`);
+    if (sitOutCount > 0) parts.push(`+${sitOutCount * 0.5} sit`);
+    if (byeMod > 0) parts.push(`+${byeMod.toFixed(2)} mod`);
+    return parts.join(" + ") || "base: 0";
   };
 
   const renderMatchCard = (match: Match) => {
@@ -95,8 +109,8 @@ export default function CourtsPanel({
           <div className="text-center py-4">
             <div className="text-2xl mb-2">😴</div>
             <div className="font-semibold text-gray-800">{findPlayer(match.byePlayerId || "")?.name}</div>
-            <div className="text-xs text-gray-500 mt-1">
-              bye score: {getPlayerByeBase(match.byePlayerId || "").toFixed(2)}
+            <div className="text-sm font-mono text-blue-600 mt-1" title={formatByeBreakdown(match.byePlayerId || "")}>
+              bye: {getPlayerByeTotal(match.byePlayerId || "").toFixed(2)}
             </div>
           </div>
         ) : (
@@ -251,7 +265,9 @@ export default function CourtsPanel({
                   return (
                     <div key={m.id} className="bg-white rounded-lg px-4 py-2 border border-orange-200 flex flex-col">
                       <span className="font-medium text-gray-800">{player?.name}</span>
-                      <span className="text-xs text-gray-500">{formatByeReason(m.byePlayerId || "")}</span>
+                      <span className="text-xs font-mono text-blue-600" title={formatByeBreakdown(m.byePlayerId || "")}>
+                        bye: {getPlayerByeTotal(m.byePlayerId || "").toFixed(2)}
+                      </span>
                     </div>
                   );
                 })}

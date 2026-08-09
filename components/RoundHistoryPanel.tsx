@@ -42,6 +42,50 @@ export default function RoundHistoryPanel({
     }
   };
 
+  const [editMode, setEditMode] = useState(false);
+  const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
+
+  const startEditing = () => {
+    if (selectedRound) {
+      setEditMatches(JSON.parse(JSON.stringify(selectedRound.matches)));
+      setEditMode(true);
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditMode(false);
+    setEditMatches([]);
+  };
+
+  const saveEdits = () => {
+    if (selectedRound && onEditRound) {
+      onEditRound({ ...selectedRound, matches: editMatches });
+      setEditMode(false);
+      setEditMatches([]);
+    }
+  };
+
+  const updateMatchScore = (matchId: string, team: "team1Score" | "team2Score", value: number) => {
+    setEditMatches(prev => prev.map(m => m.id === matchId ? { ...m, [team]: value } : m));
+  };
+
+  const swapTeamPlayer = (matchId: string, fromTeam: "team1" | "team2", playerId: string) => {
+    setEditMatches(prev => prev.map(m => {
+      if (m.id !== matchId || m.bye) return m;
+      const fromArr = [...m[fromTeam]];
+      const otherTeam = fromTeam === "team1" ? "team2" : "team1";
+      const otherArr = [...m[otherTeam]];
+      const playerIdx = fromArr.indexOf(playerId);
+      if (playerIdx === -1) return m;
+      
+      // Move player to other team
+      fromArr.splice(playerIdx, 1);
+      otherArr.push(playerId);
+      
+      return { ...m, [fromTeam]: fromArr, [otherTeam]: otherArr };
+    }));
+  };
+
   return (
     <section className="bg-slate-800/50 backdrop-blur rounded-2xl border border-slate-700/50 p-4">
       <div className="flex items-center justify-between mb-4">
@@ -61,12 +105,39 @@ export default function RoundHistoryPanel({
           </select>
 
           {selectedRound && (
-            <button
-              onClick={deleteRound}
-              className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
-            >
-              Delete Round
-            </button>
+            <>
+              {editMode ? (
+                <>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveEdits}
+                    className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
+                  >
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={startEditing}
+                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                  >
+                    Edit Round
+                  </button>
+                  <button
+                    onClick={deleteRound}
+                    className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
+                  >
+                    Delete Round
+                  </button>
+                </>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -85,7 +156,7 @@ export default function RoundHistoryPanel({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {selectedRound.matches.map((m) => {
+            {(editMode ? editMatches : selectedRound.matches).map((m) => {
               const getPlayerName = (id: string) => {
                 const p = eventPool.find(e => e.id === id);
                 return p?.name || id;
@@ -102,7 +173,7 @@ export default function RoundHistoryPanel({
                     <div className="font-semibold text-white">
                       {m.bye ? "BYE" : `Court ${m.court ?? "-"}`}
                     </div>
-                    {m.team1Score !== undefined && m.team2Score !== undefined && (
+                    {!editMode && m.team1Score !== undefined && m.team2Score !== undefined && (
                       <div className="text-xs text-green-400">
                         {m.team1Score} – {m.team2Score}
                       </div>
@@ -112,15 +183,60 @@ export default function RoundHistoryPanel({
                   {!m.bye && (
                     <>
                       <div className="text-sm text-slate-300 mb-2">
-                        <div className="font-medium">
-                          {m.team1.map(id => getPlayerName(id)).join(" / ")}
+                        <div className="font-medium flex items-center gap-2">
+                          {m.team1.map(id => (
+                            <span key={id} className="flex items-center gap-1">
+                              {editMode && (
+                                <button
+                                  onClick={() => swapTeamPlayer(m.id, "team1", id)}
+                                  className="text-xs bg-purple-600 hover:bg-purple-500 px-1 rounded"
+                                  title="Move to Team 2"
+                                >
+                                  ←
+                                </button>
+                              )}
+                              {getPlayerName(id)}
+                            </span>
+                          ))}
                         </div>
                         <div className="text-slate-500 text-center my-1">vs</div>
-                        <div className="font-medium">
-                          {m.team2.map(id => getPlayerName(id)).join(" / ")}
+                        <div className="font-medium flex items-center gap-2">
+                          {m.team2.map(id => (
+                            <span key={id} className="flex items-center gap-1">
+                              {editMode && (
+                                <button
+                                  onClick={() => swapTeamPlayer(m.id, "team2", id)}
+                                  className="text-xs bg-green-600 hover:bg-green-500 px-1 rounded"
+                                  title="Move to Team 1"
+                                >
+                                  →
+                                </button>
+                              )}
+                              {getPlayerName(id)}
+                            </span>
+                          ))}
                         </div>
                       </div>
-                      {m.team1Score !== undefined && m.team2Score !== undefined && (
+                      
+                      {editMode ? (
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                          <input
+                            type="number"
+                            value={m.team1Score ?? ""}
+                            onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
+                            className="w-16 px-2 py-1 border rounded text-center bg-slate-800 text-white"
+                            placeholder="T1"
+                          />
+                          <span className="text-slate-400">vs</span>
+                          <input
+                            type="number"
+                            value={m.team2Score ?? ""}
+                            onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
+                            className="w-16 px-2 py-1 border rounded text-center bg-slate-800 text-white"
+                            placeholder="T2"
+                          />
+                        </div>
+                      ) : m.team1Score !== undefined && m.team2Score !== undefined && (
                         <div className="text-xs text-slate-400 mt-2">
                           {m.team1Score > m.team2Score ? "Team 1" : "Team 2"} wins
                         </div>

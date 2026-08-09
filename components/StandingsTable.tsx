@@ -226,7 +226,11 @@ export default function StandingsTable({
 
                     <td 
                       className="p-2 text-center font-mono text-blue-600 cursor-help"
-                      title={`seed: ${(entry.seed || 0).toFixed(2)}, adj: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}
+                      title={`Order # History:
+seed: ${(entry.seed || 0).toFixed(2)}
+${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}
+${entry.orderHistory.map((h, i) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}
+current adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}
                     >
                       {seedTotal.toFixed(2)}
                     </td>
