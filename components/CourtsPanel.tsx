@@ -234,21 +234,14 @@ export default function CourtsPanel({
         <>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-700">Round {currentRoundNumber} Matches</h3>
-            {submitted && onStartNextRound ? (
-              <button
-                onClick={onStartNextRound}
-                className="px-4 py-1.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 font-semibold shadow-sm transition-colors"
-              >
-                🚀 Start Next Round
-              </button>
-            ) : onCancelRound ? (
+            {onCancelRound && (
               <button
                 onClick={onCancelRound}
                 className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors"
               >
                 ✕ Cancel Round
               </button>
-            ) : null}
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -286,13 +279,22 @@ export default function CourtsPanel({
           )}
 
           <div className="mt-6 text-center">
-            <button
-              onClick={onSubmitRound}
-              disabled={roundState.submitted}
-              className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              ✓ Submit Round Results
-            </button>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={onSubmitRound}
+                disabled={roundState.submitted}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                ✓ Submit Round Results
+              </button>
+              <button
+                onClick={onStartNextRound}
+                disabled={!roundState.submitted}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-3 rounded-xl text-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                🚀 Start Next Round
+              </button>
+            </div>
             {roundState.submitted && (
               <p className="text-green-600 text-sm mt-2">Round submitted!</p>
             )}

@@ -39,15 +39,29 @@ export default function PlayerDatabase({
   const [duprId, setDuprId] = useState("");
   const [duprNumericId, setDuprNumericId] = useState("");
   const [duprScore, setDuprScore] = useState<string>("");
+  const [validationError, setValidationError] = useState<string>("");
 
   const handleAdd = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
+
+    // Validate at least one of duprId, duprNumericId, or duprScore is provided
+    const hasDuprId = duprId.trim();
+    const hasDuprNumericId = duprNumericId.trim();
+    const hasDuprScore = duprScore.trim();
+
+    if (!hasDuprId && !hasDuprNumericId && !hasDuprScore) {
+      setValidationError("At least one of DUPR ID, number ID, or rating is required");
+      return;
+    }
+
+    setValidationError("");
+
     const payload = {
       name: trimmed,
-      duprId: duprId.trim() || undefined,
-      duprNumericId: duprNumericId.trim() || undefined,
-      duprScore: duprScore ? parseFloat(duprScore) : undefined,
+      duprId: hasDuprId ? duprId.trim() : undefined,
+      duprNumericId: hasDuprNumericId ? duprNumericId.trim() : undefined,
+      duprScore: hasDuprScore ? parseFloat(duprScore) : undefined,
     };
     if (onAddPlayer) await onAddPlayer(payload);
     setName("");
@@ -166,6 +180,11 @@ export default function PlayerDatabase({
           + Add
         </button>
       </div>
+
+      {/* Validation error message */}
+      {validationError && (
+        <p className="text-red-500 text-xs mt-1">{validationError}</p>
+      )}
 
       {/* Player list */}
       <div className="space-y-2 max-h-96 overflow-y-auto">
