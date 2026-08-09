@@ -609,17 +609,6 @@ export default function Page() {
         <SettingsPanel
           config={config}
           updateConfig={updateConfig}
-          onSettingsChange={(keys)=>{}}
-          onFormatSelect={(format) => {
-            if (currentRoundNumber === 1) regenerateByes();
-            if (config.format === "POOL_PLAY") {
-              generatePoolMatches();
-            } else if (config.format === "FIXED_PARTNER") {
-              generateMatches("FIXED_14V23" as MatchFormat);
-            } else {
-              generateMatches("PICK_PARTNER" as MatchFormat);
-            }
-          }}
           onRestartEvent={handleRestartEvent}
         />
 
@@ -694,7 +683,7 @@ export default function Page() {
           eventPool={eventPool}
           standings={standings}
           currentRoundNumber={currentRoundNumber}
-          defaultRoundFormat={(config as any).roundFormat || "FIXED_14V23"}
+          defaultRoundFormat={config.roundFormat || "FIXED_14V23"}
           onStartPickPartner={() => { if (currentRoundNumber === 1) regenerateByes(); generateMatches("PICK_PARTNER"); }}
           onStartFixed14v23={() => { if (currentRoundNumber === 1) regenerateByes(); generateMatches("FIXED_14V23"); }}
           onRegenerateByes={regenerateByes}
@@ -707,7 +696,7 @@ export default function Page() {
             if (config.format === "POOL_PLAY") {
               generatePoolMatches();
             } else {
-              const roundFmt = (config as any).roundFormat || "FIXED_14V23";
+              const roundFmt = config.roundFormat || "FIXED_14V23";
               generateMatches(roundFmt as MatchFormat);
             }
           }}
