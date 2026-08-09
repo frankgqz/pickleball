@@ -111,18 +111,7 @@ export default function CourtsPanel({
         {match.bye ? (
           <div className="text-center py-4">
             <div className="text-2xl mb-2">😴</div>
-            <div className="font-semibold text-gray-800 flex items-center justify-center gap-2">
-              {findPlayer(match.byePlayerId || "")?.name}
-              {onVetoBye && match.byePlayerId && (
-                <button
-                  onClick={() => onVetoBye(match.byePlayerId!)}
-                  className="px-2 py-0.5 text-xs bg-orange-100 hover:bg-orange-200 text-orange-600 rounded border border-orange-300"
-                  title="Veto this bye - add 0.25 to their bye score"
-                >
-                  ✕ Veto
-                </button>
-              )}
-            </div>
+            <div className="font-semibold text-gray-800">{findPlayer(match.byePlayerId || "")?.name}</div>
             <div className="text-sm font-mono text-blue-600 mt-1" title={formatByeBreakdown(match.byePlayerId || "")}>
               bye: {getPlayerByeTotal(match.byePlayerId || "").toFixed(2)}
             </div>
@@ -278,7 +267,18 @@ export default function CourtsPanel({
                   const player = findPlayer(m.byePlayerId);
                   return (
                     <div key={m.id} className="bg-white rounded-lg px-4 py-2 border border-orange-200 flex flex-col">
-                      <span className="font-medium text-gray-800">{player?.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-800">{player?.name}</span>
+                        {onVetoBye && m.byePlayerId && (
+                          <button
+                            onClick={() => onVetoBye(m.byePlayerId!)}
+                            className="text-orange-500 hover:text-orange-700 text-sm"
+                            title="No bye this round - add 0.25 to bye score"
+                          >
+                            ⏳
+                          </button>
+                        )}
+                      </div>
                       <span className="text-xs font-mono text-blue-600" title={formatByeBreakdown(m.byePlayerId || "")}>
                         bye: {getPlayerByeTotal(m.byePlayerId || "").toFixed(2)}
                       </span>
