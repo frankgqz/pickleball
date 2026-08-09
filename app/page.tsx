@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import SettingsPanel from "../components/SettingsPanel";
 import PlayerDatabase from "../components/PlayerDatabase";
 import EventPool from "../components/EventPool";
@@ -510,15 +510,12 @@ export default function Page() {
       pointsAgainst: 0,
       orderHistory: [],
     })));
-    setUndoStack([]);
-    setCurrentHistoryIndex(-1);
     setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
-    const newSession: GameSession = {
+    // Start fresh session
+    setCurrentSession({
       sessionId: Date.now().toString(),
       startDate: new Date().toISOString(),
-    };
-    setCurrentSession(newSession);
-    saveSessionToStorage(newSession);
+    });
   }, []);
 
   const handleCancelRound = useCallback(() => {

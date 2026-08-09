@@ -27,6 +27,13 @@ export default function PlayerDatabase({
   const [playerSearch, setPlayerSearch] = useState("");
   const [playerSortBy, setPlayerSortBy] = useState<"date" | "alpha">("date");
 
+  // Edit player state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDuprId, setEditDuprId] = useState("");
+  const [editDuprNumericId, setEditDuprNumericId] = useState("");
+  const [editDuprScore, setEditDuprScore] = useState("");
+
   // Add player form state
   const [name, setName] = useState("");
   const [duprId, setDuprId] = useState("");
@@ -47,6 +54,36 @@ export default function PlayerDatabase({
     setDuprId("");
     setDuprNumericId("");
     setDuprScore("");
+  };
+
+  // Edit player handlers
+  const startEditing = (player: Player) => {
+    setEditingId(player.id);
+    setEditName(player.name);
+    setEditDuprId(player.duprId || "");
+    setEditDuprNumericId(player.duprNumericId || "");
+    setEditDuprScore(player.duprScore != null ? String(player.duprScore) : "");
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editName.trim()) return;
+    if (onUpdatePlayer) {
+      await onUpdatePlayer(editingId, {
+        name: editName.trim(),
+        duprId: editDuprId.trim() || null,
+        duprNumericId: editDuprNumericId.trim() || null,
+        duprScore: editDuprScore ? parseFloat(editDuprScore) : null,
+      });
+    }
+    cancelEdit();
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditDuprId("");
+    setEditDuprNumericId("");
+    setEditDuprScore("");
   };
 
   const filteredPlayers = useMemo(() => {
@@ -138,6 +175,62 @@ export default function PlayerDatabase({
           filteredPlayers.map((player) => {
             const hasDupr = !!player.duprId || !!player.duprNumericId;
             const inPool = isInPool(player.id);
+            const isEditing = editingId === player.id;
+
+            if (isEditing) {
+              // Edit form
+              return (
+                <div
+                  key={player.id}
+                  className="p-3 rounded-lg border bg-blue-50 border-blue-200 flex items-center justify-between"
+                >
+                  <div className="flex gap-1 items-end flex-1">
+                    <div className="flex-1">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full px-2 py-1 border rounded text-sm"
+                        placeholder="Name"
+                        autoFocus
+                      />
+                    </div>
+                    <input
+                      value={editDuprId}
+                      onChange={(e) => setEditDuprId(e.target.value)}
+                      className="w-20 px-2 py-1 border rounded text-sm"
+                      placeholder="DUPR ID"
+                    />
+                    <input
+                      value={editDuprNumericId}
+                      onChange={(e) => setEditDuprNumericId(e.target.value)}
+                      className="w-16 px-2 py-1 border rounded text-sm"
+                      placeholder="#"
+                    />
+                    <input
+                      value={editDuprScore}
+                      onChange={(e) => setEditDuprScore(e.target.value)}
+                      className="w-16 px-2 py-1 border rounded text-sm"
+                      placeholder="Rating"
+                    />
+                  </div>
+                  <div className="flex gap-1 ml-2">
+                    <button
+                      onClick={saveEdit}
+                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
             const bgClass = hasDupr ? "bg-white border-gray-100" : "bg-yellow-50 border-yellow-200";
 
             return (
@@ -195,9 +288,9 @@ export default function PlayerDatabase({
                     </button>
                   )}
 
-                  {/* Edit - white background */}
+                  {/* Edit - opens inline form */}
                   <button
-                    onClick={() => onUpdatePlayer && onUpdatePlayer(player.id, { isSitting: !player.isSitting } as Partial<Player>)}
+                    onClick={() => startEditing(player)}
                     className="w-7 h-7 rounded bg-white border border-blue-300 hover:bg-blue-50 text-blue-600 flex items-center justify-center text-xs shadow-sm"
                     title="Edit"
                   >
