@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import SettingsPanel from "../components/SettingsPanel";
-import PlayerDatabase from "../components/PlayerDatabase";
-import EventPool from "../components/EventPool";
-import CourtsPanel from "../components/CourtsPanel";
-import StandingsTable from "../components/StandingsTable";
-import RoundHistoryPanel from "../components/RoundHistoryPanel";
-import { Player, StandingsEntry, TournamentConfig, Match, CompletedRound, RoundState, GameSession, MatchFormat } from "../components/Types";
-import { generateMatches, regenerateByesSync } from "../components/MatchEngine";
-import { sortStandings, computeStandingsEntries } from "../components/standingsUtils";
+import SettingsPanel from "@/components/SettingsPanel";
+import PlayerDatabase from "@/components/PlayerDatabase";
+import EventPool from "@/components/EventPool";
+import CourtsPanel from "@/components/CourtsPanel";
+import StandingsTable from "@/components/StandingsTable";
+import RoundHistoryPanel from "@/components/RoundHistoryPanel";
+import { Player, StandingsEntry, TournamentConfig, Match, CompletedRound, RoundState, GameSession, MatchFormat } from "@/components/Types";
+import { generateMatches } from "@/components/MatchEngine";
+import { sortStandings, computeStandingsEntries } from "@/components/standingsUtils";
 
 // Server actions for Neon PostgreSQL database
 import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "./actions";
@@ -406,6 +406,7 @@ export default function Page() {
     setRoundHistory([]);
     saveRoundsToStorage([]);
     setStandings([]);
+    setEventPool([]); // Clear event pool too
     if (isBrowser) localStorage.removeItem("pickleball_standings_v1");
     setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
     const newSession: GameSession = {
