@@ -15,6 +15,8 @@ interface Props {
   onSwapPlayerTeam: (matchId: string, playerId: string) => void;
   onSubmitRound: () => void;
   onCancelRound?: () => void;
+  onStartNextRound?: () => void;
+  submitted?: boolean;
 }
 
 export default function CourtsPanel({
@@ -29,6 +31,8 @@ export default function CourtsPanel({
   onSwapPlayerTeam,
   onSubmitRound,
   onCancelRound,
+  onStartNextRound,
+  submitted = false,
 }: Props) {
   const findPlayer = (id?: string) => eventPool.find(p => p.id === id) || null;
 
@@ -192,23 +196,26 @@ export default function CourtsPanel({
   return (
     <section className="bg-white rounded-2xl shadow-xl p-6">
       {!roundState.active ? (
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Ready to start Round {currentRoundNumber}?</h3>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartPickPartner(); }}
-              className="bg-purple-400 hover:bg-purple-500 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
-            >
-              🤝 Pick Partner Format
-            </button>
-            <button
-              onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); onStartFixed14v23(); }}
-              className="bg-blue-400 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
-            >
-              ⚔️ 1v4 vs 2v3 Format
-            </button>
-          </div>
-          <p className="text-gray-500 text-sm mt-3">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
+        <div className="text-center py-8">
+          {submitted ? (
+            <>
+              <div className="text-4xl mb-4">✓</div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">Round {currentRoundNumber - 1} Complete!</h3>
+              <button
+                onClick={onStartNextRound}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-4 rounded-xl text-lg shadow-md hover:shadow-lg transition-all"
+              >
+                🚀 Start Round {currentRoundNumber}
+              </button>
+              <p className="text-gray-500 text-sm mt-3">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
+            </>
+          ) : (
+            <>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700">Waiting to start Round {currentRoundNumber}</h3>
+              <p className="text-gray-500 text-sm">{eventPool.filter(p => !p.isSitting).length} active players ready</p>
+              <p className="text-gray-400 text-xs mt-2">Use the format buttons in Tournament Settings to start</p>
+            </>
+          )}
         </div>
       ) : (
         <>

@@ -81,8 +81,8 @@ export default function StandingsTable({
                 <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("ptsPct")}>
                   Pts% {sortColumn === "ptsPct" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeBase")}>
-                  Bye {sortColumn === "byeBase" && (sortDirection === "asc" ? "↑" : "↓")}
+                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeTotal")}>
+                  Bye {sortColumn === "byeTotal" && (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
                 <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => handleSort("byeCount")}>
                   Byes {sortColumn === "byeCount" && (sortDirection === "asc" ? "↑" : "↓")}
@@ -101,7 +101,6 @@ export default function StandingsTable({
                   <tr key={entry.id} className="border-t hover:bg-gray-50">
                     <td className="p-2">
                       <div className="font-medium">{entry.name}</div>
-                      {entry.duprId && <div className="text-xs text-gray-500">DUPR: {entry.duprId}</div>}
                     </td>
 
                     <td

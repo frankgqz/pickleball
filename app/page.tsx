@@ -555,20 +555,18 @@ export default function Page() {
         <SettingsPanel
           config={config}
           updateConfig={updateConfig}
-          onSettingsChange={(keys)=>{ /* handled above */ }}
-          onStartRound={() => {
+          onSettingsChange={(keys)=>{}}
+          onFormatSelect={(format) => {
             if (currentRoundNumber === 1) regenerateByes();
             if (config.format === "POOL_PLAY") {
-              // Pool/Finals format - distribute players into pools
               generatePoolMatches();
             } else if (config.format === "FIXED_PARTNER") {
-              generateMatches("FIXED_14V23");
+              generateMatches("FIXED_14V23" as MatchFormat);
             } else {
-              generateMatches("PICK_PARTNER");
+              generateMatches("PICK_PARTNER" as MatchFormat);
             }
           }}
           onRestartEvent={handleRestartEvent}
-          canStartRound={eventPool.filter(p => !p.isSitting).length >= 2}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -642,13 +640,17 @@ export default function Page() {
           eventPool={eventPool}
           standings={standings}
           currentRoundNumber={currentRoundNumber}
-          onStartPickPartner={() => { if (currentRoundNumber===1) regenerateByes(); generateMatches("PICK_PARTNER"); }}
-          onStartFixed14v23={() => { if (currentRoundNumber===1) regenerateByes(); generateMatches("FIXED_14V23"); }}
-          onRegenerateByes={() => regenerateByes()}
+          onStartPickPartner={() => { if (currentRoundNumber === 1) regenerateByes(); generateMatches("PICK_PARTNER"); }}
+          onStartFixed14v23={() => { if (currentRoundNumber === 1) regenerateByes(); generateMatches("FIXED_14V23"); }}
+          onRegenerateByes={regenerateByes}
           onUpdateMatchScore={updateMatchScore}
           onSwapPlayerTeam={swapPlayerTeam}
           onSubmitRound={submitRoundResults}
           onCancelRound={handleCancelRound}
+          onStartNextRound={() => {
+            setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+          }}
+          submitted={roundState.submitted}
         />
 
         <StandingsTable
