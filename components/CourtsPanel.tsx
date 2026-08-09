@@ -82,10 +82,11 @@ export default function CourtsPanel({
     const byeCount = entry.byeCount ?? 0;
     const sitOutCount = entry.sitOutCount ?? 0;
     const byeMod = entry.byeMod ?? 0;
+    const sitBonus = sitOutCount * 0.5; // sitProtection is 0.5
     if (byeBase !== 0) parts.push(`base: ${byeBase >= 0 ? "+" : ""}${byeBase.toFixed(2)}`);
     if (byeCount > 0) parts.push(`+${byeCount} byes`);
-    if (sitOutCount > 0) parts.push(`+${sitOutCount * 0.5} sit`);
-    if (byeMod > 0) parts.push(`+${byeMod.toFixed(2)} mod`);
+    if (sitBonus > 0) parts.push(`+${sitBonus.toFixed(2)} sitBonus`);
+    if (byeMod > 0) parts.push(`+${byeMod.toFixed(2)} LateJoin`);
     return parts.join(" + ") || "base: 0";
   };
 

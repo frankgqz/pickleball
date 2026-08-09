@@ -254,7 +254,11 @@ current adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedA
 
                     <td 
                       className={`p-2 text-center font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`}
-                      title={`base: ${(entry.byeBase || 0).toFixed(2)}, count: ${entry.byeCount || 0}, sit: ${(entry.sitOutCount || 0) * 0.5}, mod: ${(entry.byeMod || 0).toFixed(2)}`}
+                      title={`bye breakdown:
+base: ${(entry.byeBase || 0).toFixed(2)}
++ ${entry.byeCount || 0} byes
++ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus
++ ${(entry.byeMod || 0).toFixed(2)} LateJoin`}
                     >
                       {byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}
                     </td>

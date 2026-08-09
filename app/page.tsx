@@ -699,8 +699,71 @@ export default function Page() {
           currentSessionId={currentSession.sessionId}
           eventPool={eventPool}
           onEditRound={(updated: CompletedRound) => {
-            setRoundHistory(prev => prev.map(r => r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId ? updated : r));
-            saveRoundsToStorage(roundHistory);
+            // Replace the round in history
+            const newHistory = roundHistory.map(r => 
+              r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId ? updated : r
+            );
+            setRoundHistory(newHistory);
+            saveRoundsToStorage(newHistory);
+            
+            // Recalculate standings from all rounds (including edited one)
+            const sessionRounds = newHistory
+              .filter(r => r.sessionId === currentSession.sessionId)
+              .sort((a, b) => a.roundNumber - b.roundNumber);
+            
+            // Reset standings
+            setStandings(prev => prev.map(s => ({
+              ...s,
+              seedAdjustment: 0,
+              byeCount: 0,
+              sitOutCount: 0,
+              wins: 0,
+              losses: 0,
+              ties: 0,
+              pointsFor: 0,
+              pointsAgainst: 0,
+              orderHistory: [],
+            })));
+            
+            // Replay all rounds
+            sessionRounds.forEach(r => {
+              r.matches.forEach(m => {
+                if (m.bye && m.byePlayerId) {
+                  setStandings(prev => prev.map(s => {
+                    if (s.id === m.byePlayerId) {
+                      return {
+                        ...s,
+                        byeCount: (s.byeCount || 0) + 1,
+                        orderHistory: [...(s.orderHistory || []), { round: r.roundNumber, change: 0, reason: 'bye' }],
+                      };
+                    }
+                    return s;
+                  }));
+                } else {
+                  const t1score = m.team1Score || 0;
+                  const t2score = m.team2Score || 0;
+                  [...m.team1, ...m.team2].forEach(pid => {
+                    setStandings(prev => prev.map(s => {
+                      if (s.id !== pid) return s;
+                      const isOnTeam1 = m.team1.includes(pid);
+                      const myScore = isOnTeam1 ? t1score : t2score;
+                      const oppScore = isOnTeam1 ? t2score : t1score;
+                      let wins = s.wins || 0;
+                      let losses = s.losses || 0;
+                      if (myScore > oppScore) wins++;
+                      else if (oppScore > myScore) losses++;
+                      return {
+                        ...s,
+                        wins,
+                        losses,
+                        pointsFor: (s.pointsFor || 0) + myScore,
+                        pointsAgainst: (s.pointsAgainst || 0) + oppScore,
+                      };
+                    }));
+                  });
+                }
+              });
+            });
           }}
           onDeleteRound={(roundNumber, sessionId)=> {
             const newHistory = roundHistory.filter(r => !(r.roundNumber===roundNumber && r.sessionId===sessionId));
