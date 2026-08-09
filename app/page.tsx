@@ -8,7 +8,7 @@ import CourtsPanel from "../components/CourtsPanel";
 import StandingsTable from "../components/StandingsTable";
 import RoundHistoryPanel from "../components/RoundHistoryPanel";
 import { Player, StandingsEntry, TournamentConfig, Match, CompletedRound, RoundState, GameSession, MatchFormat } from "../components/Types";
-import { generateMatches, regenerateByesSync, getByeTotal, getSeedTotal } from "../components/MatchEngine";
+import { generateMatches, regenerateByesSync } from "../components/MatchEngine";
 import { sortStandings, computeStandingsEntries } from "../components/standingsUtils";
 
 // Server actions for Neon PostgreSQL database
@@ -270,7 +270,6 @@ export default function Page() {
 
   // --- Match generation ---------------------- //
   const doGenerateMatches = useCallback((format: MatchFormat) => {
-    // Use MatchEngine for match generation
     const result = generateMatches(format, eventPool, standings, config, currentRoundNumber, null, setStandings);
     setRoundState({ active: true, format, matches: result.matches, submitted: false });
   }, [eventPool, standings, config, currentRoundNumber]);
@@ -346,7 +345,6 @@ export default function Page() {
         } else {
           const team1Ids = m.team1, team2Ids = m.team2;
           const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
-          const t1won = t1score > t2score;
 
           [...team1Ids, ...team2Ids].forEach(pid => {
             const s = map.get(pid);
@@ -532,12 +530,10 @@ export default function Page() {
             // Build all changes first
             const changesMap = new Map<string, { wins: number; losses: number; pointsFor: number; pointsAgainst: number; byeCount: number; orderHistory: { round: number; change: number; reason: string }[] }>();
             
-            // Initialize all players
             standings.forEach(s => {
               changesMap.set(s.id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, byeCount: 0, orderHistory: [] });
             });
             
-            // Apply all rounds
             sessionRounds.forEach(r => {
               r.matches.forEach(m => {
                 if (m.bye && m.byePlayerId) {
