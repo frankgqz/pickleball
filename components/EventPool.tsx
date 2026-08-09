@@ -56,15 +56,30 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 ? "flex items-center gap-3 p-3 rounded-lg border bg-green-50 border-green-200"
                 : "flex items-center gap-3 p-3 rounded-lg border bg-yellow-50 border-yellow-200";
 
-            const avatarClass = player.isSitting
-              ? "w-8 h-8 rounded-full flex items-center justify-center font-bold bg-orange-200 text-orange-700"
-              : hasDupr
-                ? "w-8 h-8 rounded-full flex items-center justify-center font-bold bg-green-600 text-white"
-                : "w-8 h-8 rounded-full flex items-center justify-center font-bold bg-yellow-200 text-yellow-800";
+            const hasDupr = !!player.duprId || !!player.duprNumericId;
 
             return (
               <div key={player.id} className={containerClass}>
-                <div className={avatarClass}>
+                {player.imageUrl ? (
+                  <img
+                    src={player.imageUrl}
+                    alt={player.name}
+                    className={`w-8 h-8 rounded-full object-cover ${player.isSitting ? "opacity-50" : ""}`}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                    player.isSitting
+                      ? "bg-orange-200 text-orange-700 hidden"
+                      : hasDupr
+                      ? "bg-green-600 text-white hidden"
+                      : "bg-yellow-200 text-yellow-800 hidden"
+                  } ${player.imageUrl ? "" : "flex"}`}
+                >
                   {player.isSitting ? "💤" : (hasDupr ? "🎾" : "⚠️")}
                 </div>
 
