@@ -58,7 +58,18 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
 
             return (
               <div key={player.id} className={containerClass}>
-                {/* CSS Initials Avatar */}
+                {/* DUPR Avatar if available, otherwise CSS initials */}
+                {player.imageUrl ? (
+                  <img
+                    src={player.imageUrl}
+                    alt={player.name}
+                    className={`w-8 h-8 rounded-full object-cover ${player.isSitting ? "opacity-50" : ""}`}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
                     player.isSitting
@@ -66,7 +77,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       : hasDupr
                       ? "bg-gradient-to-br from-green-500 to-green-700 text-white"
                       : "bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900"
-                  }`}
+                  } ${player.imageUrl ? "hidden" : ""}`}
                   style={{ textTransform: 'uppercase' }}
                 >
                   {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
