@@ -17,6 +17,9 @@ import {
   GameSession,
 } from "../components/Types";
 
+// Server actions for Neon PostgreSQL database
+import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "./actions";
+
 // Define MatchFormat locally since it's used but not exported from Types
 type MatchFormat = "PICK_PARTNER" | "FIXED_14V23";
 
@@ -69,6 +72,10 @@ const initialConfig: TournamentConfig = {
 
 // --- Page (orchestrator) ---------------------- //
 export default function Page() {
+  // UI states
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Players & pool
   const [players, setPlayers] = useState<Player[]>(() => loadPlayersFromStorage());
   const [eventPool, setEventPool] = useState<Player[]>([]);
@@ -143,22 +150,69 @@ export default function Page() {
   }, [roundHistory]);
 
   // --- Player handlers ---------------------- //
+  // Load players from Neon PostgreSQL on mount
+  useEffect(() => {
+    loadPlayersFromDb();
+  }, []);
+
+  async function loadPlayersFromDb() {
+    try {
+      setLoading(true);
+      const result = await getPlayers();
+      if (result.success) {
+        setPlayers(result.players || []);
+      } else {
+        setError(result.error || "Failed to load players");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Connection failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const handleAddPlayer = async (p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => {
-    const newPlayer: Player = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2,6),
-      name: p.name,
-      duprId: p.duprId || null,
-      duprNumericId: p.duprNumericId || null,
-      duprScore: p.duprScore ?? null,
-    };
-    setPlayers(prev => [newPlayer, ...prev]);
-    // Automatically add to event pool and standings
-    addToPool(newPlayer);
+    const formData = new FormData();
+    formData.append("name", p.name);
+    formData.append("duprId", p.duprId || "");
+    formData.append("duprNumericId", p.duprNumericId || "");
+    formData.append("duprScore", p.duprScore ? String(p.duprScore) : "");
+
+    const result = await addPlayer(formData);
+    if (result.success && result.player) {
+      setPlayers(prev => [result.player, ...prev]);
+      // Automatically add to event pool and standings
+      addToPool(result.player);
+    }
   };
-  const handleDeletePlayer = (id: string) => {
-    setPlayers(prev => prev.filter(p => p.id !== id));
-    setEventPool(prev => prev.filter(p => p.id !== id));
-    setStandings(prev => prev.filter(s => s.id !== id));
+
+  const handleDeletePlayer = async (id: string) => {
+    const result = await deletePlayer(id);
+    if (result.success) {
+      setPlayers(prev => prev.filter(p => p.id !== id));
+      setEventPool(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
+  const handleUpdatePlayer = async (id: string, updates: { name?: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => {
+    const formData = new FormData();
+    if (updates.name) formData.append("name", updates.name);
+    if (updates.duprId) formData.append("duprId", updates.duprId);
+    if (updates.duprNumericId) formData.append("duprNumericId", updates.duprNumericId);
+    if (updates.duprScore) formData.append("duprScore", String(updates.duprScore));
+
+    const result = await updatePlayer(id, formData);
+    if (result.success && result.player) {
+      setPlayers(prev => prev.map(p => p.id === id ? result.player! : p));
+    }
+  };
+
+  const handleFetchDupr = async (playerId: string) => {
+    const result = await fetchDuprRating(playerId);
+    if (result.success && result.player) {
+      setPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
+    }
+    return result;
   };
 
   // --- Event pool handlers ---------------------- //
@@ -364,6 +418,29 @@ export default function Page() {
   };
 
   // --- Simple UI wiring for components ---------------------- //
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+        <p className="text-white text-xl">Loading...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl text-center max-w-md">
+          <p className="text-red-600 font-bold mb-2">Database Error</p>
+          <p className="text-gray-700 text-sm">{error}</p>
+          <button onClick={loadPlayersFromDb} className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
       <header className="text-center mb-8">
@@ -375,13 +452,13 @@ export default function Page() {
         <SettingsPanel config={config} updateConfig={updateConfig} onSettingsChange={(keys)=>{ /* handled above */ }} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <PlayerDatabase
-            players={players}
-            onAddPlayer={handleAddPlayer}
-            onDeletePlayer={handleDeletePlayer}
-            onFetchDupr={async (id)=>{ /* placeholder */ }}
-            onUpdatePlayer={async (id,p)=>{ setPlayers(prev=>prev.map(x=> x.id===id? {...x, ...p}: x)) }}
-          />
+<PlayerDatabase
+          players={players}
+          onAddPlayer={handleAddPlayer}
+          onDeletePlayer={handleDeletePlayer}
+          onFetchDupr={handleFetchDupr}
+          onUpdatePlayer={handleUpdatePlayer}
+        />
           <EventPool
             eventPool={eventPool}
             onToggleSitting={(id)=>{ setEventPool(prev => prev.map(p=> p.id===id? {...p, isSitting: !p.isSitting} : p)) }}
