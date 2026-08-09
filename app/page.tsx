@@ -541,8 +541,6 @@ export default function Page() {
         <StandingsTable
           standings={computedStandings}
           onRegenerateByes={regenerateByes}
-          sortColumn={standingsSortColumn}
-          sortDirection={standingsSortDirection}
           onSortChange={handleStandingsSort}
         />
 
