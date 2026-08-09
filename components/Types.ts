@@ -64,6 +64,7 @@ export interface StandingsEntry {
 export interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
   roundFormat?: "FIXED_14V23" | "PICK_PARTNER"; // user's preferred round format
+  eventName?: string; // name of the event for CSV export
   orderGap: number;
   band: number;                // rubberband buffer for seedTotal bounds
   winLossMagnitude: number;    // magnitude applied for wins/losses

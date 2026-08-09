@@ -45,6 +45,18 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
         </button>
       </div>
 
+      {/* Event Name - for CSV export */}
+      <div className="mb-3">
+        <label className="text-xs font-medium text-gray-600 mb-1 block">Event Name (for CSV export)</label>
+        <input
+          type="text"
+          value={config.eventName || ""}
+          onChange={(e) => handleChange("eventName" as any, e.target.value)}
+          placeholder="e.g. Fun Pickleball Tournament - 3.5 Division"
+          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+        />
+      </div>
+
       {/* Format Row - compact */}
       <div className="flex flex-wrap gap-2 mb-3">
         <div className="flex items-center gap-1.5">

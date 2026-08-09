@@ -516,6 +516,7 @@ export default function Page() {
           roundHistory={roundHistory}
           currentSessionId={currentSession.sessionId}
           eventPool={eventPool}
+          config={config}
           onEditRound={(updated: CompletedRound) => {
             const newHistory = roundHistory.map(r => 
               r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId ? updated : r

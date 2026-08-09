@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { CompletedRound, Player } from "./Types";
+import { CompletedRound, Player, TournamentConfig } from "./Types";
 
 interface Props {
   roundHistory: CompletedRound[];
   currentSessionId: string;
   eventPool?: Player[];
+  config?: TournamentConfig;
   onEditRound?: (updated: CompletedRound) => void;
   onDeleteRound?: (roundNumber: number, sessionId: string) => void;
 }
@@ -15,6 +16,7 @@ export default function RoundHistoryPanel({
   roundHistory,
   currentSessionId,
   eventPool = [],
+  config,
   onEditRound,
   onDeleteRound,
 }: Props) {
@@ -52,61 +54,95 @@ export default function RoundHistoryPanel({
       return;
     }
 
-    // CSV Header
+    // CSV Header - your format
     const headers = [
-      "Round",
-      "Date",
-      "Format",
-      "Court",
-      "Team1_P1",
-      "Team1_P2",
-      "Team1_Score",
-      "Team2_P1",
-      "Team2_P2",
-      "Team2_Score",
-      "Winner",
-      "Bye"
+      "matchType",
+      "scoreType",
+      "event",
+      "date",
+      "playerA1",
+      "playerA1DuprId",
+      "playerA2",
+      "playerA2DuprId",
+      "playerB1",
+      "playerB1DuprId",
+      "playerB2",
+      "playerB2DuprId",
+      "teamAGame1",
+      "teamBGame1",
+      "teamAGame2",
+      "teamBGame2",
+      "teamAGame3",
+      "teamBGame3",
+      "teamAGame4",
+      "teamBGame4",
+      "teamAGame5",
+      "teamBGame5"
     ];
+
+    // Helper to get player name and duprId
+    const getPlayerInfo = (id: string) => {
+      const player = eventPool.find(p => p.id === id);
+      return {
+        name: player?.name || "",
+        duprId: player?.duprId || player?.duprNumericId || ""
+      };
+    };
 
     // Build CSV rows
     const rows: string[][] = [];
     
+    const eventName = config?.eventName || "Pickleball Event";
+    
     sessionRounds.forEach(round => {
       round.matches.forEach(match => {
-        const getPlayerName = (id: string) => {
-          const player = eventPool.find(p => p.id === id);
-          return player?.name || id;
-        };
-
-        const t1p1 = match.team1[0] ? getPlayerName(match.team1[0]) : "";
-        const t1p2 = match.team1[1] ? getPlayerName(match.team1[1]) : "";
-        const t2p1 = match.team2[0] ? getPlayerName(match.team2[0]) : "";
-        const t2p2 = match.team2[1] ? getPlayerName(match.team2[1]) : "";
-
-        let winner = "";
-        if (!match.bye && match.team1Score !== undefined && match.team2Score !== undefined) {
-          if (match.team1Score > match.team2Score) {
-            winner = "Team1";
-          } else if (match.team2Score > match.team1Score) {
-            winner = "Team2";
-          } else {
-            winner = "Tie";
-          }
+        if (match.bye) {
+          // Skip byes in CSV (or you could include them differently)
+          return;
         }
 
+        const pA1 = match.team1[0] ? getPlayerInfo(match.team1[0]) : { name: "", duprId: "" };
+        const pA2 = match.team1[1] ? getPlayerInfo(match.team1[1]) : { name: "", duprId: "" };
+        const pB1 = match.team2[0] ? getPlayerInfo(match.team2[0]) : { name: "", duprId: "" };
+        const pB2 = match.team2[1] ? getPlayerInfo(match.team2[1]) : { name: "", duprId: "" };
+
+        // Format date as M/D/YYYY
+        const dateStr = new Date(round.date).toLocaleDateString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric'
+        });
+
+        // Build event name with round
+        const eventWithRound = `${eventName} - Round ${round.roundNumber}`;
+
+        // Game scores (only game 1 for now as it's best of 11)
+        const game1A = match.team1Score !== undefined ? String(match.team1Score) : "";
+        const game1B = match.team2Score !== undefined ? String(match.team2Score) : "";
+
         rows.push([
-          String(round.roundNumber),
-          new Date(round.date).toLocaleString(),
-          round.format,
-          match.bye ? "BYE" : String(match.court || ""),
-          t1p1,
-          t1p2,
-          match.team1Score !== undefined ? String(match.team1Score) : "",
-          t2p1,
-          t2p2,
-          match.team2Score !== undefined ? String(match.team2Score) : "",
-          winner,
-          match.bye ? "Yes" : "No"
+          "D", // matchType - always doubles
+          "SIDEOUT", // scoreType
+          eventWithRound,
+          dateStr,
+          pA1.name,
+          pA1.duprId,
+          pA2.name,
+          pA2.duprId,
+          pB1.name,
+          pB1.duprId,
+          pB2.name,
+          pB2.duprId,
+          game1A,
+          game1B,
+          "", // teamAGame2
+          "", // teamBGame2
+          "", // teamAGame3
+          "", // teamBGame3
+          "", // teamAGame4
+          "", // teamBGame4
+          "", // teamAGame5
+          ""  // teamBGame5
         ]);
       });
     });
@@ -122,7 +158,7 @@ export default function RoundHistoryPanel({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `pickleball_matches_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `pickleball_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
