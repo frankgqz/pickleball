@@ -175,7 +175,7 @@ export default function PlayerDatabase({
 
                 {/* Icon buttons in order: Add/Minus → Edit → DUPR → Delete */}
                 <div className="flex gap-1 items-center">
-                  {/* Add to Pool / Remove from Pool */}
+                  {/* Add to Pool / Remove from Pool - colored background */}
                   {onAddToPool && !inPool && (
                     <button
                       onClick={() => onAddToPool(player)}
@@ -188,35 +188,35 @@ export default function PlayerDatabase({
                   {onRemoveFromPool && inPool && (
                     <button
                       onClick={() => onRemoveFromPool(player.id)}
-                      className="w-7 h-7 rounded bg-gray-400 hover:bg-red-500 text-white flex items-center justify-center text-sm font-bold shadow-sm transition-colors"
+                      className="w-7 h-7 rounded bg-gray-500 hover:bg-red-500 text-white flex items-center justify-center text-sm font-bold shadow-sm transition-colors"
                       title="Remove from pool"
                     >
                       −
                     </button>
                   )}
 
-                  {/* Edit */}
+                  {/* Edit - white background */}
                   <button
                     onClick={() => onUpdatePlayer && onUpdatePlayer(player.id, { isSitting: !player.isSitting } as Partial<Player>)}
-                    className="w-7 h-7 rounded bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center text-xs shadow-sm"
+                    className="w-7 h-7 rounded bg-white border border-blue-300 hover:bg-blue-50 text-blue-600 flex items-center justify-center text-xs shadow-sm"
                     title="Edit"
                   >
                     ✏️
                   </button>
 
-                  {/* Fetch DUPR */}
+                  {/* Fetch DUPR - white background */}
                   <button
                     onClick={() => onFetchDupr && onFetchDupr(player.id)}
-                    className="w-7 h-7 rounded bg-purple-500 hover:bg-purple-600 text-white flex items-center justify-center text-xs shadow-sm"
+                    className="w-7 h-7 rounded bg-white border border-purple-300 hover:bg-purple-50 text-purple-600 flex items-center justify-center text-xs shadow-sm"
                     title="Fetch DUPR"
                   >
                     🔍
                   </button>
 
-                  {/* Delete */}
+                  {/* Delete - white background */}
                   <button
                     onClick={() => onDeletePlayer && onDeletePlayer(player.id)}
-                    className="w-7 h-7 rounded bg-red-500 hover:bg-red-600 text-white flex items-center justify-center text-xs shadow-sm"
+                    className="w-7 h-7 rounded bg-white border border-red-300 hover:bg-red-50 text-red-500 flex items-center justify-center text-xs shadow-sm"
                     title="Delete"
                   >
                     🗑️

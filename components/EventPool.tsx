@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool }: Props) {
-  const [sortBy, setSortBy] = useState<"dupr" | "seed" | "recent">("dupr");
+  const [sortBy, setSortBy] = useState<"dupr" | "recent">("dupr");
 
   const activeCount = eventPool.filter(p => !p.isSitting).length;
 
@@ -21,11 +21,9 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
       const bScore = b.duprScore ?? 0;
       if (bScore !== aScore) return bScore - aScore; // highest first
       return a.name.localeCompare(b.name);
-    } else if (sortBy === "seed") {
-      return a.name.localeCompare(b.name);
     } else {
-      // Recent first - newest at top (no reverse since we unshift)
-      return 0; // keep insertion order
+      // Recent first - keep insertion order (newest at top via unshift)
+      return 0;
     }
   });
 
@@ -40,7 +38,6 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
             className="px-2 py-1 border border-gray-300 rounded text-sm"
           >
             <option value="dupr">DUPR Rating</option>
-            <option value="seed">Seed Order</option>
             <option value="recent">Recent First</option>
           </select>
           <span className="text-sm text-gray-500">{activeCount} / {eventPool.length}</span>
