@@ -190,11 +190,11 @@ export default function Page() {
 
         // Also load standings from localStorage (only if same session)
         const savedStandings = localStorage.getItem("pickleball_standings_v1");
-        if (savedStandings) {
+        if (savedStandings && currentSession) {
           try {
             const parsed = JSON.parse(savedStandings);
             // Only load if standings belong to current session
-            if (parsed.sessionId === result.sessionId) {
+            if (parsed.sessionId === currentSession.sessionId) {
               setStandings(parsed.entries || []);
             } else {
               // Different session - clear standings
