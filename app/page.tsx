@@ -194,12 +194,12 @@ export default function Page() {
     }
   };
 
-  const handleUpdatePlayer = async (id: string, updates: { name?: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => {
+  const handleUpdatePlayer = async (id: string, updates: Partial<Player>) => {
     const formData = new FormData();
     if (updates.name) formData.append("name", updates.name);
-    if (updates.duprId) formData.append("duprId", updates.duprId);
-    if (updates.duprNumericId) formData.append("duprNumericId", updates.duprNumericId);
-    if (updates.duprScore) formData.append("duprScore", String(updates.duprScore));
+    if (updates.duprId !== undefined && updates.duprId !== null) formData.append("duprId", updates.duprId);
+    if (updates.duprNumericId !== undefined && updates.duprNumericId !== null) formData.append("duprNumericId", updates.duprNumericId);
+    if (updates.duprScore !== undefined && updates.duprScore !== null) formData.append("duprScore", String(updates.duprScore));
 
     const result = await updatePlayer(id, formData);
     if (result.success && result.player) {
@@ -212,7 +212,6 @@ export default function Page() {
     if (result.success && result.player) {
       setPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
     }
-    return result;
   };
 
   // --- Event pool handlers ---------------------- //
