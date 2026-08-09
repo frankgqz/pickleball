@@ -495,6 +495,36 @@ export default function Page() {
 
   // --- Simple UI wiring for components ---------------------- //
 
+  // --- Restart event handler ---------------------- //
+  const handleRestartEvent = useCallback(() => {
+    setRoundHistory([]);
+    saveRoundsToStorage([]);
+    setStandings(prev => prev.map(s => ({
+      ...s,
+      seedAdjustment: 0,
+      byeCount: 0,
+      sitOutCount: 0,
+      wins: 0,
+      losses: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+      orderHistory: [],
+    })));
+    setUndoStack([]);
+    setCurrentHistoryIndex(-1);
+    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+    const newSession: GameSession = {
+      sessionId: Date.now().toString(),
+      startDate: new Date().toISOString(),
+    };
+    setCurrentSession(newSession);
+    saveSessionToStorage(newSession);
+  }, []);
+
+  const handleCancelRound = useCallback(() => {
+    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+  }, []);
+
   // Loading state
   if (loading) {
     return (
@@ -540,6 +570,7 @@ export default function Page() {
               generateMatches("PICK_PARTNER");
             }
           }}
+          onRestartEvent={handleRestartEvent}
           canStartRound={eventPool.filter(p => !p.isSitting).length >= 2}
         />
 
@@ -560,63 +591,6 @@ export default function Page() {
             onRemoveFromPool={(id)=> removeFromPool(id)}
           />
         </div>
-
-        // --- Restart event handler ---------------------- //
-  const handleRestartEvent = useCallback(() => {
-    setRoundHistory([]);
-    saveRoundsToStorage([]);
-    setStandings(prev => prev.map(s => ({
-      ...s,
-      seedAdjustment: 0,
-      byeCount: 0,
-      sitOutCount: 0,
-      wins: 0,
-      losses: 0,
-      pointsFor: 0,
-      pointsAgainst: 0,
-      orderHistory: [],
-    })));
-    setUndoStack([]);
-    setCurrentHistoryIndex(-1);
-    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
-    const newSession: GameSession = {
-      sessionId: Date.now().toString(),
-      startDate: new Date().toISOString(),
-    };
-    setCurrentSession(newSession);
-    saveSessionToStorage(newSession);
-  }, []);
-
-  const handleCancelRound = useCallback(() => {
-    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
-
-      <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
-        <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
-      </header>
-
-      <div className="max-w-6xl mx-auto space-y-8">
-        <SettingsPanel
-          config={config}
-          updateConfig={updateConfig}
-          onSettingsChange={(keys)=>{}}
-          onStartRound={() => {
-            if (currentRoundNumber === 1) regenerateByes();
-            if (config.format === "POOL_PLAY") {
-              generatePoolMatches();
-            } else if (config.format === "FIXED_PARTNER") {
-              generateMatches("FIXED_14V23");
-            } else {
-              generateMatches("PICK_PARTNER");
-            }
-          }}
-          onRestartEvent={handleRestartEvent}
-          canStartRound={eventPool.filter(p => !p.isSitting).length >= 2}
-        />
 
         <RoundHistoryPanel
           roundHistory={roundHistory}
