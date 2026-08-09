@@ -61,7 +61,7 @@ export default function PlayerDatabase({
     const hasNum = duprNumericId.trim();
     const hasScore = duprScore.trim();
     if (!hasDuprId && !hasNum && !hasScore) {
-      setValidationError("Provide at least DUPR ID, numeric ID, or rating");
+      setValidationError("Provide at least DUPR ID, webNumericID, or rating");
       return;
     }
     setValidationError("");
@@ -95,7 +95,6 @@ export default function PlayerDatabase({
     setFetchFeedback({ playerId: id, message: "Fetching...", success: true });
     try {
       await onFetchDupr?.(id);
-      // Parent should update players prop; try to reflect update if available
       const updated = players.find(p => p.id === id);
       if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar fetched", success: true });
       else if (updated?.duprScore) setFetchFeedback({ playerId: id, message: `✓ ${updated.duprScore}`, success: true });
@@ -116,89 +115,81 @@ export default function PlayerDatabase({
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="flex-1 md:flex-none px-3 py-1.5 border rounded text-sm" />
-          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="px-2 py-1.5 border rounded text-sm">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="flex-1 md:flex-none px-3 py-1.5 border border-gray-300 rounded text-sm" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="px-2 py-1.5 border border-gray-300 rounded text-sm">
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
           </select>
         </div>
       </div>
 
-      {/* Add player compact form */}
+      {/* Add form compact */}
       <div className="mb-3 grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-2 items-end text-sm">
-        <input className="px-2 py-1 border rounded" placeholder="Name *" value={name} onChange={e => setName(e.target.value)} />
-        <input className="px-2 py-1 border rounded w-full md:w-24" placeholder="DUPR ID" value={duprId} onChange={e => setDuprId(e.target.value)} />
-        <input className="px-2 py-1 border rounded w-full md:w-20" placeholder="#ID" value={duprNumericId} onChange={e => setDuprNumericId(e.target.value)} />
-        <input className="px-2 py-1 border rounded w-full md:w-20" placeholder="Rating" value={duprScore} onChange={e => setDuprScore(e.target.value)} />
-        <button className="bg-green-600 text-white px-3 py-1 rounded text-sm" onClick={handleAdd}>+ Add</button>
+        <input className="px-2 py-1 border border-gray-300 rounded" placeholder="Name *" value={name} onChange={e => setName(e.target.value)} />
+        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-24" placeholder="DUPR ID" value={duprId} onChange={e => setDuprId(e.target.value)} />
+        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-24" placeholder="webNumericID" value={duprNumericId} onChange={e => setDuprNumericId(e.target.value)} />
+        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-20" placeholder="Rating" value={duprScore} onChange={e => setDuprScore(e.target.value)} />
+        <button className="text-sm text-white bg-green-600 px-3 py-1 rounded" onClick={handleAdd}>+ Add</button>
       </div>
       {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
 
-      <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: 6 }} className="space-y-2">
+      <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: 6 }} className="space-y-2">
         {filtered.length === 0 ? (
-          <div className="text-center text-gray-400 py-8 text-sm">No players</div>
+          <div className="text-center text-gray-400 py-6 text-sm">No players</div>
         ) : filtered.map(player => {
           const hasDupr = !!player.duprId || !!player.duprNumericId;
           const inPool = inPoolIds.has(player.id);
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`p-2 rounded-lg border ${inPool ? 'bg-green-50' : 'bg-white'} flex items-center gap-3`}>
-              {/* Avatar or initials */}
+            <div key={player.id} className={`p-2 rounded-lg border ${inPool ? 'bg-green-50' : 'bg-white'} flex items-center gap-3`}> 
               <div className="flex-none">
                 {player.imageUrl ? (
                   <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded-full object-cover ${player.isSitting ? 'opacity-50' : ''}`} />
                 ) : (
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${hasDupr ? 'bg-gradient-to-br from-green-500 to-green-700 text-white' : 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900'}`} style={{ textTransform: 'uppercase' }}>
-                    {initials}
-                  </div>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm ${hasDupr ? 'bg-gradient-to-br from-green-500 to-green-700 text-white' : 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
                 )}
               </div>
 
-              {/* Name + single-line meta */}
-              <div className="flex-1 min-w-0">
+              {/* single-line compact info */}
+              <div className="flex-1 min-w-0 text-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="truncate text-sm">
+                  <div className="truncate">
                     <div className="font-medium truncate">{player.name}</div>
-                    {/* Single-line: DUPR token or numeric id + rating (no label) */}
-                    <div className="text-xs text-gray-500 truncate">
-                      {player.duprId || player.duprNumericId || ""}{player.duprScore != null && <span className="ml-2 font-semibold">{player.duprScore}</span>}
-                    </div>
-                    {/* Small transient feedback Inline (keeps one-line footprint mostly) */}
-                    {fetchFeedback?.playerId === player.id && (
-                      <div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>{fetchFeedback.message}</div>
-                    )}
+                    <div className="text-xs text-gray-500 truncate">{player.duprId || player.duprNumericId || ''}{player.duprScore != null && <span className="ml-2 font-semibold">{player.duprScore}</span>}</div>
+                    {fetchFeedback?.playerId === player.id && (<div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>{fetchFeedback.message}</div>)}
                   </div>
 
-                  {/* Compact action icons */}
+                  {/* compact actions: + first, then edit/fetch/delete */}
                   <div className="flex-none flex items-center gap-1">
-                    <button onClick={() => startEditing(player)} aria-label="Edit" className="px-2 py-1 bg-white border rounded text-xs text-blue-600 hover:bg-blue-50">✏️</button>
-                    <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-2 py-1 bg-white border rounded text-xs text-purple-600 hover:bg-purple-50">🔍</button>
-                    <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-2 py-1 bg-white border rounded text-xs text-red-500 hover:bg-red-50">🗑️</button>
                     {inPool ? (
-                      <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-9 h-9 rounded text-orange-600 bg-white border">−</button>
+                      <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-8 h-8 rounded text-orange-600 bg-white border">−</button>
                     ) : (
-                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-9 h-9 rounded bg-green-600 text-white">+</button>
+                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-8 h-8 rounded bg-transparent border border-green-600 text-green-600">+</button>
                     )}
-                  </div>
-                </div>
-              </div>
 
-              {/* Inline edit form appears below in compact area if needed */}
-              {editingId === player.id && (
-                <div className="w-full mt-2 bg-slate-50 p-2 rounded">
-                  <div className="flex gap-2">
-                    <input value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-1 border rounded text-sm" />
-                    <input value={editDuprId} onChange={e => setEditDuprId(e.target.value)} placeholder="DUPR ID" className="w-24 px-2 py-1 border rounded text-sm" />
-                    <input value={editDuprNumericId} onChange={e => setEditDuprNumericId(e.target.value)} placeholder="#ID" className="w-20 px-2 py-1 border rounded text-sm" />
-                    <input value={editDuprScore} onChange={e => setEditDuprScore(e.target.value)} placeholder="Rating" className="w-20 px-2 py-1 border rounded text-sm" />
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <button onClick={saveEdit} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Save</button>
-                    <button onClick={cancelEdit} className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">Cancel</button>
+                    <button onClick={() => startEditing(player)} aria-label="Edit" className="px-2 py-0.5 bg-white border rounded text-xs text-blue-600 hover:bg-blue-50" title="Edit">✏️</button>
+                    <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-2 py-0.5 bg-white border rounded text-xs text-purple-600 hover:bg-purple-50" title="Fetch DUPR">🔍</button>
+                    <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-2 py-0.5 bg-white border rounded text-xs text-red-500 hover:bg-red-50" title="Delete">🗑️</button>
                   </div>
                 </div>
-              )}
+
+                {/* compact inline edit appears below (rare) */}
+                {editingId === player.id && (
+                  <div className="mt-2 bg-slate-50 p-2 rounded">
+                    <div className="flex gap-2">
+                      <input value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm" />
+                      <input value={editDuprId} onChange={e => setEditDuprId(e.target.value)} placeholder="DUPR ID" className="w-24 px-2 py-1 border border-gray-300 rounded text-sm" />
+                      <input value={editDuprNumericId} onChange={e => setEditDuprNumericId(e.target.value)} placeholder="webNumericID" className="w-24 px-2 py-1 border border-gray-300 rounded text-sm" />
+                      <input value={editDuprScore} onChange={e => setEditDuprScore(e.target.value)} placeholder="Rating" className="w-20 px-2 py-1 border border-gray-300 rounded text-sm" />
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={saveEdit} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Save</button>
+                      <button onClick={cancelEdit} className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm">Cancel</button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}
