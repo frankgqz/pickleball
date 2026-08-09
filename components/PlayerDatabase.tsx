@@ -114,9 +114,9 @@ export default function PlayerDatabase({
           <div className="text-xs text-gray-500">({players.length})</div>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="flex-1 md:flex-none px-3 py-1.5 border border-gray-300 rounded text-sm" />
-          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="px-2 py-1.5 border border-gray-300 rounded text-sm">
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="w-44 md:w-56 px-2 h-8 border border-gray-300 rounded text-sm" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="h-8 px-2 border border-gray-300 rounded text-sm">
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
           </select>
@@ -126,30 +126,30 @@ export default function PlayerDatabase({
       {/* Add form - all inputs on same row */}
       <div className="mb-3 flex flex-wrap items-end gap-2 text-sm">
         <input 
-          className="px-2 py-1 border border-gray-300 rounded min-w-[120px]" 
+          className="h-8 px-2 border border-gray-300 rounded min-w-[120px]" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className="px-2 py-1 border border-gray-300 rounded w-20 text-xs" 
+          className="h-8 px-2 border border-gray-300 rounded w-20 text-xs" 
           placeholder="DUPR ID" 
           value={duprId} 
           onChange={e => setDuprId(e.target.value)} 
         />
         <input 
-          className="px-2 py-1 border border-gray-300 rounded w-22 text-xs" 
+          className="h-8 px-2 border border-gray-300 rounded w-20 text-xs" 
           placeholder="webNumID" 
           value={duprNumericId} 
           onChange={e => setDuprNumericId(e.target.value)} 
         />
         <input 
-          className="px-2 py-1 border border-gray-300 rounded w-16 text-xs" 
+          className="h-8 px-2 border border-gray-300 rounded w-16 text-xs" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
         />
-        <button className="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700" onClick={handleAdd}>+ Add</button>
+        <button className="h-8 px-4 text-sm text-white bg-green-600 rounded hover:bg-green-700" onClick={handleAdd}>+ Add</button>
       </div>
       {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
 
@@ -165,9 +165,9 @@ export default function PlayerDatabase({
             <div key={player.id} className={`p-2 rounded-lg border border-gray-300 flex items-center gap-3 ${hasDupr ? 'bg-white' : 'bg-yellow-50'}`}>
               <div className="flex-none">
                 {player.imageUrl ? (
-                  <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
+                  <img src={player.imageUrl} alt={player.name} className={`w-9 h-9 rounded-full object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} />
                 ) : (
-                  <div className={`w-9 h-9 rounded flex items-center justify-center font-bold text-sm border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm border border-gray-300 ${hasDupr ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
                 )}
               </div>
 
@@ -185,7 +185,7 @@ export default function PlayerDatabase({
                     {inPool ? (
                       <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-8 h-8 rounded bg-gray-200 text-gray-500 border border-gray-300 hover:bg-red-100 hover:text-red-600 hover:border-red-300 transition-colors">−</button>
                     ) : (
-                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-8 h-8 rounded bg-transparent border border-green-600 text-green-600 hover:bg-green-100 transition-colors">+</button>
+                      <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-8 h-8 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors">+</button>
                     )}
 
                     <button onClick={() => startEditing(player)} aria-label="Edit" className="px-2 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" title="Edit">✏️</button>
