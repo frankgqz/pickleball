@@ -22,8 +22,8 @@ interface Props {
 }
 
 // Helper to check if score is invalid
-function isInvalidScore(value: number | undefined): boolean {
-  if (value === undefined || value === null || value === "") return false;
+function isInvalidScore(value: number | undefined | null): boolean {
+  if (value === undefined || value === null) return false;
   const num = Number(value);
   return isNaN(num) ? false : (num > 99 || num < 0);
 }

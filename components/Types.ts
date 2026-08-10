@@ -51,7 +51,8 @@ export interface StandingsEntry {
   id: string;
   name: string;
   duprId?: string | null;
-  duprScore?: number | null;
+  duprScore?: number | null; // From DUPR API (3 decimals)
+  manualDuprScore?: number | null; // Manually entered (1 decimal)
 
   // Seed fields
   seed: number;
