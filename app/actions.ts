@@ -85,9 +85,11 @@ export async function getPlayers() {
 // Add a new player
 export async function addPlayer(formData: FormData) {
   const name = formData.get("name") as string;
-  const duprId = formData.get("duprId") as string; // Letter ID (e.g., "5E64ZL")
-  const duprNumericId = formData.get("duprNumericId") as string; // Numeric ID (e.g., "7438750465")
+  const duprId = formData.get("duprId") as string; // Letter ID
+  const duprNumericId = formData.get("duprNumericId") as string; // Numeric ID
   const manualDuprScore = formData.get("manualDuprScore") as string; // Manually entered score
+
+  console.log("addPlayer called:", { name, duprId, duprNumericId, manualDuprScore });
 
   if (!name?.trim()) {
     return { success: false, error: "Name is required" };
@@ -97,12 +99,13 @@ export async function addPlayer(formData: FormData) {
     const player = await prisma.player.create({
       data: {
         name: name.trim(),
-        duprId: duprId?.trim() || null, // Letter ID
-        duprNumericId: duprNumericId?.trim() || null, // Numeric ID
-        manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null, // Manual entry
+        duprId: duprId?.trim() || null,
+        duprNumericId: duprNumericId?.trim() || null,
+        manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
         orderScore: manualDuprScore ? parseFloat(manualDuprScore) : 5,
       },
     });
+    console.log("Player created:", player);
     return { success: true, player };
   } catch (error) {
     console.error("Error adding player:", error);
@@ -130,9 +133,7 @@ export async function updatePlayer(playerId: string, formData: FormData) {
   const duprNumericId = formData.get("duprNumericId") as string;
   const manualDuprScore = formData.get("manualDuprScore") as string;
 
-  if (!name?.trim()) {
-    return { success: false, error: "Name is required" };
-  }
+  console.log("updatePlayer called:", { playerId, name, duprId, duprNumericId, manualDuprScore });
 
   try {
     const player = await prisma.player.update({
@@ -144,6 +145,7 @@ export async function updatePlayer(playerId: string, formData: FormData) {
         manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
       },
     });
+    console.log("Player updated:", player);
     return { success: true, player };
   } catch (error) {
     console.error("Error updating player:", error);
