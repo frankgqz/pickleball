@@ -36,7 +36,8 @@ export interface Player {
   name: string;
   duprId?: string | null;
   duprNumericId?: string | null;
-  duprScore?: number | null;
+  duprScore?: number | null; // Only from DUPR API (3 decimals)
+  manualDuprScore?: number | null; // Manually entered (1 decimal)
   imageUrl?: string | null;
   isSitting?: boolean;
   lastRefreshed?: string | null; // ISO date string when DUPR was last fetched

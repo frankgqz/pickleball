@@ -87,7 +87,7 @@ export async function addPlayer(formData: FormData) {
   const name = formData.get("name") as string;
   const duprId = formData.get("duprId") as string; // Letter ID (e.g., "5E64ZL")
   const duprNumericId = formData.get("duprNumericId") as string; // Numeric ID (e.g., "7438750465")
-  const duprScore = formData.get("duprScore") as string;
+  const manualDuprScore = formData.get("manualDuprScore") as string; // Manually entered score
 
   if (!name?.trim()) {
     return { success: false, error: "Name is required" };
@@ -99,8 +99,8 @@ export async function addPlayer(formData: FormData) {
         name: name.trim(),
         duprId: duprId?.trim() || null, // Letter ID
         duprNumericId: duprNumericId?.trim() || null, // Numeric ID
-        duprScore: duprScore ? parseFloat(duprScore) : null,
-        orderScore: duprScore ? parseFloat(duprScore) : 5,
+        manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null, // Manual entry
+        orderScore: manualDuprScore ? parseFloat(manualDuprScore) : 5,
       },
     });
     return { success: true, player };

@@ -73,7 +73,7 @@ export default function PlayerDatabase({
       name: trimmed, 
       duprId: hasDuprId ? duprId.trim() : undefined, 
       duprNumericId: hasNum ? duprNumericId.trim() : undefined, 
-      duprScore: hasScore ? parseFloat(duprScore) : undefined 
+      manualDuprScore: hasScore ? parseFloat(duprScore) : undefined  // Manual entry goes to manualDuprScore
     };
     try {
       await onAddPlayer?.(payload);
@@ -278,11 +278,11 @@ export default function PlayerDatabase({
                         <div className="font-medium text-xs truncate">{player.name}</div>
                         <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleString()}` : undefined}>
                           {player.duprId || player.duprNumericId || ''}
-                          {player.duprScore != null && (
+                          {(player.duprScore != null || player.manualDuprScore != null) && (
                             <span className="ml-1 font-semibold">
-                              {player.lastRefreshed 
-                                ? player.duprScore.toFixed(3)   // API fetched = 3 decimals
-                                : player.duprScore.toFixed(1)    // Manual entry = 1 decimal
+                              {player.duprScore != null 
+                                ? player.duprScore.toFixed(3)        // API fetched = 3 decimals
+                                : player.manualDuprScore!.toFixed(1)  // Manual = 1 decimal
                               }
                             </span>
                           )}
