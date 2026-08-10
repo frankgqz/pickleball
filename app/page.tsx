@@ -228,9 +228,16 @@ export default function Page() {
     setStandings([]);
   }, [clearEventPool, currentSession, setStandings]);
 
-  const handleEditRound = useCallback((updated: CompletedRound) => {
-    updateRoundInHistory(updated);
-    recalculateStandingsFromHistory(roundHistory, currentSession.sessionId, config, eventPool);
+  const handleEditRound = useCallback((roundNumber: number, updatedMatches: CompletedRound["matches"]) => {
+    updateRoundInHistory(roundNumber, updatedMatches);
+    // After updateRoundInHistory, we need to use the updated history
+    // Create the new history array locally for recalculation
+    const newHistory = roundHistory.map(r =>
+      r.roundNumber === roundNumber && r.sessionId === currentSession.sessionId
+        ? { ...r, matches: updatedMatches }
+        : r
+    );
+    recalculateStandingsFromHistory(newHistory, currentSession.sessionId, config, eventPool);
   }, [updateRoundInHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
   const handleDeleteRound = useCallback((roundNumber: number, sessionId: string) => {
