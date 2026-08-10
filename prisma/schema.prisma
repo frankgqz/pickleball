@@ -12,19 +12,20 @@ datasource db {
 // PLAYER — A person in the tournament
 // ============================================
 model Player {
-  id            String   @id @default(uuid())
-  name          String
-  duprId        String?  // Letter ID for DUPR export (e.g., "5E64ZL")
-  duprNumericId String?  // Numeric ID for API lookups (e.g., "7438750465")
-  duprScore     Float?
-  imageUrl      String?  // DUPR profile avatar image URL
-  seed          Int      @default(999)
-  isSitting     Boolean  @default(false)
-  orderScore    Float    @default(0)
-  createdAt     DateTime @default(now())
-  
-  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
-  tournamentId String?
+  id              String    @id @default(uuid())
+  name            String
+  duprId          String?   // Letter ID for DUPR export (e.g., "5E64ZL")
+  duprNumericId   String?   // Numeric ID for API lookups (e.g., "7438750465")
+  duprScore       Float?    // From API (3 decimals)
+  manualDuprScore Float?    // ADD THIS - Manual entry (1 decimal)
+  imageUrl        String?   // DUPR profile avatar image URL
+  seed            Int       @default(999)
+  isSitting       Boolean   @default(false)
+  orderScore      Float     @default(0)
+  lastRefreshed   String?   // ADD THIS - When DUPR was last fetched
+  createdAt       DateTime  @default(now())
+  tournament      Tournament? @relation(fields: [tournamentId], references: [id])
+  tournamentId    String?
 }
 
 
