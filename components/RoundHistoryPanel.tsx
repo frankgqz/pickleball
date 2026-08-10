@@ -8,7 +8,7 @@ interface Props {
   currentSessionId: string;
   eventPool?: Player[];
   config?: TournamentConfig;
-  onEditRound?: (updated: CompletedRound) => void;
+  onEditRound?: (roundNumber: number, updatedMatches: CompletedRound["matches"]) => void;
   onDeleteRound?: (roundNumber: number, sessionId: string) => void;
 }
 
@@ -174,8 +174,8 @@ export default function RoundHistoryPanel({
   };
 
   const saveEdits = () => {
-    if (selectedRound && onEditRound) {
-      onEditRound({ ...selectedRound, matches: editMatches });
+    if (selectedRound && onEditRound && typeof selectedRoundNumber === "number") {
+      onEditRound(selectedRoundNumber, editMatches);
       setEditMode(false);
       setEditMatches([]);
     }

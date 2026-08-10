@@ -38,7 +38,7 @@ export interface EventSessionActions {
   updateConfig: <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => void;
   setRoundState: React.Dispatch<React.SetStateAction<RoundState>>;
   addRoundToHistory: (round: CompletedRound) => void;
-  updateRoundInHistory: (round: CompletedRound) => void;
+  updateRoundInHistory: (roundNumber: number, updatedMatches: CompletedRound["matches"]) => void;
   deleteRoundFromHistory: (roundNumber: number, sessionId: string) => void;
   restartEvent: () => void;
   createNewSession: () => GameSession;
@@ -48,7 +48,7 @@ export interface EventSessionActions {
 export function useEventSession(initialConfig?: TournamentConfig): [EventSessionState, EventSessionActions] {
   // Load saved config or use default
   const savedConfig = localStorageDb.loadConfig();
-  
+
   // Load saved session or create new
   const savedSession = localStorageDb.loadSession();
   const initialSession: GameSession = savedSession || {
@@ -63,17 +63,17 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(savedRounds);
-  const [roundState, setRoundState] = useState<RoundState>(() => ({ 
-    active: false, 
-    format: PICK_PARTNER_FORMAT, 
-    matches: [], 
-    submitted: false 
+  const [roundState, setRoundState] = useState<RoundState>(() => ({
+    active: false,
+    format: PICK_PARTNER_FORMAT,
+    matches: [],
+    submitted: false
   }));
 
   // Derived: rounds in current session
   const currentSessionRounds = useMemo(
     () => roundHistory.filter(r => r.sessionId === currentSession.sessionId)
-                      .sort((a, b) => a.roundNumber - b.roundNumber),
+      .sort((a, b) => a.roundNumber - b.roundNumber),
     [roundHistory, currentSession]
   );
 
@@ -81,7 +81,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
 
   // Actions
   const updateConfig = useCallback(<K extends keyof TournamentConfig>(
-    key: K, 
+    key: K,
     value: TournamentConfig[K]
   ) => {
     setConfig(prev => {
@@ -114,21 +114,21 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const restartEvent = useCallback(() => {
     createNewSession();
     setRoundHistory([]);
-    setRoundState({ 
-      active: false, 
-      format: PICK_PARTNER_FORMAT, 
-      matches: [], 
-      submitted: false 
+    setRoundState({
+      active: false,
+      format: PICK_PARTNER_FORMAT,
+      matches: [],
+      submitted: false
     });
     localStorageDb.clearEventData();
   }, [createNewSession]);
 
   const cancelCurrentRound = useCallback(() => {
-    setRoundState({ 
-      active: false, 
-      format: PICK_PARTNER_FORMAT, 
-      matches: [], 
-      submitted: false 
+    setRoundState({
+      active: false,
+      format: PICK_PARTNER_FORMAT,
+      matches: [],
+      submitted: false
     });
   }, []);
 
@@ -141,21 +141,21 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     setRoundState(prev => ({ ...prev, submitted: true }));
   }, []);
 
-  const updateRoundInHistory = useCallback((round: CompletedRound) => {
+  const updateRoundInHistory = useCallback((roundNumber: number, updatedMatches: CompletedRound["matches"]) => {
     setRoundHistory(prev => {
       const updated = prev.map(r =>
-        r.roundNumber === round.roundNumber && r.sessionId === round.sessionId 
-          ? round 
+        r.roundNumber === roundNumber && r.sessionId === currentSession.sessionId
+          ? { ...r, matches: updatedMatches }
           : r
       );
       localStorageDb.saveRounds(updated);
       return updated;
     });
-  }, []);
+  }, [currentSession.sessionId]);
 
   const deleteRoundFromHistory = useCallback((roundNumber: number, sessionId: string) => {
     setRoundHistory(prev => {
-      const updated = prev.filter(r => 
+      const updated = prev.filter(r =>
         !(r.roundNumber === roundNumber && r.sessionId === sessionId)
       );
       localStorageDb.saveRounds(updated);
