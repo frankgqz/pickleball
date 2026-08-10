@@ -9,23 +9,18 @@ import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 
-// Hooks - extracted logic for cleaner page.tsx
+// Hooks
 import { useEventSession } from "@/components/hooks/useEventSession";
 import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
 import { createStandingsEntry } from "@/components/standingsUtils";
 
-// Format constants with proper literal types
+// Format constants
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
 const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 
-// ============================================================
-// MAIN PAGE COMPONENT
-// ============================================================
-
 export default function Page() {
-  // App loading state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,42 +87,89 @@ export default function Page() {
   );
 
   // ============================================================
-  // HELPER FUNCTIONS
+  // RECALCULATE SEEDS - based on DUPR position
   // ============================================================
-
-  // Add player to event pool AND standings (sorted by DUPR)
-  const addToPoolWithStandings = useCallback((player: Player) => {
-    // Add player to pool first
-    addPlayerToEventPool(player);
-
-    // Create standings entry
-    const newEntry = createStandingsEntry(
-      player,
-      standings.length, // will be sorted below
-      config.orderGap,
-      currentRoundNumber > 1 ? config.lateJoinBonus : 0
-    );
-
-    // Insert into standings in correct position (sorted by DUPR, highest first)
+  const recalculateSeedsByDupr = useCallback(() => {
     setStandings(prev => {
-      const updated = [...prev, newEntry];
-      // Sort by DUPR score (highest first), then by name
-      return updated.sort((a, b) => {
+      // Sort by DUPR score (highest first)
+      const sorted = [...prev].sort((a, b) => {
         const aScore = a.duprScore ?? 0;
         const bScore = b.duprScore ?? 0;
-        if (bScore !== aScore) return bScore - aScore;
-        return a.name.localeCompare(b.name);
+        return bScore - aScore;
       });
-    });
-  }, [addPlayerToEventPool, standings.length, config, currentRoundNumber, setStandings]);
 
-  // Remove player from event pool AND standings
+      // Recalculate seeds based on position
+      return sorted.map((entry, index) => ({
+        ...entry,
+        seed: 1 + index * config.orderGap,
+        // Reset seed adjustment when pool changes
+        seedAdjustment: 0,
+        orderHistory: entry.orderHistory.length > 0 
+          ? entry.orderHistory 
+          : [],
+      }));
+    });
+  }, [config.orderGap, setStandings]);
+
+  // ============================================================
+  // ADD PLAYER TO POOL
+  // ============================================================
+  const addToPoolWithStandings = useCallback((player: Player) => {
+    // Don't add duplicates
+    if (standings.find(s => s.id === player.id)) return;
+
+    // Add player to pool
+    addPlayerToEventPool(player);
+
+    // Create new standings entry
+    const newEntry: StandingsEntry = {
+      id: player.id,
+      name: player.name,
+      duprId: player.duprId ?? null,
+      duprScore: player.duprScore ?? null,
+      seed: 0,
+      seedAdjustment: 0,
+      orderHistory: [],
+      byeBase: -Math.random(),
+      byeMod: 0,
+      byeCount: 0,
+      sitOutCount: 0,
+      wins: 0,
+      losses: 0,
+      pointsFor: 0,
+      pointsAgainst: 0,
+    };
+
+    // Add to standings and recalculate all seeds by DUPR position
+    setStandings(prev => {
+      const updated = [...prev, newEntry];
+      
+      // Sort by DUPR score (highest first)
+      const sorted = updated.sort((a, b) => {
+        const aScore = a.duprScore ?? 0;
+        const bScore = b.duprScore ?? 0;
+        return bScore - aScore;
+      });
+
+      // Recalculate seeds based on sorted position
+      return sorted.map((entry, index) => ({
+        ...entry,
+        seed: 1 + index * config.orderGap,
+      }));
+    });
+  }, [addPlayerToEventPool, standings, config.orderGap, setStandings]);
+
+  // ============================================================
+  // REMOVE PLAYER FROM POOL
+  // ============================================================
   const removeFromPoolWithStandings = useCallback((playerId: string) => {
     removePlayerFromEventPool(playerId);
     removePlayerStandingsEntry(playerId);
   }, [removePlayerFromEventPool, removePlayerStandingsEntry]);
 
-  // Start a round
+  // ============================================================
+  // OTHER HANDLERS
+  // ============================================================
   const startStandardRound = useCallback((format: MatchFormat) => {
     if (currentRoundNumber === 1) {
       regenerateByes(config.byeTopProtection, config.byeBonusTop);
@@ -135,7 +177,6 @@ export default function Page() {
     matchGenActions.generateStandardMatches(format);
   }, [currentRoundNumber, config, regenerateByes, matchGenActions]);
 
-  // Start the next round
   const startNextRound = useCallback(() => {
     if (config.format === "POOL_PLAY") {
       matchGenActions.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
@@ -146,7 +187,6 @@ export default function Page() {
     }
   }, [config, matchGenActions, startStandardRound]);
 
-  // Submit round results
   const submitRoundResults = useCallback(() => {
     processMatchResults(roundState.matches, currentRoundNumber, config, eventPool);
     
@@ -162,7 +202,6 @@ export default function Page() {
     addRoundToHistory(completedRound);
   }, [roundState, currentRoundNumber, config, eventPool, currentSession, processMatchResults, addRoundToHistory]);
 
-  // Veto bye
   const vetoPlayerBye = useCallback((playerId: string) => {
     setStandings((prev: StandingsEntry[]) => prev.map((entry: StandingsEntry) => {
       if (entry.id === playerId) return { ...entry, byeMod: (entry.byeMod || 0) + 0.25 };
@@ -173,25 +212,21 @@ export default function Page() {
     matchGenActions.generateStandardMatches(format);
   }, [config.roundFormat, matchGenActions, setStandings]);
 
-  // Restart event
   const handleRestartEvent = useCallback(() => {
     restartEvent();
     setStandings([]);
   }, [restartEvent, setStandings]);
 
-  // Clear pool
   const handleClearPool = useCallback(() => {
     clearEventPool(currentSession);
     setStandings([]);
   }, [clearEventPool, currentSession, setStandings]);
 
-  // Edit round
   const handleEditRound = useCallback((updated: CompletedRound) => {
     updateRoundInHistory(updated);
     recalculateStandingsFromHistory(roundHistory, currentSession.sessionId, config, eventPool);
   }, [updateRoundInHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
-  // Delete round
   const handleDeleteRound = useCallback((roundNumber: number, sessionId: string) => {
     deleteRoundFromHistory(roundNumber, sessionId);
     if (sessionId === currentSession.sessionId) {
@@ -223,9 +258,7 @@ export default function Page() {
         <div className="bg-white p-8 rounded-xl text-center max-w-md">
           <p className="text-red-600 font-bold mb-2">Database Error</p>
           <p className="text-gray-700 text-sm">{error}</p>
-          <button onClick={loadPlayersFromDatabase} className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">
-            Retry
-          </button>
+          <button onClick={loadPlayersFromDatabase} className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Retry</button>
         </div>
       </div>
     );
@@ -239,11 +272,7 @@ export default function Page() {
       </header>
 
       <div className="max-w-6xl mx-auto space-y-6">
-        <SettingsPanel
-          config={config}
-          updateConfig={updateConfig}
-          onRestartEvent={handleRestartEvent}
-        />
+        <SettingsPanel config={config} updateConfig={updateConfig} onRestartEvent={handleRestartEvent} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PlayerDatabase
