@@ -14,8 +14,9 @@ import { useEventSession } from "@/components/hooks/useEventSession";
 import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
+import { createStandingsEntry } from "@/components/standingsUtils";
 
-// Format constants with proper literal types (avoids type inference issues)
+// Format constants with proper literal types
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
 const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 
@@ -29,7 +30,6 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   // ====== EVENT SESSION HOOK ======
-  // Manages: config, session ID, round history, restart
   const [eventSessionState, eventSessionActions] = useEventSession();
   const { 
     config, 
@@ -48,7 +48,6 @@ export default function Page() {
   } = eventSessionActions;
 
   // ====== PLAYER DATABASE HOOK ======
-  // Manages: all players, event pool, DUPR fetching
   const [playerDbState, playerDbActions] = usePlayerDatabase(loading, setLoading);
   const { 
     allPlayers, 
@@ -67,7 +66,6 @@ export default function Page() {
   } = playerDbActions;
 
   // ====== STANDINGS STATE HOOK ======
-  // Manages: standings entries, sorting, percentage calculations
   const [standingsState, standingsActions] = useStandingsState();
   const { 
     standings, 
@@ -78,13 +76,11 @@ export default function Page() {
     toggleSortColumn, 
     recalculateStandingsFromHistory, 
     removePlayerStandingsEntry, 
-    addPlayerStandingsEntry, 
     processMatchResults,
     regenerateByes 
   } = standingsActions;
 
   // ====== MATCH GENERATION HOOK ======
-  // Manages: creating matches, updating scores, swapping teams
   const [, matchGenActions] = useMatchGeneration(
     eventPool, 
     standings, 
@@ -99,7 +95,39 @@ export default function Page() {
   // HELPER FUNCTIONS
   // ============================================================
 
-  // Start a round with PICK_PARTNER or FIXED_14V23 format
+  // Add player to event pool AND standings (sorted by DUPR)
+  const addToPoolWithStandings = useCallback((player: Player) => {
+    // Add player to pool first
+    addPlayerToEventPool(player);
+
+    // Create standings entry
+    const newEntry = createStandingsEntry(
+      player,
+      standings.length, // will be sorted below
+      config.orderGap,
+      currentRoundNumber > 1 ? config.lateJoinBonus : 0
+    );
+
+    // Insert into standings in correct position (sorted by DUPR, highest first)
+    setStandings(prev => {
+      const updated = [...prev, newEntry];
+      // Sort by DUPR score (highest first), then by name
+      return updated.sort((a, b) => {
+        const aScore = a.duprScore ?? 0;
+        const bScore = b.duprScore ?? 0;
+        if (bScore !== aScore) return bScore - aScore;
+        return a.name.localeCompare(b.name);
+      });
+    });
+  }, [addPlayerToEventPool, standings.length, config, currentRoundNumber, setStandings]);
+
+  // Remove player from event pool AND standings
+  const removeFromPoolWithStandings = useCallback((playerId: string) => {
+    removePlayerFromEventPool(playerId);
+    removePlayerStandingsEntry(playerId);
+  }, [removePlayerFromEventPool, removePlayerStandingsEntry]);
+
+  // Start a round
   const startStandardRound = useCallback((format: MatchFormat) => {
     if (currentRoundNumber === 1) {
       regenerateByes(config.byeTopProtection, config.byeBonusTop);
@@ -107,7 +135,7 @@ export default function Page() {
     matchGenActions.generateStandardMatches(format);
   }, [currentRoundNumber, config, regenerateByes, matchGenActions]);
 
-  // Start the next round (pool play or standard based on config)
+  // Start the next round
   const startNextRound = useCallback(() => {
     if (config.format === "POOL_PLAY") {
       matchGenActions.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
@@ -118,12 +146,10 @@ export default function Page() {
     }
   }, [config, matchGenActions, startStandardRound]);
 
-  // Submit the current round results
+  // Submit round results
   const submitRoundResults = useCallback(() => {
-    // Update standings based on match results
     processMatchResults(roundState.matches, currentRoundNumber, config, eventPool);
     
-    // Save round to history
     const completedRound: CompletedRound = {
       roundNumber: currentRoundNumber,
       date: new Date().toISOString(),
@@ -136,49 +162,36 @@ export default function Page() {
     addRoundToHistory(completedRound);
   }, [roundState, currentRoundNumber, config, eventPool, currentSession, processMatchResults, addRoundToHistory]);
 
-  // Veto a bye for a player (add penalty to bye calculation)
+  // Veto bye
   const vetoPlayerBye = useCallback((playerId: string) => {
     setStandings((prev: StandingsEntry[]) => prev.map((entry: StandingsEntry) => {
       if (entry.id === playerId) return { ...entry, byeMod: (entry.byeMod || 0) + 0.25 };
       return entry;
     }));
-    // Regenerate matches with updated bye values
     const roundFmt = config.roundFormat || "FIXED_14V23";
     const format: MatchFormat = roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
     matchGenActions.generateStandardMatches(format);
   }, [config.roundFormat, matchGenActions, setStandings]);
 
-  // Add player to event pool AND create their standings entry
-  const addToPoolWithStandings = useCallback((player: Player) => {
-    addPlayerToEventPool(player);
-    addPlayerStandingsEntry(player, config.orderGap, currentRoundNumber, config.lateJoinBonus);
-  }, [addPlayerToEventPool, addPlayerStandingsEntry, config, currentRoundNumber]);
-
-  // Remove player from event pool AND remove their standings entry
-  const removeFromPoolWithStandings = useCallback((playerId: string) => {
-    removePlayerFromEventPool(playerId);
-    removePlayerStandingsEntry(playerId);
-  }, [removePlayerFromEventPool, removePlayerStandingsEntry]);
-
-  // Restart event - clears rounds but keeps players in pool
+  // Restart event
   const handleRestartEvent = useCallback(() => {
     restartEvent();
     setStandings([]);
   }, [restartEvent, setStandings]);
 
-  // Clear all from event pool - full reset
+  // Clear pool
   const handleClearPool = useCallback(() => {
     clearEventPool(currentSession);
     setStandings([]);
   }, [clearEventPool, currentSession, setStandings]);
 
-  // Edit a past round - recalculate standings
+  // Edit round
   const handleEditRound = useCallback((updated: CompletedRound) => {
     updateRoundInHistory(updated);
     recalculateStandingsFromHistory(roundHistory, currentSession.sessionId, config, eventPool);
   }, [updateRoundInHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
-  // Delete a past round - recalculate standings
+  // Delete round
   const handleDeleteRound = useCallback((roundNumber: number, sessionId: string) => {
     deleteRoundFromHistory(roundNumber, sessionId);
     if (sessionId === currentSession.sessionId) {
@@ -187,10 +200,7 @@ export default function Page() {
     }
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
-  // ============================================================
-  // INITIAL LOAD
-  // ============================================================
-
+  // Initial load
   useEffect(() => {
     loadPlayersFromDatabase();
   }, []);
