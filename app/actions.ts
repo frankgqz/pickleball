@@ -170,7 +170,7 @@ export async function fetchDuprRating(playerId: string) {
     // Fetch by numeric ID
     const response = await fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
       method: "GET",
-      headers: { 
+      headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
@@ -178,9 +178,9 @@ export async function fetchDuprRating(playerId: string) {
 
     if (response.ok) {
       const data = await response.json();
-      
+
       let rating = data.result?.ratings?.doubles;
-      
+
       if (rating === "NR" || !rating) {
         rating = null;
       } else {
@@ -190,7 +190,7 @@ export async function fetchDuprRating(playerId: string) {
       // Get imageUrl from response
       const imageUrl = data.result?.imageUrl || null;
 
-      // Update with all available data (name, letter ID, rating, imageUrl)
+      // Update with all available data (name, letter ID, rating, imageUrl, lastRefreshed)
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
@@ -198,12 +198,13 @@ export async function fetchDuprRating(playerId: string) {
           duprId: data.result?.duprId || player.duprId, // Letter ID
           duprNumericId: data.result?.id?.toString() || player.duprNumericId, // Numeric ID
           duprScore: rating,
-          imageUrl: imageUrl, // NEW: Save avatar URL
+          imageUrl: imageUrl, // Save avatar URL
+          lastRefreshed: new Date().toISOString(), // Track when DUPR was last fetched
         },
       });
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         player: updatedPlayer,
         message: rating ? `Fetched: ${data.result.fullName} - ${rating}${imageUrl ? " ✓" : ""}` : "Player found but no rating (NR)"
       };
