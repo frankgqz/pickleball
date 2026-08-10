@@ -9,54 +9,29 @@ import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { Player, StandingsEntry, TournamentConfig, Match, CompletedRound, RoundState, GameSession, MatchFormat } from "@/components/Types";
 import { generateMatches } from "@/components/MatchEngine";
-import { sortStandings, computeStandingsEntries } from "@/components/standingsUtils";
+import { 
+  sortStandings, 
+  computeStandingsEntries,
+  createStandingsEntry,
+  recalculateStandingsFromHistory,
+  processMatchResult,
+} from "@/components/standingsUtils";
 
 // Server actions for Neon PostgreSQL database
 import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "./actions";
 
-// --- localStorage helpers (browser-only) ---------------------- //
+// ============================================================
+// CONSTANTS
+// ============================================================
+
 const STORAGE_KEY_ROUNDS = "pickleball_rounds_v1";
 const STORAGE_KEY_PLAYERS = "pickleball_players_v1";
 const STORAGE_KEY_EVENT_POOL = "pickleball_event_pool_v1";
+const STORAGE_KEY_SESSION = "pickleball_session_v1";
+const STORAGE_KEY_STANDINGS = "pickleball_standings_v1";
+
 const isBrowser = typeof window !== "undefined";
 
-const saveRoundsToStorage = (rounds: CompletedRound[]) => {
-  if (!isBrowser) return;
-  localStorage.setItem(STORAGE_KEY_ROUNDS, JSON.stringify(rounds));
-};
-const loadRoundsFromStorage = (): CompletedRound[] => {
-  if (!isBrowser) return [];
-  const s = localStorage.getItem(STORAGE_KEY_ROUNDS);
-  if (!s) return [];
-  try {
-    const parsed = JSON.parse(s) as CompletedRound[];
-    return parsed.map(r => ({ ...r }));
-  } catch {
-    return [];
-  }
-};
-const savePlayersToStorage = (players: Player[]) => {
-  if (!isBrowser) return;
-  localStorage.setItem(STORAGE_KEY_PLAYERS, JSON.stringify(players));
-};
-const loadPlayersFromStorage = (): Player[] => {
-  if (!isBrowser) return [];
-  const s = localStorage.getItem(STORAGE_KEY_PLAYERS);
-  if (!s) return [];
-  try { return JSON.parse(s) as Player[]; } catch { return []; }
-};
-const saveEventPoolToStorage = (pool: Player[]) => {
-  if (!isBrowser) return;
-  localStorage.setItem(STORAGE_KEY_EVENT_POOL, JSON.stringify(pool));
-};
-const loadEventPoolFromStorage = (): Player[] => {
-  if (!isBrowser) return [];
-  const s = localStorage.getItem(STORAGE_KEY_EVENT_POOL);
-  if (!s) return [];
-  try { return JSON.parse(s) as Player[]; } catch { return []; }
-};
-
-// --- Initial config defaults ---------------------- //
 const initialConfig: TournamentConfig = {
   format: "STANDARD",
   orderGap: 0.25,
@@ -72,15 +47,119 @@ const initialConfig: TournamentConfig = {
   finalsFormat: "top2",
 };
 
-// --- Page (orchestrator) ---------------------- //
+// ============================================================
+// LOCAL STORAGE HELPERS
+// ============================================================
+
+const storage = {
+  saveRounds: (rounds: CompletedRound[]) => {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEY_ROUNDS, JSON.stringify(rounds));
+  },
+  
+  loadRounds: (): CompletedRound[] => {
+    if (!isBrowser) return [];
+    const s = localStorage.getItem(STORAGE_KEY_ROUNDS);
+    if (!s) return [];
+    try {
+      return JSON.parse(s) as CompletedRound[];
+    } catch {
+      return [];
+    }
+  },
+  
+  savePlayers: (players: Player[]) => {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEY_PLAYERS, JSON.stringify(players));
+  },
+  
+  loadPlayers: (): Player[] => {
+    if (!isBrowser) return [];
+    const s = localStorage.getItem(STORAGE_KEY_PLAYERS);
+    if (!s) return [];
+    try {
+      return JSON.parse(s) as Player[];
+    } catch {
+      return [];
+    }
+  },
+  
+  saveEventPool: (pool: Player[]) => {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEY_EVENT_POOL, JSON.stringify(pool));
+  },
+  
+  loadEventPool: (): Player[] => {
+    if (!isBrowser) return [];
+    const s = localStorage.getItem(STORAGE_KEY_EVENT_POOL);
+    if (!s) return [];
+    try {
+      return JSON.parse(s) as Player[];
+    } catch {
+      return [];
+    }
+  },
+  
+  saveSession: (session: GameSession) => {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+  },
+  
+  loadSession: (): GameSession | null => {
+    if (!isBrowser) return null;
+    const s = localStorage.getItem(STORAGE_KEY_SESSION);
+    if (!s) return null;
+    try {
+      return JSON.parse(s) as GameSession;
+    } catch {
+      return null;
+    }
+  },
+  
+  saveStandings: (standings: StandingsEntry[], sessionId: string) => {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEY_STANDINGS, JSON.stringify({
+      sessionId,
+      entries: standings,
+    }));
+  },
+  
+  loadStandings: (sessionId: string): StandingsEntry[] => {
+    if (!isBrowser) return [];
+    const s = localStorage.getItem(STORAGE_KEY_STANDINGS);
+    if (!s) return [];
+    try {
+      const parsed = JSON.parse(s);
+      if (parsed.sessionId === sessionId) {
+        return parsed.entries || [];
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  },
+  
+  clearAll: () => {
+    if (!isBrowser) return;
+    localStorage.removeItem(STORAGE_KEY_ROUNDS);
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_STANDINGS);
+    localStorage.removeItem(STORAGE_KEY_EVENT_POOL);
+  },
+};
+
+// ============================================================
+// MAIN PAGE COMPONENT
+// ============================================================
+
 export default function Page() {
   // UI states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Players & pool
-  const [players, setPlayers] = useState<Player[]>(() => loadPlayersFromStorage());
-  const [eventPool, setEventPool] = useState<Player[]>(() => loadEventPoolFromStorage());
+  const [players, setPlayers] = useState<Player[]>(() => storage.loadPlayers());
+  const [eventPool, setEventPool] = useState<Player[]>(() => storage.loadEventPool());
 
   // Standings entries
   const [standings, setStandings] = useState<StandingsEntry[]>([]);
@@ -89,22 +168,36 @@ export default function Page() {
   const [config, setConfig] = useState<TournamentConfig>(() => initialConfig);
 
   // Round state
-  const [roundState, setRoundState] = useState<RoundState>({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+  const [roundState, setRoundState] = useState<RoundState>({ 
+    active: false, 
+    format: "PICK_PARTNER", 
+    matches: [], 
+    submitted: false 
+  });
 
   // Session and history
-  const [currentSession, setCurrentSession] = useState<GameSession>(() => ({ sessionId: Date.now().toString(), startDate: new Date().toISOString() }));
-  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(() => loadRoundsFromStorage());
+  const [currentSession, setCurrentSession] = useState<GameSession>(() => ({
+    sessionId: Date.now().toString(),
+    startDate: new Date().toISOString(),
+  }));
+  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(() => storage.loadRounds());
 
   // UI helpers
-  const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const [standingsSortColumn, setStandingsSortColumn] = useState("seedTotal");
   const [standingsSortDirection, setStandingsSortDirection] = useState<"asc" | "desc">("asc");
 
   // derived: rounds in current session
-  const currentSessionRounds = useMemo(() => roundHistory.filter(r => r.sessionId === currentSession.sessionId).sort((a,b)=>a.roundNumber - b.roundNumber), [roundHistory, currentSession]);
+  const currentSessionRounds = useMemo(
+    () => roundHistory.filter(r => r.sessionId === currentSession.sessionId)
+                      .sort((a, b) => a.roundNumber - b.roundNumber),
+    [roundHistory, currentSession]
+  );
   const currentRoundNumber = currentSessionRounds.length + 1;
 
-  // --- Standings sorting handler ---------------------- //
+  // ============================================================
+  // STANDINGS SORTING HANDLER
+  // ============================================================
+
   const handleStandingsSort = useCallback((column: string) => {
     if (column === standingsSortColumn) {
       setStandingsSortDirection(prev => prev === "asc" ? "desc" : "asc");
@@ -114,7 +207,10 @@ export default function Page() {
     }
   }, [standingsSortColumn]);
 
-  // --- Player handlers ---------------------- //
+  // ============================================================
+  // PLAYER HANDLERS
+  // ============================================================
+
   useEffect(() => {
     loadPlayersFromDb();
   }, []);
@@ -123,25 +219,23 @@ export default function Page() {
     try {
       setLoading(true);
       const result = await getPlayers();
+
       if (result.success) {
         setPlayers(result.players || []);
 
-        const savedRounds = loadRoundsFromStorage();
-        if (savedRounds.length > 0) setRoundHistory(savedRounds);
-
-        const savedSession = localStorage.getItem("pickleball_session_v1");
-        if (savedSession) {
-          try { setCurrentSession(JSON.parse(savedSession)); } catch {}
+        // Load persisted data
+        const savedRounds = storage.loadRounds();
+        if (savedRounds.length > 0) {
+          setRoundHistory(savedRounds);
         }
 
-        const savedStandings = localStorage.getItem("pickleball_standings_v1");
-        if (savedStandings && currentSession) {
-          try {
-            const parsed = JSON.parse(savedStandings);
-            if (parsed.sessionId === currentSession.sessionId) {
-              setStandings(parsed.entries || []);
-            }
-          } catch {}
+        const savedSession = storage.loadSession();
+        if (savedSession) {
+          setCurrentSession(savedSession);
+          const savedStandings = storage.loadStandings(savedSession.sessionId);
+          if (savedStandings.length > 0) {
+            setStandings(savedStandings);
+          }
         }
       } else {
         setError(result.error || "Failed to load players");
@@ -195,28 +289,25 @@ export default function Page() {
     }
   };
 
-  // --- Event pool handlers ---------------------- //
+  // ============================================================
+  // EVENT POOL HANDLERS
+  // ============================================================
+
   const addToPool = (player: Player) => {
     if (eventPool.find(p => p.id === player.id)) return;
+    
     setEventPool(prev => [player, ...prev]);
     setStandings(prev => {
       if (prev.find(s => s.id === player.id)) return prev;
-      const seed = 1 + prev.length * config.orderGap;
-      const byeBase = -Math.random();
-      return [...prev, {
-        id: player.id,
-        name: player.name,
-        duprId: player.duprId ?? null,
-        duprScore: player.duprScore ?? null,
-        seed,
-        seedAdjustment: 0,
-        orderHistory: [],
-        byeBase,
-        byeMod: config.lateJoinBonus && currentRoundNumber > 1 ? config.lateJoinBonus : 0,
-        byeCount: 0,
-        sitOutCount: 0,
-        wins: 0, losses: 0, ties: 0, pointsFor: 0, pointsAgainst: 0,
-      }];
+      
+      const newEntry = createStandingsEntry(
+        player,
+        prev.length,
+        config.orderGap,
+        currentRoundNumber > 1 ? config.lateJoinBonus : 0
+      );
+      
+      return [...prev, newEntry];
     });
     recalculateSeeds();
   };
@@ -228,32 +319,42 @@ export default function Page() {
   };
 
   const toggleSitting = (playerId: string) => {
-    setEventPool(prev => prev.map(p => p.id === playerId ? { ...p, isSitting: !p.isSitting } : p));
+    setEventPool(prev => prev.map(p => 
+      p.id === playerId ? { ...p, isSitting: !p.isSitting } : p
+    ));
   };
 
-  // --- Seed recalculations ---------------------- //
-  const recalculateSeeds = () => {
+  // ============================================================
+  // SEED & BYE RECALCULATION
+  // ============================================================
+
+  const recalculateSeeds = useCallback(() => {
     setStandings(prev => {
-      const sorted = [...prev].sort((a,b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
+      const sorted = [...prev].sort((a, b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
       return sorted.map((entry, i) => ({ ...entry, seed: 1 + i * config.orderGap }));
     });
-  };
+  }, [config.orderGap]);
 
-  const regenerateByes = () => {
+  const regenerateByes = useCallback(() => {
     setStandings(prev => {
-      const updated = [...prev].sort((a,b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
+      const sorted = [...prev].sort((a, b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
       const topHalf = Math.floor(config.byeTopProtection / 2);
-      return updated.map((entry, idx) => {
+
+      return sorted.map((entry, idx) => {
         const baseRoll = -Math.random();
         let byeBase = baseRoll;
-        if (idx < topHalf) byeBase = baseRoll + config.byeBonusTop;
-        else if (idx < config.byeTopProtection) byeBase = baseRoll + (config.byeBonusTop / 2);
+        
+        if (idx < topHalf) {
+          byeBase = baseRoll + config.byeBonusTop;
+        } else if (idx < config.byeTopProtection) {
+          byeBase = baseRoll + (config.byeBonusTop / 2);
+        }
+        
         return { ...entry, byeBase };
       });
     });
-  };
+  }, [config.byeTopProtection, config.byeBonusTop]);
 
-  // Veto a bye for a specific player - add 0.25 to their byeMod and regenerate matches
   const handleVetoBye = (playerId: string) => {
     setStandings(prev => prev.map(entry => {
       if (entry.id === playerId) {
@@ -261,64 +362,66 @@ export default function Page() {
       }
       return entry;
     }));
-    // Regenerate matches with the updated bye scores
+    
     const roundFmt = config.roundFormat || "FIXED_14V23";
     doGenerateMatches(roundFmt as MatchFormat);
   };
 
-  // --- Persistence: save players on change ---------------------- //
+  // ============================================================
+  // PERSISTENCE
+  // ============================================================
+
   useEffect(() => {
-    savePlayersToStorage(players);
+    storage.savePlayers(players);
   }, [players]);
 
   useEffect(() => {
-    saveRoundsToStorage(roundHistory);
+    storage.saveRounds(roundHistory);
   }, [roundHistory]);
 
-  // Auto-save standings to localStorage when they change
   useEffect(() => {
-    if (standings.length > 0 && isBrowser) {
-      localStorage.setItem("pickleball_standings_v1", JSON.stringify({
-        sessionId: currentSession?.sessionId,
-        entries: standings,
-      }));
+    if (standings.length > 0) {
+      storage.saveStandings(standings, currentSession?.sessionId);
     }
   }, [standings, currentSession]);
 
-  // Auto-save session to localStorage when it changes
   useEffect(() => {
-    if (currentSession && isBrowser) {
-      localStorage.setItem("pickleball_session_v1", JSON.stringify(currentSession));
-    }
+    storage.saveSession(currentSession);
   }, [currentSession]);
 
-  // Auto-save eventPool to localStorage when it changes
   useEffect(() => {
     if (!isBrowser) return;
-    // Only save if it's been initialized (not initial empty state)
     if (eventPool.length > 0 || localStorage.getItem(STORAGE_KEY_EVENT_POOL)) {
-      saveEventPoolToStorage(eventPool);
+      storage.saveEventPool(eventPool);
     }
   }, [eventPool]);
 
-  // --- Match generation ---------------------- //
+  // ============================================================
+  // MATCH GENERATION
+  // ============================================================
+
   const doGenerateMatches = useCallback((format: MatchFormat) => {
     const result = generateMatches(format, eventPool, standings, config, currentRoundNumber, null, setStandings);
-    setRoundState({ active: true, format, matches: result.matches, submitted: false });
+    setRoundState({ 
+      active: true, 
+      format, 
+      matches: result.matches, 
+      submitted: false 
+    });
   }, [eventPool, standings, config, currentRoundNumber]);
 
   const doGeneratePoolMatches = useCallback(() => {
-    // Generate simple pool matches (round-robin within each pool)
     const activePlayers = eventPool.filter(p => !p.isSitting);
     const poolsCount = config.poolFinals?.poolsCount || 2;
     const pools: Player[][] = Array.from({ length: poolsCount }, () => []);
-    
+
     activePlayers.forEach((player, idx) => {
       pools[idx % poolsCount].push(player);
     });
 
     const generatedMatches: Match[] = [];
     let courtNum = 1;
+
     pools.forEach((pool, poolIdx) => {
       for (let i = 0; i < pool.length; i++) {
         for (let j = i + 1; j < pool.length; j++) {
@@ -336,12 +439,26 @@ export default function Page() {
       }
     });
 
-    setRoundState({ active: true, format: "POOL_PLAY", matches: generatedMatches, submitted: false, stage: "pool" });
+    setRoundState({ 
+      active: true, 
+      format: "POOL_PLAY", 
+      matches: generatedMatches, 
+      submitted: false, 
+      stage: "pool" 
+    });
   }, [eventPool, config]);
 
-  // --- Match helpers ---------------------- //
+  // ============================================================
+  // MATCH HELPERS
+  // ============================================================
+
   const updateMatchScore = (matchId: string, score: number, team: "team1" | "team2") => {
-    setRoundState(prev => ({ ...prev, matches: prev.matches.map(m => m.id === matchId ? ({ ...m, [team+"Score"]: score }) : m) }));
+    setRoundState(prev => ({ 
+      ...prev, 
+      matches: prev.matches.map(m => 
+        m.id === matchId ? ({ ...m, [team + "Score"]: score }) : m
+      ) 
+    }));
   };
 
   const swapPlayerTeam = (matchId: string, playerId: string) => {
@@ -349,71 +466,69 @@ export default function Page() {
       ...prev,
       matches: prev.matches.map(m => {
         if (m.id !== matchId) return m;
+        
         const picker = m.team1[0];
         const partner = m.team1[1];
+        
         if (playerId === picker) return m;
+        
         if (m.team2.includes(playerId)) {
-          return { ...m, team1: [picker, playerId], team2: [...m.team2.filter(id => id !== playerId), partner] };
+          return { 
+            ...m, 
+            team1: [picker, playerId], 
+            team2: [...m.team2.filter(id => id !== playerId), partner] 
+          };
         }
+        
         return m;
       })
     }));
   };
 
-  // --- Submit round ---------------------- //
+  // ============================================================
+  // SUBMIT ROUND RESULTS
+  // ============================================================
+
   const submitRoundResults = () => {
-    const byePlayerIds = roundState.matches.filter(m => m.bye).map(m => m.byePlayerId).filter(Boolean) as string[];
-
+    // Update standings for each match
     setStandings(prev => {
-      const map = new Map<string, StandingsEntry>(prev.map(s => [s.id, { ...s }]));
-
+      const updated = [...prev];
+      
       roundState.matches.forEach(m => {
         if (m.bye && m.byePlayerId) {
-          const s = map.get(m.byePlayerId);
-          if (s) {
-            s.byeCount = (s.byeCount || 0) + 1;
-            s.orderHistory = [...(s.orderHistory || []), { round: currentRoundNumber, change: 0, reason: "bye" }];
-            map.set(s.id, s);
+          // Handle bye
+          const idx = updated.findIndex(s => s.id === m.byePlayerId);
+          if (idx >= 0) {
+            updated[idx] = {
+              ...updated[idx],
+              byeCount: (updated[idx].byeCount || 0) + 1,
+              orderHistory: [
+                ...(updated[idx].orderHistory || []),
+                { round: currentRoundNumber, change: 0, reason: "bye" }
+              ]
+            };
           }
         } else {
-          const team1Ids = m.team1, team2Ids = m.team2;
-          const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
-
-          [...team1Ids, ...team2Ids].forEach(pid => {
-            const s = map.get(pid);
-            if (!s) return;
-            const isOnTeam1 = team1Ids.includes(pid);
-            const myScore = isOnTeam1 ? t1score : t2score;
-            const oppScore = isOnTeam1 ? t2score : t1score;
-            const won = myScore > oppScore;
-
-            if (won) s.wins = (s.wins || 0) + 1;
-            else if (myScore > 0 || oppScore > 0) s.losses = (s.losses || 0) + 1;
-            s.pointsFor = (s.pointsFor || 0) + myScore;
-            s.pointsAgainst = (s.pointsAgainst || 0) + oppScore;
-
-            // Compute order change based on court position
-            const filledCourts = Math.ceil((eventPool.filter(p => !p.isSitting).length - byePlayerIds.length) / 4) || 1;
-            const isTop = m.court === 1;
-            const isBottom = m.court === filledCourts;
-            let orderChange = won ? -config.winLossMagnitude : config.winLossMagnitude;
-            if (isTop) orderChange = won ? -config.courtBonus : config.winLossMagnitude;
-            else if (isBottom) orderChange = won ? -config.winLossMagnitude : config.courtBonus;
-
-            const rawAdj = (s.seedAdjustment || 0) + orderChange;
-            const minSeedTotal = 1 - config.band;
-            const maxSeedTotal = 1 + config.band + ((prev.length - 1) * config.orderGap);
-            const clampedAdj = Math.max(minSeedTotal - s.seed, Math.min(maxSeedTotal - s.seed, rawAdj));
-
-            s.orderHistory = [...(s.orderHistory || []), { round: currentRoundNumber, change: clampedAdj - (s.seedAdjustment || 0), reason: (isTop ? "top" : isBottom ? "bottom" : `court ${m.court}`) + (won ? " win" : " loss") }];
-            s.seedAdjustment = clampedAdj;
-            map.set(s.id, s);
+          // Handle regular match - use centralized function
+          [m.team1[0], m.team1[1], m.team2[0], m.team2[1]].forEach(playerId => {
+            if (!playerId) return;
+            const idx = updated.findIndex(s => s.id === playerId);
+            if (idx >= 0) {
+              updated[idx] = processMatchResult(updated[idx], {
+                match: m,
+                eventPool,
+                config,
+                roundNumber: currentRoundNumber,
+              });
+            }
           });
         }
       });
-      return Array.from(map.values());
+      
+      return updated;
     });
 
+    // Save round to history
     const completedRound: CompletedRound = {
       roundNumber: currentRoundNumber,
       date: new Date().toISOString(),
@@ -425,41 +540,109 @@ export default function Page() {
 
     const newHistory = [...roundHistory, completedRound];
     setRoundHistory(newHistory);
-    saveRoundsToStorage(newHistory);
     setRoundState(prev => ({ ...prev, submitted: true }));
   };
 
-  // --- Settings change handler ---------------------- //
+  // ============================================================
+  // SETTINGS CHANGE HANDLER
+  // ============================================================
+
   const updateConfig = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     setConfig(prev => ({ ...prev, [key]: value }));
   };
 
-  // --- Restart event handler ---------------------- //
+  // ============================================================
+  // RESTART & CANCEL
+  // ============================================================
+
   const handleRestartEvent = useCallback(() => {
     setRoundHistory([]);
-    saveRoundsToStorage([]);
     setStandings([]);
-    setEventPool([]); // Clear event pool too
-    if (isBrowser) localStorage.removeItem("pickleball_standings_v1");
-    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+    setEventPool([]);
+    storage.clearAll();
+    
+    setRoundState({ 
+      active: false, 
+      format: "PICK_PARTNER", 
+      matches: [], 
+      submitted: false 
+    });
+    
     const newSession: GameSession = {
       sessionId: Date.now().toString(),
       startDate: new Date().toISOString(),
     };
     setCurrentSession(newSession);
-    if (isBrowser) localStorage.setItem("pickleball_session_v1", JSON.stringify(newSession));
   }, []);
 
   const handleCancelRound = useCallback(() => {
-    setRoundState({ active: false, format: "PICK_PARTNER", matches: [], submitted: false });
+    setRoundState({ 
+      active: false, 
+      format: "PICK_PARTNER", 
+      matches: [], 
+      submitted: false 
+    });
   }, []);
 
-  // --- Computed standings for display ---------------------- //
+  // ============================================================
+  // COMPUTED STANDINGS FOR DISPLAY
+  // ============================================================
+
   const computedStandings = useMemo(() => {
-    return sortStandings(computeStandingsEntries(standings), standingsSortColumn, standingsSortDirection);
+    return sortStandings(
+      computeStandingsEntries(standings),
+      standingsSortColumn,
+      standingsSortDirection
+    );
   }, [standings, standingsSortColumn, standingsSortDirection]);
 
-  // --- Loading state ---------------------- //
+  // ============================================================
+  // ROUND HISTORY EDIT HANDLERS (using centralized logic)
+  // ============================================================
+
+  const handleEditRound = useCallback((updated: CompletedRound) => {
+    const newHistory = roundHistory.map(r =>
+      r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId 
+        ? updated 
+        : r
+    );
+    setRoundHistory(newHistory);
+
+    // Use centralized standings recalculation
+    const newStandings = recalculateStandingsFromHistory(
+      standings,
+      newHistory,
+      currentSession.sessionId,
+      config,
+      eventPool
+    );
+    setStandings(newStandings);
+  }, [roundHistory, standings, currentSession.sessionId, config, eventPool]);
+
+  const handleDeleteRound = useCallback((roundNumber: number, sessionId: string) => {
+    const newHistory = roundHistory.filter(r => 
+      !(r.roundNumber === roundNumber && r.sessionId === sessionId)
+    );
+    setRoundHistory(newHistory);
+
+    // Only recalculate if deleting from current session
+    if (sessionId !== currentSession.sessionId) return;
+
+    // Use centralized standings recalculation
+    const newStandings = recalculateStandingsFromHistory(
+      standings,
+      newHistory,
+      sessionId,
+      config,
+      eventPool
+    );
+    setStandings(newStandings);
+  }, [roundHistory, standings, currentSession.sessionId, config, eventPool]);
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
@@ -474,7 +657,12 @@ export default function Page() {
         <div className="bg-white p-8 rounded-xl text-center max-w-md">
           <p className="text-red-600 font-bold mb-2">Database Error</p>
           <p className="text-gray-700 text-sm">{error}</p>
-          <button onClick={loadPlayersFromDb} className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Retry</button>
+          <button 
+            onClick={loadPlayersFromDb} 
+            className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -482,7 +670,6 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
-
       <header className="text-center mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
         <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
@@ -519,8 +706,14 @@ export default function Page() {
           standings={standings}
           currentRoundNumber={currentRoundNumber}
           defaultRoundFormat={config.roundFormat || "FIXED_14V23"}
-          onStartPickPartner={() => { if (currentRoundNumber === 1) regenerateByes(); doGenerateMatches("PICK_PARTNER"); }}
-          onStartFixed14v23={() => { if (currentRoundNumber === 1) regenerateByes(); doGenerateMatches("FIXED_14V23"); }}
+          onStartPickPartner={() => { 
+            if (currentRoundNumber === 1) regenerateByes(); 
+            doGenerateMatches("PICK_PARTNER"); 
+          }}
+          onStartFixed14v23={() => { 
+            if (currentRoundNumber === 1) regenerateByes(); 
+            doGenerateMatches("FIXED_14V23"); 
+          }}
           onRegenerateByes={regenerateByes}
           onUpdateMatchScore={updateMatchScore}
           onSwapPlayerTeam={swapPlayerTeam}
@@ -548,122 +741,8 @@ export default function Page() {
           currentSessionId={currentSession.sessionId}
           eventPool={eventPool}
           config={config}
-          onEditRound={(updated: CompletedRound) => {
-            const newHistory = roundHistory.map(r => 
-              r.roundNumber === updated.roundNumber && r.sessionId === updated.sessionId ? updated : r
-            );
-            setRoundHistory(newHistory);
-            saveRoundsToStorage(newHistory);
-            
-            // Recalculate standings from all rounds - BATCHED into single setStandings call
-            const sessionRounds = newHistory
-              .filter(r => r.sessionId === currentSession.sessionId)
-              .sort((a, b) => a.roundNumber - b.roundNumber);
-            
-            // Build all changes first
-            const changesMap = new Map<string, { wins: number; losses: number; pointsFor: number; pointsAgainst: number; byeCount: number; orderHistory: { round: number; change: number; reason: string }[] }>();
-            
-            standings.forEach(s => {
-              changesMap.set(s.id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, byeCount: 0, orderHistory: [] });
-            });
-            
-            sessionRounds.forEach(r => {
-              r.matches.forEach(m => {
-                if (m.bye && m.byePlayerId) {
-                  const changes = changesMap.get(m.byePlayerId)!;
-                  changes.byeCount++;
-                  changes.orderHistory.push({ round: r.roundNumber, change: 0, reason: 'bye' });
-                } else {
-                  const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
-                  [...m.team1, ...m.team2].forEach(pid => {
-                    const changes = changesMap.get(pid)!;
-                    const isOnTeam1 = m.team1.includes(pid);
-                    const myScore = isOnTeam1 ? t1score : t2score;
-                    const oppScore = isOnTeam1 ? t2score : t1score;
-                    if (myScore > oppScore) changes.wins++;
-                    else if (oppScore > myScore) changes.losses++;
-                    changes.pointsFor += myScore;
-                    changes.pointsAgainst += oppScore;
-                  });
-                }
-              });
-            });
-            
-            // Apply all changes in ONE setStandings call
-            setStandings(prev => prev.map(s => {
-              const changes = changesMap.get(s.id)!;
-              return {
-                ...s,
-                seedAdjustment: 0,
-                byeCount: changes.byeCount,
-                sitOutCount: 0,
-                wins: changes.wins,
-                losses: changes.losses,
-                ties: 0,
-                pointsFor: changes.pointsFor,
-                pointsAgainst: changes.pointsAgainst,
-                orderHistory: changes.orderHistory,
-              };
-            }));
-          }}
-          onDeleteRound={(roundNumber, sessionId) => {
-            const newHistory = roundHistory.filter(r => !(r.roundNumber === roundNumber && r.sessionId === sessionId));
-            setRoundHistory(newHistory);
-            saveRoundsToStorage(newHistory);
-            
-            if (sessionId !== currentSession.sessionId) return;
-            
-            // Recalculate standings from remaining rounds - BATCHED into single setStandings call
-            const sessionRounds = newHistory
-              .filter(r => r.sessionId === sessionId)
-              .sort((a, b) => a.roundNumber - b.roundNumber);
-            
-            // Build all changes first
-            const changesMap = new Map<string, { wins: number; losses: number; pointsFor: number; pointsAgainst: number; byeCount: number; orderHistory: { round: number; change: number; reason: string }[] }>();
-            
-            standings.forEach(s => {
-              changesMap.set(s.id, { wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0, byeCount: 0, orderHistory: [] });
-            });
-            
-            sessionRounds.forEach(r => {
-              r.matches.forEach(m => {
-                if (m.bye && m.byePlayerId) {
-                  const changes = changesMap.get(m.byePlayerId)!;
-                  changes.byeCount++;
-                  changes.orderHistory.push({ round: r.roundNumber, change: 0, reason: 'bye' });
-                } else {
-                  const t1score = m.team1Score || 0, t2score = m.team2Score || 0;
-                  [...m.team1, ...m.team2].forEach(pid => {
-                    const changes = changesMap.get(pid)!;
-                    const isOnTeam1 = m.team1.includes(pid);
-                    const myScore = isOnTeam1 ? t1score : t2score;
-                    const oppScore = isOnTeam1 ? t2score : t1score;
-                    if (myScore > oppScore) changes.wins++;
-                    else if (oppScore > myScore) changes.losses++;
-                    changes.pointsFor += myScore;
-                    changes.pointsAgainst += oppScore;
-                  });
-                }
-              });
-            });
-            
-            // Apply all changes in ONE setStandings call
-            setStandings(prev => prev.map(s => {
-              const changes = changesMap.get(s.id)!;
-              return {
-                ...s,
-                seedAdjustment: 0,
-                byeCount: changes.byeCount,
-                sitOutCount: 0,
-                wins: changes.wins,
-                losses: changes.losses,
-                ties: 0,
-                pointsFor: changes.pointsFor,
-                pointsAgainst: changes.pointsAgainst,
-                orderHistory: changes.orderHistory,
-              };
-            }));
-          }}
+          onEditRound={handleEditRound}
+          onDeleteRound={handleDeleteRound}
         />
       </div>
     </div>
