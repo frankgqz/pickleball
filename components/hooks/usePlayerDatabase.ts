@@ -77,12 +77,27 @@ export function usePlayerDatabase(
 
   const addNewPlayer = useCallback(async (formData: FormData) => {
     const result = await addPlayer(formData);
+    console.log("addPlayer result:", result);
     if (result.success && result.player) {
-      setAllPlayers(prev => [result.player!, ...prev]);
+      setAllPlayers(prev => {
+        const updated = [result.player!, ...prev];
+        console.log("Updated allPlayers:", updated);
+        return updated;
+      });
+      // Also add to pool if it's not already there
+      setEventPool(prev => {
+        if (prev.find(p => p.id === result.player!.id)) return prev;
+        const updated = [result.player!, ...prev];
+        console.log("Updated eventPool:", updated);
+        return updated;
+      });
+    } else {
+      console.error("Failed to add player:", result.error);
     }
   }, []);
 
   const updateExistingPlayer = useCallback(async (id: string, updates: Partial<Player>) => {
+    console.log("updateExistingPlayer called:", { id, updates });
     const formData = new FormData();
     if (updates.name) formData.append("name", updates.name);
     if (updates.duprId !== undefined && updates.duprId !== null) formData.append("duprId", updates.duprId);
@@ -90,8 +105,15 @@ export function usePlayerDatabase(
     if (updates.manualDuprScore !== undefined && updates.manualDuprScore !== null) formData.append("manualDuprScore", String(updates.manualDuprScore));
 
     const result = await updatePlayer(id, formData);
+    console.log("updateExistingPlayer result:", result);
     if (result.success && result.player) {
-      setAllPlayers(prev => prev.map(p => p.id === id ? result.player! : p));
+      setAllPlayers(prev => {
+        const updated = prev.map(p => p.id === id ? result.player! : p);
+        console.log("Updated players list:", updated);
+        return updated;
+      });
+    } else {
+      console.error("Failed to update player:", result.error);
     }
   }, []);
 
