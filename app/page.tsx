@@ -125,11 +125,14 @@ export default function Page() {
     // Late joiners (after round 1) get the lateJoinBonus in their byeMod
     const lateJoinBonus = currentRoundNumber > 1 ? config.lateJoinBonus : 0;
     
+    // Use manualDuprScore if available, otherwise duprScore (API fetched)
+    const scoreToUse = player.manualDuprScore ?? player.duprScore ?? null;
+    
     const newEntry: StandingsEntry = {
       id: player.id,
       name: player.name,
       duprId: player.duprId ?? null,
-      duprScore: player.duprScore ?? null,
+      duprScore: scoreToUse,
       seed: 0,
       seedAdjustment: 0,
       orderHistory: [],
@@ -147,7 +150,7 @@ export default function Page() {
     setStandings(prev => {
       const updated = [...prev, newEntry];
       
-      // Sort by DUPR score (highest first)
+      // Sort by DUPR score (highest first) - use duplexScore if available, otherwise manualDuprScore
       const sorted = updated.sort((a, b) => {
         const aScore = a.duprScore ?? 0;
         const bScore = b.duprScore ?? 0;
