@@ -91,7 +91,15 @@ export default function PlayerDatabase({
     setEditDuprNumericId(p.duprNumericId || "");
     setEditDuprScore(p.duprScore != null ? String(p.duprScore) : "");
   };
-  const cancelEdit = () => { setEditingId(null); setEditName(""); setEditDuprId(""); setEditDuprNumericId(""); setEditDuprScore(""); };
+
+  const cancelEdit = () => { 
+    setEditingId(null); 
+    setEditName(""); 
+    setEditDuprId(""); 
+    setEditDuprNumericId(""); 
+    setEditDuprScore(""); 
+  };
+
   const saveEdit = async () => {
     if (!editingId) return;
     try {
@@ -102,7 +110,9 @@ export default function PlayerDatabase({
         duprScore: editDuprScore ? parseFloat(editDuprScore) : null 
       });
       cancelEdit();
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e); 
+    }
   };
 
   const fetchDuprFor = async (id: string) => {
@@ -123,7 +133,7 @@ export default function PlayerDatabase({
   return (
     <section className="bg-white rounded-2xl shadow p-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3 pt-1">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2 pt-1">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">🎾 Player Database</h2>
           <div className="text-xs text-gray-500">({players.length})</div>
@@ -148,7 +158,7 @@ export default function PlayerDatabase({
       </div>
 
       {/* Add form - single row */}
-      <div className="flex flex-wrap gap-2 mb-2 items-end">
+      <div className="flex flex-wrap gap-2 mb-1.5 items-end">
         <input 
           className="px-2 py-1.5 border border-gray-300 rounded text-sm flex-1 min-w-[140px]" 
           placeholder="Name *" 
@@ -180,7 +190,7 @@ export default function PlayerDatabase({
           + Add
         </button>
       </div>
-      {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
+      {validationError && <div className="text-red-500 text-xs mb-1.5">{validationError}</div>}
 
       {/* Player list */}
       <div style={{ maxHeight: '25vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1">
@@ -192,88 +202,143 @@ export default function PlayerDatabase({
           const hasId = hasDuprId || hasNumericId;
           const inPool = inPoolIds.has(player.id);
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+          const isEditing = editingId === player.id;
 
           return (
-            <div key={player.id} className={`px-2 py-1 rounded-lg border border-gray-300 flex items-center gap-2.5 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
-              {/* Avatar */}
-              <div className="flex-none">
-                {player.imageUrl ? (
-                  <img 
-                    src={player.imageUrl} 
-                    alt={player.name} 
-                    className="w-7 h-7 rounded-full object-cover border border-gray-300" 
-                  />
-                ) : (
-                  <div 
-                    className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} 
-                    style={{ textTransform: 'uppercase' }}
-                  >
-                    {initials}
+            <div key={player.id} className={`px-2 py-1 rounded-lg border border-gray-300 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
+              {isEditing ? (
+                /* Inline edit form */
+                <div className="space-y-1.5 py-1">
+                  <div className="flex flex-wrap gap-1.5 items-end">
+                    <input 
+                      value={editName} 
+                      onChange={e => setEditName(e.target.value)} 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs flex-1 min-w-[100px]" 
+                      placeholder="Name" 
+                    />
+                    <input 
+                      value={editDuprId} 
+                      onChange={e => setEditDuprId(e.target.value)} 
+                      placeholder="DUPR ID" 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs w-18" 
+                    />
+                    <input 
+                      value={editDuprNumericId} 
+                      onChange={e => setEditDuprNumericId(e.target.value)} 
+                      placeholder="webID" 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs w-18" 
+                    />
+                    <input 
+                      value={editDuprScore} 
+                      onChange={e => setEditDuprScore(e.target.value)} 
+                      placeholder="Rating" 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs w-14" 
+                    />
                   </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-xs truncate">{player.name}</div>
-                    <div className="text-[10px] text-gray-500 truncate">
-                      {player.duprId || player.duprNumericId || ''}
-                      {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}
-                    </div>
-                    {fetchFeedback?.playerId === player.id && (
-                      <div className={`text-[10px] ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
-                        {fetchFeedback.message}
+                  <div className="flex gap-1.5">
+                    <button 
+                      onClick={saveEdit} 
+                      className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-medium"
+                    >
+                      Save
+                    </button>
+                    <button 
+                      onClick={cancelEdit} 
+                      className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Normal display */
+                <div className="flex items-center gap-2.5">
+                  {/* Avatar */}
+                  <div className="flex-none">
+                    {player.imageUrl ? (
+                      <img 
+                        src={player.imageUrl} 
+                        alt={player.name} 
+                        className="w-7 h-7 rounded-full object-cover border border-gray-300" 
+                      />
+                    ) : (
+                      <div 
+                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} 
+                        style={{ textTransform: 'uppercase' }}
+                      >
+                        {initials}
                       </div>
                     )}
                   </div>
 
-                  {/* Action buttons - white background, colored on hover */}
-                  <div className="flex items-center gap-1.5">
-                    {inPool ? (
-                      <button 
-                        aria-label="Remove from pool" 
-                        onClick={() => onRemoveFromPool?.(player.id)} 
-                        className="w-6 h-6 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold"
-                      >
-                        −
-                      </button>
-                    ) : (
-                      <button 
-                        aria-label="Add to pool" 
-                        onClick={() => onAddToPool?.(player)} 
-                        className="w-6 h-6 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm font-bold"
-                      >
-                        +
-                      </button>
-                    )}
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-xs truncate">{player.name}</div>
+                        <div className="text-[10px] text-gray-500 truncate">
+                          {player.duprId || player.duprNumericId || ''}
+                          {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}
+                        </div>
+                        {fetchFeedback?.playerId === player.id && (
+                          <div className={`text-[10px] ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
+                            {fetchFeedback.message}
+                          </div>
+                        )}
+                      </div>
 
-                    <button 
-                      onClick={() => startEditing(player)} 
-                      className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" 
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      onClick={() => fetchDuprFor(player.id)} 
-                      className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-purple-600 hover:bg-purple-100 hover:border-purple-300 transition-colors" 
-                    >
-                      🔍
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (confirm(`Delete ${player.name}?`)) {
-                          onDeletePlayer?.(player.id);
-                        }
-                      }} 
-                      className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" 
-                    >
-                      🗑️
-                    </button>
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-1.5">
+                        {inPool ? (
+                          <button 
+                            aria-label="Remove from pool" 
+                            onClick={() => onRemoveFromPool?.(player.id)} 
+                            className="w-6 h-6 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold"
+                          >
+                            −
+                          </button>
+                        ) : (
+                          <button 
+                            aria-label="Add to pool" 
+                            onClick={() => onAddToPool?.(player)} 
+                            className="w-6 h-6 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm font-bold"
+                          >
+                            +
+                          </button>
+                        )}
+
+                        <button 
+                          onClick={() => startEditing(player)} 
+                          className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" 
+                        >
+                          ✏️
+                        </button>
+                        {/* Search button - highlighted if has webNumericID */}
+                        <button 
+                          onClick={() => fetchDuprFor(player.id)} 
+                          className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${
+                            hasNumericId 
+                              ? "bg-yellow-200 border border-yellow-400 text-yellow-700 hover:bg-yellow-300 hover:border-yellow-500" 
+                              : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"
+                          }`}
+                        >
+                          🔍
+                        </button>
+                        <button 
+                          onClick={() => {
+                            if (confirm(`Delete ${player.name}?`)) {
+                              onDeletePlayer?.(player.id);
+                            }
+                          }} 
+                          className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" 
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
