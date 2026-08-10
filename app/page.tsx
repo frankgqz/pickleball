@@ -33,7 +33,7 @@ export default function Page() {
     roundHistory, 
     roundState, 
     currentRoundNumber,
-    setRoundState,
+    setRoundState,  // Now on state object
   } = eventSessionState;
   const { 
     updateConfig, 
@@ -95,7 +95,7 @@ export default function Page() {
   // HELPER FUNCTIONS
   // ============================================================
 
-  // Create format objects
+  // Create format objects with explicit type assertions
   const pickPartnerFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
   const fixed14v23Format: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 
@@ -113,7 +113,7 @@ export default function Page() {
       matchGenActions.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
     } else {
       const roundFmt = config.roundFormat || "FIXED_14V23";
-      const format = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
+      const format: MatchFormat = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
       startStandardRound(format);
     }
   }, [config, matchGenActions, startStandardRound]);
@@ -144,7 +144,7 @@ export default function Page() {
     }));
     // Regenerate matches with updated bye values
     const roundFmt = config.roundFormat || "FIXED_14V23";
-    const format = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
+    const format: MatchFormat = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
     matchGenActions.generateStandardMatches(format);
   }, [config.roundFormat, matchGenActions, setStandings]);
 

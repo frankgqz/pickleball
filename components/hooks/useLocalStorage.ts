@@ -96,28 +96,5 @@ export const localStorageDb = {
   },
 };
 
-// Custom hook for automatic persistence with debounce
-import { useEffect, useRef } from "react";
-
-export function useStorageSync<T>(
-  key: string,
-  data: T,
-  isReady: boolean,
-  delay: number = 100
-) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => {
-    if (!isReady) return;
-
-    // Debounce saves to avoid rapid writes
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => {
-      safeJsonStringify(key, data);
-    }, delay);
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [key, data, isReady, delay]);
-}
+// Note: The useStorageSync hook was removed as it had issues.
+// Direct calls to localStorageDb.save* are preferred in useEffects.

@@ -28,6 +28,7 @@ export interface EventSessionState {
   roundHistory: CompletedRound[];
   roundState: RoundState;
   currentRoundNumber: number;
+  setRoundState: React.Dispatch<React.SetStateAction<RoundState>>;
 }
 
 export interface EventSessionActions {
@@ -55,18 +56,18 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   // Load saved rounds
   const savedRounds = localStorageDb.loadRounds();
 
-  // Default format for new rounds
-  const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
-
   // State
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(savedRounds);
-  const [roundState, setRoundState] = useState<RoundState>({ 
-    active: false, 
-    format: defaultFormat, 
-    matches: [], 
-    submitted: false 
+  const [roundState, setRoundState] = useState<RoundState>(() => { 
+    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
+    return { 
+      active: false, 
+      format: defaultFormat, 
+      matches: [], 
+      submitted: false 
+    };
   });
 
   // Derived: rounds in current session
@@ -113,6 +114,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const restartEvent = useCallback(() => {
     createNewSession();
     setRoundHistory([]);
+    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
     setRoundState({ 
       active: false, 
       format: defaultFormat, 
@@ -120,16 +122,17 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
       submitted: false 
     });
     localStorageDb.clearEventData();
-  }, [createNewSession, defaultFormat]);
+  }, [createNewSession]);
 
   const cancelCurrentRound = useCallback(() => {
+    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
     setRoundState({ 
       active: false, 
       format: defaultFormat, 
       matches: [], 
       submitted: false 
     });
-  }, [defaultFormat]);
+  }, []);
 
   const addRoundToHistory = useCallback((round: CompletedRound) => {
     setRoundHistory(prev => {
@@ -168,6 +171,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     roundHistory,
     roundState,
     currentRoundNumber,
+    setRoundState,
   };
 
   const actions: EventSessionActions = {

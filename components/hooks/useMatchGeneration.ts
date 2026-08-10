@@ -34,7 +34,17 @@ export function useMatchGeneration(
 
   // Generate matches for PICK_PARTNER or FIXED_14V23 formats
   const generateStandardMatches = useCallback((format: MatchFormat): Match[] => {
-    const result = generateMatches(format, eventPool, standings, config, currentRoundNumber);
+    // generateMatches signature: (format, pool, standings, config, roundNumber, byeMap, setStandings)
+    const result = generateMatches(
+      format,
+      eventPool,
+      standings,
+      config,
+      currentRoundNumber,
+      null,  // byePlayerIdsMap - let it calculate internally
+      undefined  // setStandings - we handle byeBase regeneration separately
+    );
+    
     setRoundState({ 
       active: true, 
       format, 
