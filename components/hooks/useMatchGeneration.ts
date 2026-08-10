@@ -20,7 +20,7 @@ export interface MatchGenerationActions {
   setRoundState: React.Dispatch<React.SetStateAction<RoundState>>;
   generateStandardMatches: (format: MatchFormat) => Match[];
   generatePoolPlayMatches: (poolsCount: number) => Match[];
-  updateMatchScore: (matchId: string, score: number, team: "team1" | "team2") => void;
+  updateMatchScore: (matchId: string, score: number | undefined, team: "team1" | "team2") => void;
   swapPlayerTeam: (matchId: string, playerId: string) => void;
   cancelRound: () => void;
 }
@@ -101,8 +101,8 @@ export function useMatchGeneration(
     return generatedMatches;
   }, [eventPool, setRoundState]);
 
-  // Update score for a specific match
-  const updateMatchScore = useCallback((matchId: string, score: number, team: "team1" | "team2") => {
+  // Update score for a specific match (accept undefined so inputs can be cleared)
+  const updateMatchScore = useCallback((matchId: string, score: number | undefined, team: "team1" | "team2") => {
     setRoundState(prev => ({ 
       ...prev, 
       matches: prev.matches.map(m => 
