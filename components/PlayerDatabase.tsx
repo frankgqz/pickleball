@@ -75,7 +75,11 @@ export default function PlayerDatabase({
     if (hasNum) formData.append("duprNumericId", duprNumericId.trim());
     if (hasScore) formData.append("manualDuprScore", duprScore);
     try {
-      await onAddPlayer?.(formData);
+      const result = await onAddPlayer?.(formData);
+      // Also add to pool automatically
+      if (result?.player) {
+        onAddToPool?.(result.player);
+      }
     } catch (e) {
       console.error(e);
       setValidationError("Failed to add player");
@@ -103,13 +107,21 @@ export default function PlayerDatabase({
 
   const saveEdit = async () => {
     if (!editingId) return;
+    console.log("saveEdit called:", {
+      id: editingId,
+      name: editName.trim(),
+      duprId: editDuprId.trim() || null,
+      duprNumericId: editDuprNumericId.trim() || null,
+      manualDuprScore: editDuprScore ? parseFloat(editDuprScore) : null
+    });
     try {
-      await onUpdatePlayer?.(editingId, { 
+      const result = await onUpdatePlayer?.(editingId, { 
         name: editName.trim(), 
         duprId: editDuprId.trim() || null, 
         duprNumericId: editDuprNumericId.trim() || null, 
-        manualDuprScore: editDuprScore ? parseFloat(editDuprScore) : null  // Save to manualDuprScore
+        manualDuprScore: editDuprScore ? parseFloat(editDuprScore) : null
       });
+      console.log("saveEdit result:", result);
       cancelEdit();
     } catch (e) { 
       console.error(e); 
