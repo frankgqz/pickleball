@@ -1,9 +1,7 @@
 "use client";
 
 import React from "react";
-import { TournamentConfig, PoolFinalsConfig, PoolFinalsFormat, AdvancementCriteria } from "./Types";
-
-type RoundFormat = "FIXED_14V23" | "PICK_PARTNER"; // Standard uses FIXED_14V23, New Partners uses PICK_PARTNER
+import { TournamentConfig } from "./Types";
 
 interface Props {
   config: TournamentConfig;
@@ -14,19 +12,7 @@ interface Props {
 export default function SettingsPanel({ config, updateConfig, onRestartEvent }: Props) {
   const handleChange = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     updateConfig(key, value);
-
-    // Auto-set order gap based on format
-    if (key === "format") {
-      const fmt = value as TournamentConfig["format"];
-      if (fmt === "STANDARD") {
-        updateConfig("orderGap", 0.25);
-      } else if (fmt === "FIXED_PARTNER") {
-        updateConfig("orderGap", 0.5);
-      }
-    }
   };
-
-  const isPoolFormat = config.format === "POOL_PLAY";
 
   return (
     <section className="bg-white rounded-2xl shadow-xl p-3">
@@ -57,7 +43,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
         />
       </div>
 
-      {/* Format Row - compact */}
+      {/* Format Row */}
       <div className="flex flex-wrap gap-2 mb-2">
         <div className="flex items-center gap-1">
           <label className="text-xs font-medium text-gray-600">Event:</label>
@@ -72,7 +58,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
           </select>
         </div>
 
-        {!isPoolFormat && (
+        {config.format !== "POOL_PLAY" && (
           <div className="flex items-center gap-1">
             <label className="text-xs font-medium text-gray-600">Round:</label>
             <select
@@ -87,8 +73,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
         )}
       </div>
 
-      {/* Standard / Teams Settings - compact single row */}
-      {!isPoolFormat && (
+      {/* Standard / Teams Settings */}
+      {config.format !== "POOL_PLAY" && (
         <>
           <div className="grid grid-cols-4 gap-1.5 mb-2 text-xs">
             <div>
@@ -198,8 +184,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
         </>
       )}
 
-      {/* Pool / Finals Settings - compact */}
-      {isPoolFormat && (
+      {/* Pool / Finals Settings */}
+      {config.format === "POOL_PLAY" && (
         <div className="space-y-2 text-xs">
           <div className="grid grid-cols-4 gap-1.5">
             <div>
@@ -209,7 +195,10 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={1}
                 max={10}
                 value={config.poolFinals?.poolsCount ?? 2}
-                onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, poolsCount: parseInt(e.target.value) || 2 } as any)}
+                onChange={(e) => handleChange("poolFinals" as any, { 
+                  ...config.poolFinals, 
+                  poolsCount: parseInt(e.target.value) || 2 
+                } as any)}
                 className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
@@ -220,7 +209,10 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={1}
                 max={10}
                 value={config.poolFinals?.finalistsPerPool ?? 2}
-                onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, finalistsPerPool: parseInt(e.target.value) || 2 } as any)}
+                onChange={(e) => handleChange("poolFinals" as any, { 
+                  ...config.poolFinals, 
+                  finalistsPerPool: parseInt(e.target.value) || 2 
+                } as any)}
                 className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
@@ -231,7 +223,10 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={1}
                 max={5}
                 value={config.poolFinals?.groupStageWinsFor ?? 1}
-                onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, groupStageWinsFor: parseInt(e.target.value) || 1 } as any)}
+                onChange={(e) => handleChange("poolFinals" as any, { 
+                  ...config.poolFinals, 
+                  groupStageWinsFor: parseInt(e.target.value) || 1 
+                } as any)}
                 className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
@@ -242,12 +237,15 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={1}
                 max={5}
                 value={config.poolFinals?.finalsWinsFor ?? 1}
-                onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, finalsWinsFor: parseInt(e.target.value) || 1 } as any)}
+                onChange={(e) => handleChange("poolFinals" as any, { 
+                  ...config.poolFinals, 
+                  finalsWinsFor: parseInt(e.target.value) || 1 
+                } as any)}
                 className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-blue-700 text-xs">
+          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-blue-700">
             Pool Play Mode — players distributed by DUPR rating
           </div>
         </div>
@@ -255,5 +253,3 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
     </section>
   );
 }
-
-export { };
