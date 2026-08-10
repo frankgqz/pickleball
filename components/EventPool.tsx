@@ -38,9 +38,9 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow px-3 py-2">
-      {/* Header - aligned with PlayerDatabase */}
-      <div className="flex justify-between items-center mb-1.5">
+    <section className="bg-white rounded-2xl shadow p-4">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-3 pt-1">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-gray-800">🎯 Event Pool</h2>
           <span className="text-xs text-gray-500">{activeCount}/{eventPool.length}</span>
@@ -49,7 +49,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-1.5 py-0.5 border border-gray-300 rounded text-xs h-6"
+            className="py-1.5 px-2 border border-gray-300 rounded text-xs"
           >
             <option value="dupr">By DUPR</option>
             <option value="recent">Added</option>
@@ -57,75 +57,92 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           {eventPool.length > 0 && (
             <button
               onClick={handleClearAll}
-              className={`text-xs px-1.5 py-0.5 rounded transition-all h-6 ${
+              className={`py-1.5 px-2 rounded text-xs transition-all ${
                 showClearConfirm 
                   ? "bg-red-600 text-white" 
-                  : "bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600"
+                  : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600"
               }`}
             >
-              {showClearConfirm ? "⚠" : "Clear"}
+              {showClearConfirm ? "⚠ Confirm?" : "Clear All"}
             </button>
           )}
         </div>
       </div>
 
-      {/* Player list - capped height matching PlayerDatabase */}
+      {/* Player list - fixed row heights */}
       {eventPool.length === 0 ? (
-        <div className="text-gray-400 text-center py-3 text-sm">Add players from database</div>
+        <div className="text-gray-400 text-center py-6 text-sm">Add players from database</div>
       ) : (
-        <div style={{ maxHeight: '30vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-0.5">
+        <div style={{ maxHeight: '30vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1">
           {sorted.map((player) => {
             const hasDupr = !!player.duprId || !!player.duprNumericId;
             
-            // Default light green background, orange if sitting
+            // Background based on state - consistent row heights with h-10
             const containerClass = player.isSitting
-              ? "flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-orange-200 bg-orange-50"
-              : "flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-gray-300 bg-green-50";
+              ? "flex items-center gap-2 px-2 rounded-lg border border-orange-200 bg-orange-50 h-10"
+              : hasDupr
+              ? "flex items-center gap-2 px-2 rounded-lg border border-gray-300 bg-green-50 h-10"
+              : "flex items-center gap-2 px-2 rounded-lg border border-gray-300 bg-yellow-50 h-10";
 
             return (
-              <div key={player.id} className={containerClass} title={player.duprId || player.duprNumericId || "No DUPR"}>
+              <div key={player.id} className={containerClass} title={player.duprId || player.duprNumericId || "No DUPR - may affect export"}>
                 {/* Avatar */}
-                {player.imageUrl ? (
-                  <img
-                    src={player.imageUrl}
-                    alt={player.name}
-                    className={`w-6 h-6 rounded-full object-cover border border-gray-300 ${player.isSitting ? "opacity-50" : ""}`}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      const next = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
-                      if (next) next.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[9px] border border-gray-300 ${player.isSitting ? "bg-orange-200 text-orange-700" : hasDupr ? "bg-green-100 text-green-800" : "bg-yellow-200 text-yellow-800"} ${player.imageUrl ? "hidden" : ""}`}
-                  style={{ textTransform: 'uppercase' }}
-                >
-                  {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
-
-                {/* Info */}
-                <div className={`flex-1 min-w-0 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
-                  <div className="font-medium text-xs truncate">{player.name}</div>
-                  {player.duprScore !== null && player.duprScore !== undefined && (
-                    <div className="text-[10px] text-gray-500">{player.duprScore}</div>
+                <div className="flex-none w-8 h-8">
+                  {player.imageUrl ? (
+                    <img
+                      src={player.imageUrl}
+                      alt={player.name}
+                      className={`w-full h-full rounded-full object-cover border border-gray-300 ${player.isSitting ? "opacity-50" : ""}`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        const next = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                        if (next) next.classList.remove('hidden');
+                      }}
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full rounded-full flex items-center justify-center font-bold text-xs border border-gray-300 ${
+                        player.isSitting 
+                          ? "bg-orange-200 text-orange-700" 
+                          : hasDupr 
+                            ? "bg-white text-gray-800" 
+                            : "bg-yellow-200 text-yellow-800"
+                      }`}
+                      style={{ textTransform: 'uppercase' }}
+                    >
+                      {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
                   )}
                 </div>
 
+                {/* Info - centered in the fixed height row */}
+                <div className={`flex-1 min-w-0 flex items-center ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{player.name}</div>
+                  </div>
+                </div>
+
+                {/* DUPR Score badge */}
+                {player.duprScore !== null && player.duprScore !== undefined && (
+                  <div className="flex-none px-1.5 py-0.5 rounded bg-white border border-gray-300 text-xs font-semibold text-gray-700">
+                    {player.duprScore}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
-                  <label className="flex items-center cursor-pointer">
+                  <label className="flex items-center gap-1 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!player.isSitting}
                       onChange={() => onToggleSitting && onToggleSitting(player.id)}
-                      className="w-3 h-3 rounded"
+                      className="w-3.5 h-3.5 rounded"
                     />
-                    <span className={`text-[10px] ml-0.5 ${player.isSitting ? "text-orange-500" : "text-gray-400"}`}>sit</span>
+                    <span className={`text-xs ${player.isSitting ? "text-orange-500" : "text-gray-400"}`}>sit</span>
                   </label>
                   <button
                     onClick={() => onRemoveFromPool && onRemoveFromPool(player.id)}
-                    className="w-5 h-5 text-[10px] text-red-400 hover:bg-red-100 rounded transition-colors flex items-center justify-center"
+                    className="w-6 h-6 text-xs text-red-400 hover:bg-red-100 rounded transition-colors flex items-center justify-center"
                     title="Remove"
                   >
                     ✕
