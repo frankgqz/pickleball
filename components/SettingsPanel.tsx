@@ -29,56 +29,56 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
   const isPoolFormat = config.format === "POOL_PLAY";
 
   return (
-    <section className="bg-white rounded-2xl shadow-xl p-4">
+    <section className="bg-white rounded-2xl shadow-xl p-3">
       {/* Header */}
-      <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-bold text-gray-800">⚙️ Event Settings</h2>
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-base font-bold text-gray-800">⚙️ Event Settings</h2>
         <button
           onClick={() => {
-            if (confirm("Restart event? This will clear all rounds but keep players in the database.")) {
+            if (confirm("Restart event? This will clear all rounds but keep all the players in the event pool (not the database).")) {
               onRestartEvent && onRestartEvent();
             }
           }}
-          className="px-3 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200 border border-red-300 transition-colors"
+          className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200 border border-red-300 transition-colors"
         >
           🔄 Restart
         </button>
       </div>
 
       {/* Event Name - for CSV export */}
-      <div className="mb-3">
-        <label className="text-xs font-medium text-gray-600 mb-1 block">Event Name (for CSV export)</label>
+      <div className="mb-2">
+        <label className="text-xs font-medium text-gray-600 mb-0.5 block">Event Name (for CSV export)</label>
         <input
           type="text"
           value={config.eventName || ""}
           onChange={(e) => handleChange("eventName" as any, e.target.value)}
           placeholder="e.g. Fun Pickleball Tournament - 3.5 Division"
-          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+          className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
         />
       </div>
 
       {/* Format Row - compact */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex items-center gap-1">
           <label className="text-xs font-medium text-gray-600">Event:</label>
           <select
             value={config.format}
             onChange={(e) => handleChange("format", e.target.value as TournamentConfig["format"])}
-            className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
+            className="px-2 py-0.5 border border-gray-300 rounded text-xs bg-white"
           >
             <option value="STANDARD">Standard</option>
             <option value="FIXED_PARTNER">Teams</option>
             <option value="POOL_PLAY">Pool / Finals</option>
           </select>
         </div>
-        
+
         {!isPoolFormat && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <label className="text-xs font-medium text-gray-600">Round:</label>
             <select
               value={config.roundFormat || "FIXED_14V23"}
               onChange={(e) => handleChange("roundFormat" as any, e.target.value as any)}
-              className="px-2 py-1 border border-gray-300 rounded text-sm bg-white"
+              className="px-2 py-0.5 border border-gray-300 rounded text-xs bg-white"
             >
               <option value="FIXED_14V23">Standard (by seed)</option>
               <option value="PICK_PARTNER">New Partners</option>
@@ -90,7 +90,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
       {/* Standard / Teams Settings - compact single row */}
       {!isPoolFormat && (
         <>
-          <div className="grid grid-cols-4 gap-2 mb-3 text-xs">
+          <div className="grid grid-cols-4 gap-1.5 mb-2 text-xs">
             <div>
               <label className="block text-gray-500 mb-0.5">W/L Mag</label>
               <input
@@ -99,7 +99,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0.25}
                 value={config.winLossMagnitude}
                 onChange={(e) => handleChange("winLossMagnitude", parseFloat(e.target.value) || 1)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -110,18 +110,18 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0.25}
                 value={config.orderGap}
                 onChange={(e) => handleChange("orderGap", parseFloat(e.target.value) || 0.25)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
-              <label className="block text-gray-500 mb-0.5">Wtop/Lbottom</label>
+              <label className="block text-gray-500 mb-0.5">Wtop/Lbot</label>
               <input
                 type="number"
                 step="0.25"
                 min={0}
                 value={config.courtBonus}
                 onChange={(e) => handleChange("courtBonus", parseFloat(e.target.value) || 1)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -132,12 +132,12 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.band}
                 onChange={(e) => handleChange("band", parseFloat(e.target.value) || 0)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-2 mb-2 text-xs">
+          <div className="grid grid-cols-5 gap-1.5 mb-1 text-xs">
             <div>
               <label className="block text-gray-500 mb-0.5">Courts</label>
               <input
@@ -146,7 +146,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={16}
                 value={config.courts}
                 onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -157,7 +157,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={20}
                 value={config.byeTopProtection}
                 onChange={(e) => handleChange("byeTopProtection", parseInt(e.target.value) || 8)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -169,7 +169,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={2}
                 value={config.byeBonusTop}
                 onChange={(e) => handleChange("byeBonusTop", parseFloat(e.target.value) || 0.5)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -180,7 +180,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.sitProtection}
                 onChange={(e) => handleChange("sitProtection", parseFloat(e.target.value) || 0.5)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -191,7 +191,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.lateJoinBonus}
                 onChange={(e) => handleChange("lateJoinBonus", parseFloat(e.target.value) || 1)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
       {/* Pool / Finals Settings - compact */}
       {isPoolFormat && (
         <div className="space-y-2 text-xs">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             <div>
               <label className="block text-gray-500 mb-0.5">Pools</label>
               <input
@@ -210,7 +210,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={10}
                 value={config.poolFinals?.poolsCount ?? 2}
                 onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, poolsCount: parseInt(e.target.value) || 2 } as any)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -221,7 +221,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={10}
                 value={config.poolFinals?.finalistsPerPool ?? 2}
                 onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, finalistsPerPool: parseInt(e.target.value) || 2 } as any)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -232,7 +232,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={5}
                 value={config.poolFinals?.groupStageWinsFor ?? 1}
                 onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, groupStageWinsFor: parseInt(e.target.value) || 1 } as any)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
             <div>
@@ -243,11 +243,11 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={5}
                 value={config.poolFinals?.finalsWinsFor ?? 1}
                 onChange={(e) => handleChange("poolFinals", { ...config.poolFinals, finalsWinsFor: parseInt(e.target.value) || 1 } as any)}
-                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                className="w-full px-1.5 py-0.5 border border-gray-300 rounded text-xs"
               />
             </div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-blue-700">
+          <div className="bg-blue-50 border border-blue-200 rounded p-2 text-blue-700 text-xs">
             Pool Play Mode — players distributed by DUPR rating
           </div>
         </div>

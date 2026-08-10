@@ -29,6 +29,7 @@ const STORAGE_KEY_PLAYERS = "pickleball_players_v1";
 const STORAGE_KEY_EVENT_POOL = "pickleball_event_pool_v1";
 const STORAGE_KEY_SESSION = "pickleball_session_v1";
 const STORAGE_KEY_STANDINGS = "pickleball_standings_v1";
+const STORAGE_KEY_CONFIG = "pickleball_config_v1";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -139,12 +140,37 @@ const storage = {
     return [];
   },
   
+  saveConfig: (config: TournamentConfig) => {
+    if (!isBrowser) return;
+    localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
+  },
+  
+  loadConfig: (): TournamentConfig | null => {
+    if (!isBrowser) return null;
+    const s = localStorage.getItem(STORAGE_KEY_CONFIG);
+    if (!s) return null;
+    try {
+      return JSON.parse(s) as TournamentConfig;
+    } catch {
+      return null;
+    }
+  },
+  
+  clearEventData: () => {
+    if (!isBrowser) return;
+    localStorage.removeItem(STORAGE_KEY_ROUNDS);
+    localStorage.removeItem(STORAGE_KEY_SESSION);
+    localStorage.removeItem(STORAGE_KEY_STANDINGS);
+    // Keep players, eventPool, and config
+  },
+  
   clearAll: () => {
     if (!isBrowser) return;
     localStorage.removeItem(STORAGE_KEY_ROUNDS);
     localStorage.removeItem(STORAGE_KEY_SESSION);
     localStorage.removeItem(STORAGE_KEY_STANDINGS);
     localStorage.removeItem(STORAGE_KEY_EVENT_POOL);
+    localStorage.removeItem(STORAGE_KEY_CONFIG);
   },
 };
 
@@ -165,7 +191,10 @@ export default function Page() {
   const [standings, setStandings] = useState<StandingsEntry[]>([]);
 
   // Config
-  const [config, setConfig] = useState<TournamentConfig>(() => initialConfig);
+  const [config, setConfig] = useState<TournamentConfig>(() => {
+    const saved = storage.loadConfig();
+    return saved || initialConfig;
+  });
 
   // Round state
   const [roundState, setRoundState] = useState<RoundState>({ 
@@ -195,6 +224,76 @@ export default function Page() {
   const currentRoundNumber = currentSessionRounds.length + 1;
 
   // ============================================================
+  // INITIAL DATA LOADING
+  // ============================================================
+
+  useEffect(() => {
+    // Load persisted data from localStorage first
+    const savedSession = storage.loadSession();
+    const savedRounds = storage.loadRounds();
+    const savedConfig = storage.loadConfig();
+    
+    if (savedSession) {
+      setCurrentSession(savedSession);
+      const savedStandings = storage.loadStandings(savedSession.sessionId);
+      if (savedStandings.length > 0) {
+        setStandings(savedStandings);
+      }
+    }
+    
+    if (savedRounds.length > 0) {
+      setRoundHistory(savedRounds);
+    }
+    
+    if (savedConfig) {
+      setConfig(savedConfig);
+    }
+
+    // Then sync with database
+    loadPlayersFromDb();
+  }, []);
+
+  // ============================================================
+  // PERSISTENCE EFFECTS
+  // ============================================================
+
+  useEffect(() => {
+    if (!loading) {
+      storage.savePlayers(players);
+    }
+  }, [players, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      storage.saveRounds(roundHistory);
+    }
+  }, [roundHistory, loading]);
+
+  useEffect(() => {
+    if (!loading && standings.length > 0) {
+      storage.saveStandings(standings, currentSession?.sessionId);
+    }
+  }, [standings, currentSession]);
+
+  useEffect(() => {
+    if (!loading) {
+      storage.saveSession(currentSession);
+    }
+  }, [currentSession, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      storage.saveEventPool(eventPool);
+    }
+  }, [eventPool, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      storage.saveConfig(config);
+    }
+  }, [config, loading]);
+
+  // ============================================================
   // STANDINGS SORTING HANDLER
   // ============================================================
 
@@ -211,37 +310,24 @@ export default function Page() {
   // PLAYER HANDLERS
   // ============================================================
 
-  useEffect(() => {
-    loadPlayersFromDb();
-  }, []);
-
   async function loadPlayersFromDb() {
     try {
-      setLoading(true);
       const result = await getPlayers();
 
       if (result.success) {
-        setPlayers(result.players || []);
-
-        // Load persisted data
-        const savedRounds = storage.loadRounds();
-        if (savedRounds.length > 0) {
-          setRoundHistory(savedRounds);
-        }
-
-        const savedSession = storage.loadSession();
-        if (savedSession) {
-          setCurrentSession(savedSession);
-          const savedStandings = storage.loadStandings(savedSession.sessionId);
-          if (savedStandings.length > 0) {
-            setStandings(savedStandings);
-          }
+        const dbPlayers = result.players || [];
+        
+        // Merge with local players - keep local data if DB is empty (offline mode)
+        if (dbPlayers.length > 0) {
+          setPlayers(dbPlayers);
         }
       } else {
-        setError(result.error || "Failed to load players");
+        // DB failed, but we might have local data - that's fine for offline
+        console.warn("DB load warning:", result.error);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Connection failed");
+      // Network error - keep local data
+      console.warn("Network error, using local data:", err);
     } finally {
       setLoading(false);
     }
@@ -266,6 +352,7 @@ export default function Page() {
     if (result.success) {
       setPlayers(prev => prev.filter(p => p.id !== id));
       setEventPool(prev => prev.filter(p => p.id !== id));
+      setStandings(prev => prev.filter(s => s.id !== id));
     }
   };
 
@@ -293,10 +380,14 @@ export default function Page() {
   // EVENT POOL HANDLERS
   // ============================================================
 
-  const addToPool = (player: Player) => {
+  const addToPool = useCallback((player: Player) => {
     if (eventPool.find(p => p.id === player.id)) return;
     
-    setEventPool(prev => [player, ...prev]);
+    setEventPool(prev => {
+      const updated = [player, ...prev];
+      return updated;
+    });
+    
     setStandings(prev => {
       if (prev.find(s => s.id === player.id)) return prev;
       
@@ -309,14 +400,35 @@ export default function Page() {
       
       return [...prev, newEntry];
     });
+    
     recalculateSeeds();
-  };
+  }, [eventPool, config, currentRoundNumber]);
 
-  const removeFromPool = (playerId: string) => {
+  const removeFromPool = useCallback((playerId: string) => {
     setEventPool(prev => prev.filter(p => p.id !== playerId));
     setStandings(prev => prev.filter(s => s.id !== playerId));
     recalculateSeeds();
-  };
+  }, []);
+
+  const clearEventPool = useCallback(() => {
+    setEventPool([]);
+    setStandings([]);
+    // Clear all event-specific data
+    storage.clearEventData();
+    // Create new session
+    const newSession: GameSession = {
+      sessionId: Date.now().toString(),
+      startDate: new Date().toISOString(),
+    };
+    setCurrentSession(newSession);
+    setRoundHistory([]);
+    setRoundState({ 
+      active: false, 
+      format: "PICK_PARTNER", 
+      matches: [], 
+      submitted: false 
+    });
+  }, []);
 
   const toggleSitting = (playerId: string) => {
     setEventPool(prev => prev.map(p => 
@@ -366,35 +478,6 @@ export default function Page() {
     const roundFmt = config.roundFormat || "FIXED_14V23";
     doGenerateMatches(roundFmt as MatchFormat);
   };
-
-  // ============================================================
-  // PERSISTENCE
-  // ============================================================
-
-  useEffect(() => {
-    storage.savePlayers(players);
-  }, [players]);
-
-  useEffect(() => {
-    storage.saveRounds(roundHistory);
-  }, [roundHistory]);
-
-  useEffect(() => {
-    if (standings.length > 0) {
-      storage.saveStandings(standings, currentSession?.sessionId);
-    }
-  }, [standings, currentSession]);
-
-  useEffect(() => {
-    storage.saveSession(currentSession);
-  }, [currentSession]);
-
-  useEffect(() => {
-    if (!isBrowser) return;
-    if (eventPool.length > 0 || localStorage.getItem(STORAGE_KEY_EVENT_POOL)) {
-      storage.saveEventPool(eventPool);
-    }
-  }, [eventPool]);
 
   // ============================================================
   // MATCH GENERATION
@@ -556,11 +639,15 @@ export default function Page() {
   // ============================================================
 
   const handleRestartEvent = useCallback(() => {
-    setRoundHistory([]);
-    setStandings([]);
-    setEventPool([]);
-    storage.clearAll();
+    // Create new session - keep players in eventPool and standings
+    const newSession: GameSession = {
+      sessionId: Date.now().toString(),
+      startDate: new Date().toISOString(),
+    };
+    setCurrentSession(newSession);
     
+    // Clear round history
+    setRoundHistory([]);
     setRoundState({ 
       active: false, 
       format: "PICK_PARTNER", 
@@ -568,11 +655,8 @@ export default function Page() {
       submitted: false 
     });
     
-    const newSession: GameSession = {
-      sessionId: Date.now().toString(),
-      startDate: new Date().toISOString(),
-    };
-    setCurrentSession(newSession);
+    // Clear event-specific localStorage (keep players, pool, config)
+    storage.clearEventData();
   }, []);
 
   const handleCancelRound = useCallback(() => {
@@ -670,19 +754,19 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
-      <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">🏓 Pickleball Event Manager</h1>
-        <p className="text-green-100">Tournament Management & Round Robin Scheduling</p>
+      <header className="text-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">🏓 Pickleball Event Manager</h1>
+        <p className="text-green-100 text-sm">Tournament Management & Round Robin Scheduling</p>
       </header>
 
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-6">
         <SettingsPanel
           config={config}
           updateConfig={updateConfig}
           onRestartEvent={handleRestartEvent}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PlayerDatabase
             players={players}
             eventPool={eventPool}
@@ -697,6 +781,7 @@ export default function Page() {
             eventPool={eventPool}
             onToggleSitting={toggleSitting}
             onRemoveFromPool={removeFromPool}
+            onClearAll={clearEventPool}
           />
         </div>
 
