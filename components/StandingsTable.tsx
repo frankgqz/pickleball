@@ -12,6 +12,8 @@ interface Props {
   sortColumn?: string;
   sortDirection?: "asc" | "desc";
   onSortChange?: (column: string) => void;
+  // Backwards-compatible alias
+  handleSort?: (column: string) => void;
 
   // Helper getters (parent may supply these for consistency)
   getSeedTotal?: (e: StandingsEntry) => number;
