@@ -128,7 +128,7 @@ export async function updatePlayer(playerId: string, formData: FormData) {
   const name = formData.get("name") as string;
   const duprId = formData.get("duprId") as string;
   const duprNumericId = formData.get("duprNumericId") as string;
-  const duprScore = formData.get("duprScore") as string;
+  const manualDuprScore = formData.get("manualDuprScore") as string;
 
   if (!name?.trim()) {
     return { success: false, error: "Name is required" };
@@ -141,7 +141,7 @@ export async function updatePlayer(playerId: string, formData: FormData) {
         name: name.trim(),
         duprId: duprId?.trim() || null,
         duprNumericId: duprNumericId?.trim() || null,
-        duprScore: duprScore ? parseFloat(duprScore) : null,
+        manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
       },
     });
     return { success: true, player };

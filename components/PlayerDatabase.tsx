@@ -69,14 +69,13 @@ export default function PlayerDatabase({
       return;
     }
     setValidationError("");
-    const payload = { 
-      name: trimmed, 
-      duprId: hasDuprId ? duprId.trim() : undefined, 
-      duprNumericId: hasNum ? duprNumericId.trim() : undefined, 
-      manualDuprScore: hasScore ? parseFloat(duprScore) : undefined  // Manual entry goes to manualDuprScore
-    };
+    const formData = new FormData();
+    formData.append("name", trimmed);
+    if (hasDuprId) formData.append("duprId", duprId.trim());
+    if (hasNum) formData.append("duprNumericId", duprNumericId.trim());
+    if (hasScore) formData.append("manualDuprScore", duprScore);
     try {
-      await onAddPlayer?.(payload);
+      await onAddPlayer?.(formData);
     } catch (e) {
       console.error(e);
       setValidationError("Failed to add player");
@@ -89,7 +88,9 @@ export default function PlayerDatabase({
     setEditName(p.name || "");
     setEditDuprId(p.duprId || "");
     setEditDuprNumericId(p.duprNumericId || "");
-    setEditDuprScore(p.duprScore != null ? String(p.duprScore) : "");
+    // Show manualDuprScore if available, otherwise duprScore (API fetched)
+    const scoreToShow = p.manualDuprScore ?? p.duprScore;
+    setEditDuprScore(scoreToShow != null ? String(scoreToShow) : "");
   };
 
   const cancelEdit = () => { 
@@ -107,7 +108,7 @@ export default function PlayerDatabase({
         name: editName.trim(), 
         duprId: editDuprId.trim() || null, 
         duprNumericId: editDuprNumericId.trim() || null, 
-        duprScore: editDuprScore ? parseFloat(editDuprScore) : null 
+        manualDuprScore: editDuprScore ? parseFloat(editDuprScore) : null  // Save to manualDuprScore
       });
       cancelEdit();
     } catch (e) { 
