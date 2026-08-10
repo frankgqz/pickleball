@@ -1,6 +1,7 @@
+"use client";
+
 // useStandingsState.ts - Standings state, sorting, and calculations
 // Handles: standings entries, sorting, percentage calculations, persistence
-// Renamed from useStandings for clarity
 
 import { useState, useCallback, useMemo } from "react";
 import { StandingsEntry, CompletedRound, TournamentConfig, Player, Match } from "@/components/Types";
@@ -10,6 +11,7 @@ import {
   computeStandingsEntries,
   recalculateStandingsFromHistory,
   processMatchResult,
+  createStandingsEntry,
 } from "../standingsUtils";
 
 export interface StandingsState {
@@ -20,10 +22,11 @@ export interface StandingsState {
   sortDirection: "asc" | "desc";
   // Computed standings (with win% and pts% calculated, sorted for display)
   computedStandings: StandingsEntry[];
+  // Setter for standings (exposed for direct manipulation)
+  setStandings: React.Dispatch<React.SetStateAction<StandingsEntry[]>>;
 }
 
 export interface StandingsActions {
-  setStandings: React.Dispatch<React.SetStateAction<StandingsEntry[]>>;
   toggleSortColumn: (column: string) => void;
   recalculateStandingsFromHistory: (
     history: CompletedRound[], 
@@ -77,6 +80,15 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
     }
   }, []);
 
+  // Wrapper that also persists
+  const setStandingsAndPersist = useCallback((updater: React.SetStateAction<StandingsEntry[]>) => {
+    setStandings(prev => {
+      const updated = typeof updater === 'function' ? (updater as (prev: StandingsEntry[]) => StandingsEntry[])(prev) : updater;
+      persistStandings(updated);
+      return updated;
+    });
+  }, [persistStandings]);
+
   // Actions
   const toggleSortColumn = useCallback((column: string) => {
     if (column === sortColumn) {
@@ -105,12 +117,8 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
   }, [standings, persistStandings]);
 
   const removePlayerStandingsEntry = useCallback((playerId: string) => {
-    setStandings(prev => {
-      const updated = prev.filter(s => s.id !== playerId);
-      persistStandings(updated);
-      return updated;
-    });
-  }, [persistStandings]);
+    setStandingsAndPersist(prev => prev.filter(s => s.id !== playerId));
+  }, [setStandingsAndPersist]);
 
   const addPlayerStandingsEntry = useCallback((
     player: Player, 
@@ -118,7 +126,7 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
     roundNumber: number, 
     lateJoinBonus: number
   ) => {
-    setStandings(prev => {
+    setStandingsAndPersist(prev => {
       if (prev.find(s => s.id === player.id)) return prev;
       const newEntry = createStandingsEntry(
         player, 
@@ -126,11 +134,9 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
         orderGap, 
         roundNumber > 1 ? lateJoinBonus : 0
       );
-      const updated = [...prev, newEntry];
-      persistStandings(updated);
-      return updated;
+      return [...prev, newEntry];
     });
-  }, [persistStandings]);
+  }, [setStandingsAndPersist]);
 
   const processMatchResults = useCallback((
     matches: Match[],
@@ -138,12 +144,11 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
     config: TournamentConfig,
     pool: Player[]
   ) => {
-    setStandings(prev => {
+    setStandingsAndPersist(prev => {
       const updated = [...prev];
       
       matches.forEach(m => {
         if (m.bye && m.byePlayerId) {
-          // Handle bye
           const idx = updated.findIndex(s => s.id === m.byePlayerId);
           if (idx >= 0) {
             updated[idx] = {
@@ -156,10 +161,8 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
             };
           }
         } else {
-          // Handle regular match
-          const allPlayers = [m.team1[0], m.team1[1], m.team2[0], m.team2[1]].filter(Boolean);
-          allPlayers.forEach(playerId => {
-            if (!playerId) return;
+          const allPlayerIds = [...m.team1, ...m.team2].filter((id): id is string => Boolean(id));
+          allPlayerIds.forEach(playerId => {
             const idx = updated.findIndex(s => s.id === playerId);
             if (idx >= 0) {
               updated[idx] = processMatchResult(updated[idx], {
@@ -173,17 +176,16 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
         }
       });
       
-      persistStandings(updated);
       return updated;
     });
-  }, [persistStandings]);
+  }, [setStandingsAndPersist]);
 
   const regenerateByes = useCallback((byeTopProtection: number, byeBonusTop: number) => {
-    setStandings(prev => {
+    setStandingsAndPersist(prev => {
       const sorted = [...prev].sort((a, b) => (b.duprScore ?? 0) - (a.duprScore ?? 0));
       const topHalf = Math.floor(byeTopProtection / 2);
 
-      const updated = sorted.map((entry, idx) => {
+      return sorted.map((entry, idx) => {
         const baseRoll = -Math.random();
         let byeBase = baseRoll;
         
@@ -195,11 +197,8 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
         
         return { ...entry, byeBase };
       });
-
-      persistStandings(updated);
-      return updated;
     });
-  }, [persistStandings]);
+  }, [setStandingsAndPersist]);
 
   // State
   const state: StandingsState = {
@@ -207,11 +206,11 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
     sortColumn,
     sortDirection,
     computedStandings,
+    setStandings,
   };
 
   // Actions
   const actions: StandingsActions = {
-    setStandings,
     toggleSortColumn,
     recalculateStandingsFromHistory: doRecalculateFromHistory,
     removePlayerStandingsEntry,

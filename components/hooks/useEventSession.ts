@@ -1,6 +1,7 @@
+"use client";
+
 // useEventSession.ts - Event config, session, and history management
 // Manages the overall event state: config settings, session ID, round history
-// Renamed from useTournament for clarity
 
 import { useState, useCallback, useMemo } from "react";
 import { TournamentConfig, CompletedRound, GameSession, MatchFormat, RoundState } from "@/components/Types";
@@ -54,13 +55,16 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   // Load saved rounds
   const savedRounds = localStorageDb.loadRounds();
 
+  // Default format for new rounds
+  const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
+
   // State
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(savedRounds);
   const [roundState, setRoundState] = useState<RoundState>({ 
     active: false, 
-    format: { type: "PICK_PARTNER", allowPartnerRepeat: false }, 
+    format: defaultFormat, 
     matches: [], 
     submitted: false 
   });
@@ -111,21 +115,21 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     setRoundHistory([]);
     setRoundState({ 
       active: false, 
-      format: { type: "PICK_PARTNER", allowPartnerRepeat: false }, 
+      format: defaultFormat, 
       matches: [], 
       submitted: false 
     });
     localStorageDb.clearEventData();
-  }, [createNewSession]);
+  }, [createNewSession, defaultFormat]);
 
   const cancelCurrentRound = useCallback(() => {
     setRoundState({ 
       active: false, 
-      format: { type: "PICK_PARTNER", allowPartnerRepeat: false }, 
+      format: defaultFormat, 
       matches: [], 
       submitted: false 
     });
-  }, []);
+  }, [defaultFormat]);
 
   const addRoundToHistory = useCallback((round: CompletedRound) => {
     setRoundHistory(prev => {

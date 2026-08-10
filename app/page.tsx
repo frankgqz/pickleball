@@ -7,7 +7,7 @@ import EventPool from "@/components/EventPool";
 import CourtsPanel from "@/components/CourtsPanel";
 import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
-import { CompletedRound, MatchFormat, Player } from "@/components/Types";
+import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 
 // Hooks - extracted logic for cleaner page.tsx
 import { useEventSession } from "@/components/hooks/useEventSession";
@@ -32,16 +32,15 @@ export default function Page() {
     currentSession, 
     roundHistory, 
     roundState, 
-    currentRoundNumber 
+    currentRoundNumber,
+    setRoundState,
   } = eventSessionState;
   const { 
     updateConfig, 
-    setRoundState, 
     addRoundToHistory, 
     updateRoundInHistory, 
     deleteRoundFromHistory, 
     restartEvent,
-    createNewSession 
   } = eventSessionActions;
 
   // ====== PLAYER DATABASE HOOK ======
@@ -82,7 +81,7 @@ export default function Page() {
 
   // ====== MATCH GENERATION HOOK ======
   // Manages: creating matches, updating scores, swapping teams
-  const matchGen = useMatchGeneration(
+  const [, matchGenActions] = useMatchGeneration(
     eventPool, 
     standings, 
     config, 
@@ -96,26 +95,28 @@ export default function Page() {
   // HELPER FUNCTIONS
   // ============================================================
 
+  // Create format objects
+  const pickPartnerFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
+  const fixed14v23Format: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
+
   // Start a round with PICK_PARTNER or FIXED_14V23 format
   const startStandardRound = useCallback((format: MatchFormat) => {
     if (currentRoundNumber === 1) {
       regenerateByes(config.byeTopProtection, config.byeBonusTop);
     }
-    matchGen.generateStandardMatches(format);
-  }, [currentRoundNumber, config, regenerateByes, matchGen]);
+    matchGenActions.generateStandardMatches(format);
+  }, [currentRoundNumber, config, regenerateByes, matchGenActions]);
 
   // Start the next round (pool play or standard based on config)
   const startNextRound = useCallback(() => {
     if (config.format === "POOL_PLAY") {
-      matchGen.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
+      matchGenActions.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
     } else {
       const roundFmt = config.roundFormat || "FIXED_14V23";
-      const format = roundFmt === "PICK_PARTNER" 
-        ? { type: "PICK_PARTNER" as const, allowPartnerRepeat: false }
-        : { type: "FIXED_14V23" as const, partnerLock: true };
+      const format = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
       startStandardRound(format);
     }
-  }, [config, matchGen, startStandardRound]);
+  }, [config, matchGenActions, startStandardRound]);
 
   // Submit the current round results
   const submitRoundResults = useCallback(() => {
@@ -137,17 +138,15 @@ export default function Page() {
 
   // Veto a bye for a player (add penalty to bye calculation)
   const vetoPlayerBye = useCallback((playerId: string) => {
-    setStandings(prev => prev.map(entry => {
+    setStandings((prev: StandingsEntry[]) => prev.map((entry: StandingsEntry) => {
       if (entry.id === playerId) return { ...entry, byeMod: (entry.byeMod || 0) + 0.25 };
       return entry;
     }));
     // Regenerate matches with updated bye values
     const roundFmt = config.roundFormat || "FIXED_14V23";
-    const format = roundFmt === "PICK_PARTNER"
-      ? { type: "PICK_PARTNER" as const, allowPartnerRepeat: false }
-      : { type: "FIXED_14V23" as const, partnerLock: true };
-    matchGen.generateStandardMatches(format);
-  }, [config.roundFormat, matchGen, setStandings]);
+    const format = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
+    matchGenActions.generateStandardMatches(format);
+  }, [config.roundFormat, matchGenActions, setStandings]);
 
   // Add player to event pool AND create their standings entry
   const addToPoolWithStandings = useCallback((player: Player) => {
@@ -261,13 +260,13 @@ export default function Page() {
           standings={standings}
           currentRoundNumber={currentRoundNumber}
           defaultRoundFormat={config.roundFormat || "FIXED_14V23"}
-          onStartPickPartner={() => startStandardRound({ type: "PICK_PARTNER", allowPartnerRepeat: false })}
-          onStartFixed14v23={() => startStandardRound({ type: "FIXED_14V23", partnerLock: true })}
+          onStartPickPartner={() => startStandardRound(pickPartnerFormat)}
+          onStartFixed14v23={() => startStandardRound(fixed14v23Format)}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
-          onUpdateMatchScore={matchGen.updateMatchScore}
-          onSwapPlayerTeam={matchGen.swapPlayerTeam}
+          onUpdateMatchScore={matchGenActions.updateMatchScore}
+          onSwapPlayerTeam={matchGenActions.swapPlayerTeam}
           onSubmitRound={submitRoundResults}
-          onCancelRound={matchGen.cancelRound}
+          onCancelRound={matchGenActions.cancelRound}
           onVetoBye={vetoPlayerBye}
           onStartNextRound={startNextRound}
           submitted={roundState.submitted}

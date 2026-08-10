@@ -1,5 +1,5 @@
-// useLocalStorage.ts - LocalStorage helpers extracted from page.tsx
-// Renamed from usePersistence for clarity - these are localStorage sync helpers
+// useLocalStorage.ts - LocalStorage helpers
+// Handles persisting app state to localStorage
 
 import { Player, StandingsEntry, TournamentConfig, CompletedRound, GameSession } from "@/components/Types";
 
@@ -51,6 +51,7 @@ export const localStorageDb = {
   // Session
   saveSession: (session: GameSession) => safeJsonStringify(STORAGE_KEYS.SESSION, session),
   loadSession: (): GameSession | null => {
+    if (!isBrowser) return null;
     const s = localStorage.getItem(STORAGE_KEYS.SESSION);
     return s ? JSON.parse(s) : null;
   },
@@ -61,6 +62,7 @@ export const localStorageDb = {
     localStorage.setItem(STORAGE_KEYS.STANDINGS, JSON.stringify({ sessionId, entries: standings }));
   },
   loadStandings: (sessionId: string): StandingsEntry[] => {
+    if (!isBrowser) return [];
     const s = localStorage.getItem(STORAGE_KEYS.STANDINGS);
     if (!s) return [];
     try {
@@ -74,6 +76,7 @@ export const localStorageDb = {
   // Config
   saveConfig: (config: TournamentConfig) => safeJsonStringify(STORAGE_KEYS.CONFIG, config),
   loadConfig: (): TournamentConfig | null => {
+    if (!isBrowser) return null;
     const s = localStorage.getItem(STORAGE_KEYS.CONFIG);
     return s ? JSON.parse(s) : null;
   },
@@ -102,17 +105,17 @@ export function useStorageSync<T>(
   isReady: boolean,
   delay: number = 100
 ) {
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
     if (!isReady) return;
-    
+
     // Debounce saves to avoid rapid writes
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       safeJsonStringify(key, data);
     }, delay);
-    
+
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };

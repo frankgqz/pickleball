@@ -1,23 +1,21 @@
+"use client";
+
 // useMatchGeneration.ts - Match generation and management
 // Handles: creating matches for rounds, updating scores, swapping players
-// Renamed from useMatchEngine for clarity
 
 import { useCallback } from "react";
 import { Player, StandingsEntry, TournamentConfig, Match, MatchFormat, RoundState } from "@/components/Types";
 import { generateMatches } from "../MatchEngine";
 
 export interface MatchGenerationState {
-  // Current round state
   roundState: RoundState;
-  // Is a round currently active?
   isRoundActive: boolean;
-  // Has the current round been submitted?
   isRoundSubmitted: boolean;
 }
 
 export interface MatchGenerationActions {
   setRoundState: React.Dispatch<React.SetStateAction<RoundState>>;
-  generateStandardMatches: (format: MatchFormat) => { matches: Match[]; byes: { playerId: string; seedValue: number }[] };
+  generateStandardMatches: (format: MatchFormat) => Match[];
   generatePoolPlayMatches: (poolsCount: number) => Match[];
   updateMatchScore: (matchId: string, score: number, team: "team1" | "team2") => void;
   swapPlayerTeam: (matchId: string, playerId: string) => void;
@@ -35,19 +33,19 @@ export function useMatchGeneration(
 ): [MatchGenerationState, MatchGenerationActions] {
 
   // Generate matches for PICK_PARTNER or FIXED_14V23 formats
-  const generateStandardMatches = useCallback((format: MatchFormat) => {
-    const result = generateMatches(format, eventPool, standings, config, currentRoundNumber, null, null);
+  const generateStandardMatches = useCallback((format: MatchFormat): Match[] => {
+    const result = generateMatches(format, eventPool, standings, config, currentRoundNumber);
     setRoundState({ 
       active: true, 
       format, 
       matches: result.matches, 
       submitted: false 
     });
-    return result;
+    return result.matches;
   }, [eventPool, standings, config, currentRoundNumber, setRoundState]);
 
   // Generate pool play matches (round-robin within each pool)
-  const generatePoolPlayMatches = useCallback((poolsCount: number) => {
+  const generatePoolPlayMatches = useCallback((poolsCount: number): Match[] => {
     const activePlayers = eventPool.filter(p => !p.isSitting);
     const pools: Player[][] = Array.from({ length: poolsCount || 2 }, () => []);
 
@@ -77,9 +75,11 @@ export function useMatchGeneration(
       }
     });
 
+    const poolFormat: MatchFormat = { type: "POOL_PLAY", poolsCount };
+    
     setRoundState({ 
       active: true, 
-      format: { type: "POOL_PLAY", poolsCount }, 
+      format: poolFormat, 
       matches: generatedMatches, 
       submitted: false, 
       stage: "pool" 
@@ -112,12 +112,12 @@ export function useMatchGeneration(
         if (playerId === picker) return m;
         
         // If player is on team2, swap them with the partner
-        if (Array.isArray(m.team2) ? m.team2.includes(playerId) : false) {
-          const team2Array = m.team2 as unknown as string[];
+        const team2Arr = Array.isArray(m.team2) ? m.team2 : [m.team2].filter(Boolean);
+        if (team2Arr.includes(playerId)) {
           return { 
             ...m, 
-            team1: [picker, playerId], 
-            team2: [...team2Array.filter(id => id !== playerId), partner] 
+            team1: [picker, playerId] as [string, string], 
+            team2: [...team2Arr.filter(id => id !== playerId), partner] as [string, string] 
           };
         }
         
@@ -128,9 +128,10 @@ export function useMatchGeneration(
 
   // Cancel the current round
   const cancelRound = useCallback(() => {
+    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
     setRoundState({ 
       active: false, 
-      format: { type: "PICK_PARTNER", allowPartnerRepeat: false }, 
+      format: defaultFormat, 
       matches: [], 
       submitted: false 
     });
