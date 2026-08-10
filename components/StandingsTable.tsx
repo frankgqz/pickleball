@@ -40,11 +40,13 @@ export default function StandingsTable({
   sortColumn: externalSortColumn,
   sortDirection: externalSortDirection,
   onSortChange,
+  handleSort,
   getSeedTotal,
   getByeTotal,
   getPointDiff,
   getPtsPct,
 }: Props) {
+  // Default internal sort is Order# (seedTotal)
   const [internalSortColumn, setInternalSortColumn] = useState<string>("seedTotal");
   const [internalSortDirection, setInternalSortDirection] = useState<"asc" | "desc">("asc");
 
@@ -52,7 +54,10 @@ export default function StandingsTable({
   const sortDirection = externalSortDirection ?? internalSortDirection;
 
   const headerClick = (col: string) => {
-    if (onSortChange) return onSortChange(col);
+    // support either external handler prop name
+    const externalHandler = onSortChange ?? handleSort;
+    if (externalHandler) return externalHandler(col);
+
     if (col === internalSortColumn) {
       setInternalSortDirection((d) => (d === "asc" ? "desc" : "asc"));
     } else {
@@ -91,10 +96,6 @@ export default function StandingsTable({
           aVal = a.name.toLowerCase();
           bVal = b.name.toLowerCase();
           break;
-        case "seedTotal":
-          aVal = a.seedTotal;
-          bVal = b.seedTotal;
-          break;
         case "wins":
           aVal = a.wins || 0;
           bVal = b.wins || 0;
@@ -123,10 +124,6 @@ export default function StandingsTable({
           aVal = a.ptsPct;
           bVal = b.ptsPct;
           break;
-        case "byeTotal":
-          aVal = a.byeTotal;
-          bVal = b.byeTotal;
-          break;
         case "byeCount":
           aVal = a.byeCount || 0;
           bVal = b.byeCount || 0;
@@ -135,6 +132,7 @@ export default function StandingsTable({
           aVal = a.effectiveDupr;
           bVal = b.effectiveDupr;
           break;
+        case "seedTotal":
         default:
           aVal = a.seedTotal;
           bVal = b.seedTotal;
@@ -172,17 +170,19 @@ export default function StandingsTable({
             <thead>
               <tr className="bg-gray-100">
                 <th className="p-2 text-left w-1/4 cursor-pointer" onClick={() => headerClick("name")}>Name{getSortIcon("name")}</th>
-                <th className="p-2 text-center w-16 cursor-pointer" onClick={() => headerClick("byeTotal")}>Bye{getSortIcon("byeTotal")}</th>
-                <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("byeCount")}>Byes{getSortIcon("byeCount")}</th>
-                {/* NEW DUPR COLUMN */}
-                <th className="p-2 text-center w-20 cursor-pointer" onClick={() => headerClick("duprScore")}>DUPR{getSortIcon("duprScore")}</th>
-                <th className="p-2 text-center w-20 cursor-pointer" onClick={() => headerClick("seedTotal")}>Order#{getSortIcon("seedTotal")}</th>
+
+                {/* reordered columns per request: W, L, Win%, PF, PA, +/-, Pts%, Byes, Bye, DUPR, Order# */}
                 <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("wins")}>W{getSortIcon("wins")}</th>
                 <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("losses")}>L{getSortIcon("losses")}</th>
+                <th className="p-2 text-center w-16 cursor-pointer" onClick={() => headerClick("winPct")}>Win%{getSortIcon("winPct")}</th>
                 <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("pointsFor")}>PF{getSortIcon("pointsFor")}</th>
                 <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("pointsAgainst")}>PA{getSortIcon("pointsAgainst")}</th>
                 <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("pointDiff")}>+/-{getSortIcon("pointDiff")}</th>
                 <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("ptsPct")}>Pts%{getSortIcon("ptsPct")}</th>
+                <th className="p-2 text-center w-12 cursor-pointer" onClick={() => headerClick("byeCount")}>Byes{getSortIcon("byeCount")}</th>
+                <th className="p-2 text-center w-16 cursor-pointer" onClick={() => headerClick("byeTotal")}>Bye{getSortIcon("byeTotal")}</th>
+                <th className="p-2 text-center w-20 cursor-pointer" onClick={() => headerClick("duprScore")}>DUPR{getSortIcon("duprScore")}</th>
+                <th className="p-2 text-center w-20 cursor-pointer" onClick={() => headerClick("seedTotal")}>Order#{getSortIcon("seedTotal")}</th>
               </tr>
             </thead>
             <tbody>
@@ -193,11 +193,15 @@ export default function StandingsTable({
                     {e.duprId && <div className="text-xs text-gray-500">{e.duprId}</div>}
                   </td>
 
-                  <td className="p-2 text-center font-mono" title={`bye breakdown`}>
-                    {e.byeTotal >= 0 ? "+" : ""}{e.byeTotal.toFixed(2)}
-                  </td>
-
+                  <td className="p-2 text-center text-green-600 font-bold">{e.wins}</td>
+                  <td className="p-2 text-center text-red-600 font-bold">{e.losses}</td>
+                  <td className="p-2 text-center">{(e.winPct ?? 0).toFixed(0)}%</td>
+                  <td className="p-2 text-center">{e.pointsFor}</td>
+                  <td className="p-2 text-center">{e.pointsAgainst}</td>
+                  <td className={`p-2 text-center ${e.pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{e.pointDiff >= 0 ? "+" : ""}{e.pointDiff}</td>
+                  <td className="p-2 text-center">{e.ptsPct.toFixed(0)}%</td>
                   <td className="p-2 text-center font-semibold text-purple-600">{e.byeCount}</td>
+                  <td className="p-2 text-center font-mono">{e.byeTotal >= 0 ? "+" : ""}{e.byeTotal.toFixed(2)}</td>
 
                   {/* DUPR column: show — if effectiveDupr equals defaultDupr, otherwise show 2 decimals */}
                   <td className="p-2 text-center font-mono">
@@ -205,13 +209,6 @@ export default function StandingsTable({
                   </td>
 
                   <td className="p-2 text-center font-mono text-blue-600">{e.seedTotal.toFixed(2)}</td>
-
-                  <td className="p-2 text-center text-green-600 font-bold">{e.wins}</td>
-                  <td className="p-2 text-center text-red-600 font-bold">{e.losses}</td>
-                  <td className="p-2 text-center">{e.pointsFor}</td>
-                  <td className="p-2 text-center">{e.pointsAgainst}</td>
-                  <td className={`p-2 text-center ${e.pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{e.pointDiff >= 0 ? "+" : ""}{e.pointDiff}</td>
-                  <td className="p-2 text-center">{e.ptsPct.toFixed(0)}%</td>
                 </tr>
               ))}
             </tbody>
