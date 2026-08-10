@@ -122,7 +122,7 @@ export default function PlayerDatabase({
 
   return (
     <section className="bg-white rounded-2xl shadow p-4">
-      {/* Header - more top padding */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3 pt-1">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">🎾 Player Database</h2>
@@ -174,7 +174,7 @@ export default function PlayerDatabase({
           onChange={e => setDuprScore(e.target.value)} 
         />
         <button 
-          className="px-4 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700 font-medium" 
+          className="px-5 py-2 text-sm text-white bg-green-600 rounded hover:bg-green-700 font-bold" 
           onClick={handleAdd}
         >
           + Add
@@ -194,18 +194,18 @@ export default function PlayerDatabase({
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
           return (
-            <div key={player.id} className={`px-2 py-1.5 rounded-lg border border-gray-300 flex items-center gap-3 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
+            <div key={player.id} className={`px-2 py-1 rounded-lg border border-gray-300 flex items-center gap-2.5 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
               {/* Avatar */}
               <div className="flex-none">
                 {player.imageUrl ? (
                   <img 
                     src={player.imageUrl} 
                     alt={player.name} 
-                    className="w-8 h-8 rounded-full object-cover border border-gray-300" 
+                    className="w-7 h-7 rounded-full object-cover border border-gray-300" 
                   />
                 ) : (
                   <div 
-                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} 
+                    className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} 
                     style={{ textTransform: 'uppercase' }}
                   >
                     {initials}
@@ -217,25 +217,25 @@ export default function PlayerDatabase({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate">{player.name}</div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="font-medium text-xs truncate">{player.name}</div>
+                    <div className="text-[10px] text-gray-500 truncate">
                       {player.duprId || player.duprNumericId || ''}
-                      {player.duprScore != null && <span className="ml-1.5 font-semibold">{player.duprScore}</span>}
+                      {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}
                     </div>
                     {fetchFeedback?.playerId === player.id && (
-                      <div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
+                      <div className={`text-[10px] ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
                         {fetchFeedback.message}
                       </div>
                     )}
                   </div>
 
-                  {/* Action buttons */}
-                  <div className="flex-none flex items-center gap-1">
+                  {/* Action buttons - white background, colored on hover */}
+                  <div className="flex items-center gap-1.5">
                     {inPool ? (
                       <button 
                         aria-label="Remove from pool" 
                         onClick={() => onRemoveFromPool?.(player.id)} 
-                        className="w-7 h-7 rounded bg-gray-200 text-gray-600 border border-gray-300 hover:bg-red-100 hover:text-red-600 transition-colors text-sm font-medium"
+                        className="w-6 h-6 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold"
                       >
                         −
                       </button>
@@ -243,7 +243,7 @@ export default function PlayerDatabase({
                       <button 
                         aria-label="Add to pool" 
                         onClick={() => onAddToPool?.(player)} 
-                        className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm font-medium"
+                        className="w-6 h-6 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm font-bold"
                       >
                         +
                       </button>
@@ -251,13 +251,13 @@ export default function PlayerDatabase({
 
                     <button 
                       onClick={() => startEditing(player)} 
-                      className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs text-blue-600 hover:bg-blue-100 transition-colors" 
+                      className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" 
                     >
                       ✏️
                     </button>
                     <button 
                       onClick={() => fetchDuprFor(player.id)} 
-                      className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs text-purple-600 hover:bg-purple-100 transition-colors" 
+                      className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-purple-600 hover:bg-purple-100 hover:border-purple-300 transition-colors" 
                     >
                       🔍
                     </button>
@@ -267,7 +267,7 @@ export default function PlayerDatabase({
                           onDeletePlayer?.(player.id);
                         }
                       }} 
-                      className="px-2 py-1 bg-gray-100 border border-gray-300 rounded text-xs text-red-500 hover:bg-red-100 transition-colors" 
+                      className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" 
                     >
                       🗑️
                     </button>

@@ -16,7 +16,6 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
 
   const activeCount = eventPool.filter(p => !p.isSitting).length;
 
-  // Sort by DUPR (highest first)
   const sorted = [...eventPool].sort((a, b) => {
     if (sortBy === "dupr") {
       const aScore = a.duprScore ?? 0;
@@ -57,10 +56,10 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           {eventPool.length > 0 && (
             <button
               onClick={handleClearAll}
-              className={`py-1.5 px-2 rounded text-xs transition-all ${
+              className={`py-1.5 px-3 rounded text-xs transition-all ${
                 showClearConfirm 
                   ? "bg-red-600 text-white" 
-                  : "bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600"
+                  : "bg-red-100 text-red-600 hover:bg-red-200"
               }`}
             >
               {showClearConfirm ? "⚠ Confirm?" : "Clear All"}
@@ -69,7 +68,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
         </div>
       </div>
 
-      {/* Player list - fixed row heights */}
+      {/* Player list */}
       {eventPool.length === 0 ? (
         <div className="text-gray-400 text-center py-6 text-sm">Add players from database</div>
       ) : (
@@ -77,12 +76,12 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           {sorted.map((player) => {
             const hasDupr = !!player.duprId || !!player.duprNumericId;
             
-            // Background based on state - consistent row heights with h-10
+            // Consistent row height, background based on state
             const containerClass = player.isSitting
               ? "flex items-center gap-2 px-2 rounded-lg border border-orange-200 bg-orange-50 h-10"
               : hasDupr
-              ? "flex items-center gap-2 px-2 rounded-lg border border-gray-300 bg-green-50 h-10"
-              : "flex items-center gap-2 px-2 rounded-lg border border-gray-300 bg-yellow-50 h-10";
+              ? "flex items-center gap-2 px-2 rounded-lg border border-green-300 bg-green-50 h-10"
+              : "flex items-center gap-2 px-2 rounded-lg border border-yellow-300 bg-yellow-50 h-10";
 
             return (
               <div key={player.id} className={containerClass} title={player.duprId || player.duprNumericId || "No DUPR - may affect export"}>
@@ -105,7 +104,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                         player.isSitting 
                           ? "bg-orange-200 text-orange-700" 
                           : hasDupr 
-                            ? "bg-white text-gray-800" 
+                            ? "bg-green-200 text-green-800" 
                             : "bg-yellow-200 text-yellow-800"
                       }`}
                       style={{ textTransform: 'uppercase' }}
@@ -115,22 +114,18 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                   )}
                 </div>
 
-                {/* Info - centered in the fixed height row */}
-                <div className={`flex-1 min-w-0 flex items-center ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate">{player.name}</div>
-                  </div>
+                {/* Name + DUPR in one line */}
+                <div className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
+                  <span className="text-xs font-medium truncate">{player.name}</span>
+                  {player.duprScore !== null && player.duprScore !== undefined && (
+                    <span className="flex-none px-1.5 py-0.5 rounded bg-green-600 text-white text-[10px] font-bold">
+                      {player.duprScore}
+                    </span>
+                  )}
                 </div>
 
-                {/* DUPR Score badge */}
-                {player.duprScore !== null && player.duprScore !== undefined && (
-                  <div className="flex-none px-1.5 py-0.5 rounded bg-white border border-gray-300 text-xs font-semibold text-gray-700">
-                    {player.duprScore}
-                  </div>
-                )}
-
                 {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <label className="flex items-center gap-1 cursor-pointer">
                     <input
                       type="checkbox"
@@ -142,7 +137,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                   </label>
                   <button
                     onClick={() => onRemoveFromPool && onRemoveFromPool(player.id)}
-                    className="w-6 h-6 text-xs text-red-400 hover:bg-red-100 rounded transition-colors flex items-center justify-center"
+                    className="w-6 h-6 text-[10px] text-red-400 hover:bg-red-100 rounded transition-colors flex items-center justify-center"
                     title="Remove"
                   >
                     ✕
