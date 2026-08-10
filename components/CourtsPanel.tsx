@@ -101,24 +101,30 @@ export default function CourtsPanel({
       if (m.bye) return false; // Skip bye matches
       const s1 = m.team1Score;
       const s2 = m.team2Score;
+      // Only check if score is a valid number (not null/undefined)
       return (
-        (s1 !== null && (s1 > 99 || s1 < 0)) ||
-        (s2 !== null && (s2 > 99 || s2 < 0))
+        (s1 != null && (s1 > 99 || s1 < 0)) ||
+        (s2 != null && (s2 > 99 || s2 < 0))
       );
     });
 
     if (invalidMatch) {
       // Find which specific score is invalid
       let invalidTeam: "team1" | "team2" = "team1";
-      let invalidValue = invalidMatch.team1Score;
-      if (invalidMatch.team2Score !== null && (invalidMatch.team2Score > 99 || invalidMatch.team2Score < 0)) {
+      let invalidValue = 0;
+      
+      const s1 = invalidMatch.team1Score;
+      const s2 = invalidMatch.team2Score;
+      
+      if (s2 != null && (s2 > 99 || s2 < 0)) {
         invalidTeam = "team2";
-        invalidValue = invalidMatch.team2Score;
-      } else if (invalidMatch.team1Score !== null && (invalidMatch.team1Score > 99 || invalidMatch.team1Score < 0)) {
+        invalidValue = s2;
+      } else if (s1 != null && (s1 > 99 || s1 < 0)) {
         invalidTeam = "team1";
-        invalidValue = invalidMatch.team1Score;
+        invalidValue = s1;
       }
-      setConfirmOverride({ matchId: invalidMatch.id, team: invalidTeam, value: invalidValue! });
+      
+      setConfirmOverride({ matchId: invalidMatch.id, team: invalidTeam, value: invalidValue });
       return;
     }
 
