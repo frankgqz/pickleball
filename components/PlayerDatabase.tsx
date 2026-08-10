@@ -51,7 +51,7 @@ export default function PlayerDatabase({
     let list = players.slice();
     if (q) list = list.filter(p => 
       (p.name || "").toLowerCase().includes(q) || 
-      (p.duprId || "").toLowercase().includes(q) || 
+      (p.duprId || "").toLowerCase().includes(q) || 
       (p.duprNumericId || "").toLowerCase().includes(q)
     );
     if (sortBy === "alpha") list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));

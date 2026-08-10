@@ -1,289 +1,184 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { Player } from "@/components/Types";
+// usePlayerDatabase.ts - Player database and event pool management
+// Handles: loading players from DB, adding/removing from event pool, DUPR fetching
 
-interface Props {
-  players: Player[];
-  eventPool?: Player[];
-  onAddPlayer?: (p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => Promise<any> | void;
-  onUpdatePlayer?: (id: string, p: Partial<Player>) => Promise<any> | void;
-  onDeletePlayer?: (id: string) => Promise<any> | void;
-  onFetchDupr?: (id: string) => Promise<any> | void;
-  onAddToPool?: (player: Player) => void;
-  onRemoveFromPool?: (id: string) => void;
+import { useState, useCallback, useEffect } from "react";
+import { Player, StandingsEntry, GameSession } from "@/components/Types";
+import { localStorageDb } from "./useLocalStorage";
+import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "@/app/actions";
+import { createStandingsEntry } from "../standingsUtils";
+
+export interface PlayerDatabaseState {
+  // All players in the database
+  allPlayers: Player[];
+  // Players currently in the event pool
+  eventPool: Player[];
+  // IDs of players in pool for quick lookup
+  eventPoolIds: Set<string>;
 }
 
-export default function PlayerDatabase({
-  players,
-  eventPool = [],
-  onAddPlayer,
-  onUpdatePlayer,
-  onDeletePlayer,
-  onFetchDupr,
-  onAddToPool,
-  onRemoveFromPool,
-}: Props) {
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"recent" | "alpha">("recent");
+export interface PlayerDatabaseActions {
+  // Database operations
+  loadPlayersFromDatabase: () => Promise<void>;
+  addNewPlayer: (p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => Promise<void>;
+  updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
+  deleteExistingPlayer: (id: string) => Promise<void>;
+  fetchDuprForPlayer: (playerId: string) => Promise<void>;
+  
+  // Event pool operations
+  addPlayerToEventPool: (player: Player) => void;
+  removePlayerFromEventPool: (playerId: string) => void;
+  clearEventPool: (newSession: GameSession) => void;
+  togglePlayerSitting: (playerId: string) => void;
+  
+  // Get standings entries for all players in pool
+  getPoolStandingsEntries: (orderGap: number, currentRoundNumber: number, lateJoinBonus: number) => StandingsEntry[];
+}
 
-  // Add form
-  const [name, setName] = useState("");
-  const [duprId, setDuprId] = useState("");
-  const [duprNumericId, setDuprNumericId] = useState("");
-  const [duprScore, setDuprScore] = useState("");
-  const [validationError, setValidationError] = useState("");
+export function usePlayerDatabase(
+  isAppLoading: boolean, 
+  setIsAppLoading: (v: boolean) => void
+): [PlayerDatabaseState, PlayerDatabaseActions] {
+  // State
+  const [allPlayers, setAllPlayers] = useState<Player[]>(() => localStorageDb.loadPlayers());
+  const [eventPool, setEventPool] = useState<Player[]>(() => localStorageDb.loadEventPool());
 
-  // Edit
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDuprId, setEditDuprId] = useState("");
-  const [editDuprNumericId, setEditDuprNumericId] = useState("");
-  const [editDuprScore, setEditDuprScore] = useState("");
+  // Quick lookup for pool membership
+  const eventPoolIds = new Set(eventPool.map(p => p.id));
 
-  // Fetch DUPR feedback
-  const [fetchFeedback, setFetchFeedback] = useState<{ playerId: string; message: string; success: boolean } | null>(null);
+  // Persistence effects - save whenever state changes (after initial load)
+  useEffect(() => {
+    if (!isAppLoading) {
+      localStorageDb.savePlayers(allPlayers);
+    }
+  }, [allPlayers, isAppLoading]);
 
-  const inPoolIds = useMemo(() => new Set(eventPool.map((p) => p.id)), [eventPool]);
+  useEffect(() => {
+    if (!isAppLoading) {
+      localStorageDb.saveEventPool(eventPool);
+    }
+  }, [eventPool, isAppLoading]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    let list = players.slice();
-    if (q) list = list.filter(p => 
-      (p.name || "").toLowerCase().includes(q) || 
-      (p.duprId || "").toLowerCase().includes(q) || 
-      (p.duprNumericId || "").toLowerCase().includes(q)
+  // ============ DATABASE OPERATIONS ============
+
+  const loadPlayersFromDatabase = useCallback(async () => {
+    try {
+      const result = await getPlayers();
+      if (result.success && result.players && result.players.length > 0) {
+        setAllPlayers(result.players);
+      }
+    } catch (err) {
+      console.warn("Database load failed, using local data:", err);
+    } finally {
+      setIsAppLoading(false);
+    }
+  }, [setIsAppLoading]);
+
+  const addNewPlayer = useCallback(async (
+    p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }
+  ) => {
+    const formData = new FormData();
+    formData.append("name", p.name);
+    formData.append("duprId", p.duprId || "");
+    formData.append("duprNumericId", p.duprNumericId || "");
+    formData.append("duprScore", p.duprScore ? String(p.duprScore) : "");
+
+    const result = await addPlayer(formData);
+    if (result.success && result.player) {
+      setAllPlayers(prev => [result.player!, ...prev]);
+    }
+  }, []);
+
+  const updateExistingPlayer = useCallback(async (id: string, updates: Partial<Player>) => {
+    const formData = new FormData();
+    if (updates.name) formData.append("name", updates.name);
+    if (updates.duprId !== undefined && updates.duprId !== null) formData.append("duprId", updates.duprId);
+    if (updates.duprNumericId !== undefined && updates.duprNumericId !== null) formData.append("duprNumericId", updates.duprNumericId);
+    if (updates.duprScore !== undefined && updates.duprScore !== null) formData.append("duprScore", String(updates.duprScore));
+
+    const result = await updatePlayer(id, formData);
+    if (result.success && result.player) {
+      setAllPlayers(prev => prev.map(p => p.id === id ? result.player! : p));
+    }
+  }, []);
+
+  const deleteExistingPlayer = useCallback(async (id: string) => {
+    const result = await deletePlayer(id);
+    if (result.success) {
+      setAllPlayers(prev => prev.filter(p => p.id !== id));
+      setEventPool(prev => prev.filter(p => p.id !== id));
+    }
+  }, []);
+
+  const fetchDuprForPlayer = useCallback(async (playerId: string) => {
+    const result = await fetchDuprRating(playerId);
+    if (result.success && result.player) {
+      setAllPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
+    }
+  }, []);
+
+  // ============ EVENT POOL OPERATIONS ============
+
+  const addPlayerToEventPool = useCallback((player: Player) => {
+    setEventPool(prev => {
+      if (prev.find(p => p.id === player.id)) return prev;
+      return [player, ...prev];
+    });
+  }, []);
+
+  const removePlayerFromEventPool = useCallback((playerId: string) => {
+    setEventPool(prev => prev.filter(p => p.id !== playerId));
+  }, []);
+
+  const clearEventPool = useCallback((newSession: GameSession) => {
+    setEventPool([]);
+    localStorageDb.clearEventData();
+  }, []);
+
+  const togglePlayerSitting = useCallback((playerId: string) => {
+    setEventPool(prev => prev.map(p => 
+      p.id === playerId ? { ...p, isSitting: !p.isSitting } : p
+    ));
+  }, []);
+
+  const getPoolStandingsEntries = useCallback((
+    orderGap: number, 
+    currentRoundNumber: number, 
+    lateJoinBonus: number
+  ): StandingsEntry[] => {
+    return eventPool.map((player, i) => 
+      createStandingsEntry(
+        player,
+        i,
+        orderGap,
+        currentRoundNumber > 1 ? lateJoinBonus : 0
+      )
     );
-    if (sortBy === "alpha") list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    return list;
-  }, [players, search, sortBy]);
+  }, [eventPool]);
 
-  const handleAdd = async () => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    const hasDuprId = duprId.trim();
-    const hasNum = duprNumericId.trim();
-    const hasScore = duprScore.trim();
-    if (!hasDuprId && !hasNum && !hasScore) {
-      setValidationError("Provide at least DUPR ID, webNumericID, or rating");
-      return;
-    }
-    setValidationError("");
-    const payload = { 
-      name: trimmed, 
-      duprId: hasDuprId ? duprId.trim() : undefined, 
-      duprNumericId: hasNum ? duprNumericId.trim() : undefined, 
-      duprScore: hasScore ? parseFloat(duprScore) : undefined 
-    };
-    try {
-      await onAddPlayer?.(payload);
-    } catch (e) {
-      console.error(e);
-      setValidationError("Failed to add player");
-    }
-    setName(""); setDuprId(""); setDuprNumericId(""); setDuprScore("");
+  // ============ COMBINE STATE & ACTIONS ============
+
+  const state: PlayerDatabaseState = {
+    allPlayers,
+    eventPool,
+    eventPoolIds,
   };
 
-  const startEditing = (p: Player) => {
-    setEditingId(p.id);
-    setEditName(p.name || "");
-    setEditDuprId(p.duprId || "");
-    setEditDuprNumericId(p.duprNumericId || "");
-    setEditDuprScore(p.duprScore != null ? String(p.duprScore) : "");
-  };
-  const cancelEdit = () => { setEditingId(null); setEditName(""); setEditDuprId(""); setEditDuprNumericId(""); setEditDuprScore(""); };
-  const saveEdit = async () => {
-    if (!editingId) return;
-    try {
-      await onUpdatePlayer?.(editingId, { 
-        name: editName.trim(), 
-        duprId: editDuprId.trim() || null, 
-        duprNumericId: editDuprNumericId.trim() || null, 
-        duprScore: editDuprScore ? parseFloat(editDuprScore) : null 
-      });
-      cancelEdit();
-    } catch (e) { console.error(e); }
+  const actions: PlayerDatabaseActions = {
+    // Database
+    loadPlayersFromDatabase,
+    addNewPlayer,
+    updateExistingPlayer,
+    deleteExistingPlayer,
+    fetchDuprForPlayer,
+    // Pool
+    addPlayerToEventPool,
+    removePlayerFromEventPool,
+    clearEventPool,
+    togglePlayerSitting,
+    getPoolStandingsEntries,
   };
 
-  const fetchDuprFor = async (id: string) => {
-    setFetchFeedback({ playerId: id, message: "Fetching...", success: true });
-    try {
-      await onFetchDupr?.(id);
-      const updated = players.find(p => p.id === id);
-      if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar", success: true });
-      else if (updated?.duprScore) setFetchFeedback({ playerId: id, message: `✓ ${updated.duprScore}`, success: true });
-      else setFetchFeedback({ playerId: id, message: "No rating", success: false });
-    } catch (e) {
-      console.error(e);
-      setFetchFeedback({ playerId: id, message: "Error", success: false });
-    }
-    setTimeout(() => setFetchFeedback(null), 3000);
-  };
-
-  return (
-    <section className="bg-white rounded-2xl shadow px-3 py-2">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">🎾 Player Database</h2>
-          <div className="text-xs text-gray-500">({players.length})</div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full md:w-auto -ml-1">
-          <input 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-            placeholder="Search name or ID" 
-            className="w-40 md:w-52 px-2 h-7 border border-gray-300 rounded text-sm" 
-          />
-          <select 
-            value={sortBy} 
-            onChange={e => setSortBy(e.target.value as any)} 
-            className="h-7 px-1 border border-gray-300 rounded text-xs w-24"
-          >
-            <option value="recent">Recent First</option>
-            <option value="alpha">A - Z</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Add form - single row on desktop */}
-      <div className="flex flex-wrap gap-1.5 mb-1 items-end">
-        <input 
-          className="px-2 h-7 border border-gray-300 rounded text-sm flex-1 min-w-[120px]" 
-          placeholder="Name *" 
-          value={name} 
-          onChange={e => setName(e.target.value)} 
-        />
-        <input 
-          className="px-2 h-7 border border-gray-300 rounded text-xs w-20" 
-          placeholder="DUPR ID" 
-          value={duprId} 
-          onChange={e => setDuprId(e.target.value)} 
-        />
-        <input 
-          className="px-2 h-7 border border-gray-300 rounded text-xs w-20" 
-          placeholder="webNumericID" 
-          value={duprNumericId} 
-          onChange={e => setDuprNumericId(e.target.value)} 
-        />
-        <input 
-          className="px-2 h-7 border border-gray-300 rounded text-xs w-16" 
-          placeholder="Rating" 
-          value={duprScore} 
-          onChange={e => setDuprScore(e.target.value)} 
-        />
-        <button 
-          className="h-7 px-4 text-xs text-white bg-green-600 rounded hover:bg-green-700 whitespace-nowrap flex-1" 
-          onClick={handleAdd}
-        >
-          + Add
-        </button>
-      </div>
-      {validationError && <div className="text-red-500 text-xs mb-1">{validationError}</div>}
-
-      {/* Player list */}
-      <div style={{ maxHeight: '35vh', overflowY: 'auto', paddingRight: 6 }} className="space-y-1">
-        {filtered.length === 0 ? (
-          <div className="text-center text-gray-400 py-4 text-sm">No players</div>
-        ) : filtered.map(player => {
-          const hasDuprId = !!player.duprId;
-          const hasNumericId = !!player.duprNumericId;
-          const hasId = hasDuprId || hasNumericId;
-          const inPool = inPoolIds.has(player.id);
-          const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-
-          return (
-            <div key={player.id} className={`px-2 py-1 rounded border border-gray-300 flex items-center gap-2 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
-              {/* Avatar */}
-              <div className="flex-none">
-                {player.imageUrl ? (
-                  <img 
-                    src={player.imageUrl} 
-                    alt={player.name} 
-                    className={`w-8 h-8 rounded-full object-cover border border-gray-300 ${player.isSitting ? 'opacity-50' : ''}`} 
-                  />
-                ) : (
-                  <div 
-                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} 
-                    style={{ textTransform: 'uppercase' }}
-                  >
-                    {initials}
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0 text-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate">{player.name}</div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {player.duprId || player.duprNumericId || ''}
-                      {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}
-                    </div>
-                    {fetchFeedback?.playerId === player.id && (
-                      <div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
-                        {fetchFeedback.message}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex-none flex items-center gap-1">
-                    {inPool ? (
-                      <button 
-                        aria-label="Remove from pool" 
-                        onClick={() => onRemoveFromPool?.(player.id)} 
-                        className="w-7 h-7 rounded bg-gray-200 text-gray-500 border border-gray-300 hover:bg-red-100 hover:text-red-600 hover:border-red-300 transition-colors text-sm"
-                      >
-                        −
-                      </button>
-                    ) : (
-                      <button 
-                        aria-label="Add to pool" 
-                        onClick={() => onAddToPool?.(player)} 
-                        className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm"
-                      >
-                        +
-                      </button>
-                    )}
-
-                    <button 
-                      onClick={() => startEditing(player)} 
-                      aria-label="Edit" 
-                      className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" 
-                      title="Edit"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      onClick={() => fetchDuprFor(player.id)} 
-                      aria-label="Fetch DUPR" 
-                      className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-purple-600 hover:bg-purple-100 hover:border-purple-300 transition-colors" 
-                      title="Fetch DUPR"
-                    >
-                      🔍
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (confirm(`Delete ${player.name}?`)) {
-                          onDeletePlayer?.(player.id);
-                        }
-                      }} 
-                      aria-label="Delete" 
-                      className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" 
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
+  return [state, actions];
 }
