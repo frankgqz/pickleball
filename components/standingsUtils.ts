@@ -299,7 +299,6 @@ export function createStandingsEntry(
     sitOutCount: 0,
     wins: 0,
     losses: 0,
-    ties: 0,
     pointsFor: 0,
     pointsAgainst: 0,
     winPct: null,
