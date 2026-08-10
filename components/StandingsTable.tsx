@@ -165,7 +165,7 @@ export default function StandingsTable({
       {sorted.length === 0 ? (
         <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
           <table className="w-full text-sm table-fixed">
             <thead>
               <tr className="bg-gray-100">
