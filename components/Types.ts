@@ -39,6 +39,7 @@ export interface Player {
   duprScore?: number | null;
   imageUrl?: string | null;
   isSitting?: boolean;
+  lastRefreshed?: string | null; // ISO date string when DUPR was last fetched
 }
 
 // ============================================================

@@ -276,13 +276,13 @@ export default function PlayerDatabase({
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-xs truncate">{player.name}</div>
-                        <div className="text-[10px] text-gray-500 truncate">
+                        <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleString()}` : undefined}>
                           {player.duprId || player.duprNumericId || ''}
                           {player.duprScore != null && (
                             <span className="ml-1 font-semibold">
-                              {player.duprId 
-                                ? player.duprScore.toFixed(1)  // Has duprId = manually entered, 1 decimal
-                                : player.duprScore.toFixed(3)   // Only numericId = API, 3 decimals
+                              {player.lastRefreshed 
+                                ? player.duprScore.toFixed(3)  // Fetched from DUPR API, 3 decimals
+                                : player.duprScore.toFixed(1)   // Manually entered, 1 decimal
                               }
                             </span>
                           )}
