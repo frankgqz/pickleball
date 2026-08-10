@@ -28,42 +28,42 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
   });
 
   return (
-    <section className="bg-white rounded-2xl shadow-xl p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-gray-800">🎯 Event Pool</h2>
+    <section className="bg-white rounded-2xl shadow-xl p-4">
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-lg font-bold text-gray-800">🎯 Event Pool</h2>
         <div className="flex items-center gap-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-2 py-1 border border-gray-300 rounded text-sm"
+            className="px-2 py-1 border border-gray-300 rounded text-xs"
           >
-            <option value="dupr">DUPR Rating</option>
-            <option value="recent">Recent First</option>
+            <option value="dupr">DUPR</option>
+            <option value="recent">Recent</option>
           </select>
-          <span className="text-sm text-gray-500">{activeCount} / {eventPool.length}</span>
+          <span className="text-xs text-gray-500">{activeCount}/{eventPool.length}</span>
         </div>
       </div>
 
       {eventPool.length === 0 ? (
-        <p className="text-gray-400 text-center py-8">Add players from the database to start your event!</p>
+        <p className="text-gray-400 text-center py-4 text-sm">Add players from database</p>
       ) : (
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+        <div className="space-y-1 max-h-80 overflow-y-auto">
           {sorted.map((player) => {
             const hasDupr = !!player.duprId || !!player.duprNumericId;
             const containerClass = player.isSitting
-              ? "flex items-center gap-3 p-3 rounded-lg border bg-orange-50 border-orange-200"
+              ? "flex items-center gap-2 px-2 py-1.5 rounded-lg border bg-orange-50 border-orange-200"
               : hasDupr
-                ? "flex items-center gap-3 p-3 rounded-lg border bg-green-50 border-green-200"
-                : "flex items-center gap-3 p-3 rounded-lg border bg-yellow-50 border-yellow-200";
+              ? "flex items-center gap-2 px-2 py-1.5 rounded-lg border bg-green-50 border-green-200"
+              : "flex items-center gap-2 px-2 py-1.5 rounded-lg border bg-yellow-50 border-yellow-200";
 
             return (
-              <div key={player.id} className={containerClass}>
+              <div key={player.id} className={containerClass} title={player.duprId ? `DUPR: ${player.duprId}` : player.duprNumericId ? `#${player.duprNumericId}` : "No DUPR"}>
                 {/* DUPR Avatar if available, otherwise CSS initials */}
                 {player.imageUrl ? (
                   <img
                     src={player.imageUrl}
                     alt={player.name}
-                    className={`w-8 h-8 rounded-full object-cover ${player.isSitting ? "opacity-50" : ""}`}
+                    className={`w-6 h-6 rounded-full object-cover ${player.isSitting ? "opacity-50" : ""}`}
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                       (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
@@ -71,46 +71,37 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                   />
                 ) : null}
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                    player.isSitting
-                      ? "bg-orange-200 text-orange-700"
-                      : hasDupr
-                      ? "bg-gradient-to-br from-green-500 to-green-700 text-white"
-                      : "bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900"
-                  } ${player.imageUrl ? "hidden" : ""}`}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] ${player.isSitting ? "bg-orange-200 text-orange-700" : hasDupr ? "bg-green-600 text-white" : "bg-yellow-500 text-yellow-900"} ${player.imageUrl ? "hidden" : ""}`}
                   style={{ textTransform: 'uppercase' }}
                 >
                   {player.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
 
-                <div className={`flex-1 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
-                  <div className="font-medium">
+                <div className={`flex-1 min-w-0 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
+                  <div className="font-medium text-sm truncate">
                     {player.name}
                     {player.duprScore !== null && player.duprScore !== undefined && (
-                      <span className="ml-2 text-xs font-semibold bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                      <span className="ml-1.5 text-[10px] font-semibold bg-green-100 text-green-700 px-1 py-0.5 rounded">
                         {player.duprScore}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {player.duprId ? `DUPR: ${player.duprId}` : player.duprNumericId ? `#${player.duprNumericId}` : "No DUPR"}
-                  </div>
                 </div>
 
-                <div className="flex gap-2 items-center">
-                  <label className="flex items-center gap-1 text-sm cursor-pointer">
+                <div className="flex gap-1 items-center shrink-0">
+                  <label className="flex items-center gap-0.5 text-xs cursor-pointer">
                     <input
                       type="checkbox"
                       checked={!!player.isSitting}
                       onChange={() => onToggleSitting && onToggleSitting(player.id)}
-                      className="w-4 h-4"
+                      className="w-3 h-3"
                     />
-                    <span className={player.isSitting ? "text-orange-500" : "text-gray-500"}>sit out</span>
+                    <span className={`${player.isSitting ? "text-orange-500" : "text-gray-400"} hidden sm:inline`}>sit</span>
                   </label>
 
                   <button
                     onClick={() => onRemoveFromPool && onRemoveFromPool(player.id)}
-                    className="text-red-500 hover:text-red-700 px-2"
+                    className="text-red-400 hover:text-red-600 px-1 text-xs"
                     title="Remove from pool"
                   >
                     ✕
