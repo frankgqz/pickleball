@@ -1,8 +1,7 @@
-# Pickleball Tournament Manager - Roadmap
+# Pickleball Event  Manager
 
 
 ### Matching settings
-Gauntlet style 
 Options to sort by partner repeat avoidance, by even dupr, even dupr by band, top vs low seed, deselect anytime
 fixed partner and settings changes
 Pool play bracket system
@@ -24,7 +23,5 @@ Migrate to database tables, users table for login, players table with userId for
 
 ## Known Issues
 - [ ] Pts% sort edge case (player with sit outs)
-- [ ] Tooltip showing incorrect court label
 
 
-did a git thingy
