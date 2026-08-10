@@ -79,9 +79,9 @@ export function useAsync<T>(
  * const success = await execute(newPlayer);
  * ```
  */
-export function useAsyncAction<T>(
-  asyncFn: (...args: unknown[]) => Promise<T>
-): Omit<AsyncResult<T>, "data"> {
+export function useAsyncAction(
+  asyncFn: (...args: unknown[]) => Promise<unknown>
+): { execute: (...args: unknown[]) => Promise<boolean>; loading: boolean; error: string | null; reset: () => void } {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

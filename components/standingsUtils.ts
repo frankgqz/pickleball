@@ -219,7 +219,6 @@ export function calculateStandingsFromRounds(
       sitOutCount: 0,
       wins: changes.wins,
       losses: changes.losses,
-      ties: 0,
       pointsFor: changes.pointsFor,
       pointsAgainst: changes.pointsAgainst,
       orderHistory: changes.orderHistory,
