@@ -17,6 +17,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   byeBonusTop: 0.5,
   sitProtection: 0.5,
   lateJoinBonus: 1,
+  defaultDupr: 2.5, // Default DUPR for players without a rating
   courts: 5,
   teamsPerPool: 4,
   finalsFormat: "top2",

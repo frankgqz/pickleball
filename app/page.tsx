@@ -65,7 +65,9 @@ export default function Page() {
   const { 
     standings, 
     computedStandings, 
-    setStandings 
+    setStandings,
+    sortColumn,
+    sortDirection,
   } = standingsState;
   const { 
     toggleSortColumn, 
@@ -125,8 +127,9 @@ export default function Page() {
     // Late joiners (after round 1) get the lateJoinBonus in their byeMod
     const lateJoinBonus = currentRoundNumber > 1 ? config.lateJoinBonus : 0;
     
-    // Use manualDuprScore if available, otherwise duprScore (API fetched)
-    const scoreToUse = player.manualDuprScore ?? player.duprScore ?? null;
+    // Use manualDuprScore if available, otherwise duprScore (API fetched), 
+    // otherwise use config.defaultDupr (default 2.5)
+    const scoreToUse = player.manualDuprScore ?? player.duprScore ?? config.defaultDupr;
     
     const newEntry: StandingsEntry = {
       id: player.id,
@@ -319,7 +322,15 @@ export default function Page() {
 
         <StandingsTable
           standings={computedStandings}
+          defaultDupr={config.defaultDupr}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+          handleSort={toggleSortColumn}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
+          getSeedTotal={(e) => e.seed + e.seedAdjustment}
+          getByeTotal={(e) => (e.byeBase ?? 0) + e.byeCount + (e.sitOutCount ?? 0) * 0.5 + (e.byeMod ?? 0)}
+          getPointDiff={(e) => e.pointsFor - e.pointsAgainst}
+          getPtsPct={(e) => e.pointsFor + e.pointsAgainst > 0 ? (e.pointsFor / (e.pointsFor + e.pointsAgainst)) * 100 : 0}
         />
 
         <RoundHistoryPanel

@@ -64,15 +64,12 @@ export default function PlayerDatabase({
     const hasDuprId = duprId.trim();
     const hasNum = duprNumericId.trim();
     const hasScore = duprScore.trim();
-    if (!hasDuprId && !hasNum && !hasScore) {
-      setValidationError("Provide at least DUPR ID, webNumericID, or rating");
-      return;
-    }
     setValidationError("");
     const formData = new FormData();
     formData.append("name", trimmed);
     if (hasDuprId) formData.append("duprId", duprId.trim());
     if (hasNum) formData.append("duprNumericId", duprNumericId.trim());
+    // Only set manualDuprScore if explicitly entered - otherwise leave blank
     if (hasScore) formData.append("manualDuprScore", duprScore);
     try {
       const result = await onAddPlayer?.(formData);

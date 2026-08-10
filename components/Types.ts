@@ -93,6 +93,7 @@ export interface TournamentConfig {
   byeBonusTop: number;
   sitProtection: number;
   lateJoinBonus: number;
+  defaultDupr: number; // Default DUPR for players without a rating (default 2.5)
   courts: number;
   teamsPerPool: number;
   finalsFormat: "top2" | "top4" | "all";

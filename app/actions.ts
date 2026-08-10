@@ -193,13 +193,15 @@ export async function fetchDuprRating(playerId: string) {
       const imageUrl = data.result?.imageUrl || null;
 
       // Update with all available data (name, letter ID, rating, imageUrl, lastRefreshed)
+      // Only update duprScore (API), do NOT touch manualDuprScore (preserves manual entry)
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
           name: data.result?.fullName || player.name,
           duprId: data.result?.duprId || player.duprId, // Letter ID
           duprNumericId: data.result?.id?.toString() || player.duprNumericId, // Numeric ID
-          duprScore: rating,
+          duprScore: rating, // API fetched rating (3 decimals)
+          // manualDuprScore is NOT updated - preserves manually entered value (1 decimal)
           imageUrl: imageUrl, // Save avatar URL
           lastRefreshed: new Date().toISOString(), // Track when DUPR was last fetched
         },

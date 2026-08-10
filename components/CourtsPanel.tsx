@@ -21,6 +21,13 @@ interface Props {
   submitted?: boolean;
 }
 
+// Helper to check if score is invalid
+function isInvalidScore(value: number | undefined): boolean {
+  if (value === undefined || value === null || value === "") return false;
+  const num = Number(value);
+  return isNaN(num) ? false : (num > 99 || num < 0);
+}
+
 export default function CourtsPanel({
   roundState,
   eventPool,
@@ -84,12 +91,45 @@ export default function CourtsPanel({
     const byeCount = entry.byeCount ?? 0;
     const sitOutCount = entry.sitOutCount ?? 0;
     const byeMod = entry.byeMod ?? 0;
-    const sitBonus = sitOutCount * 0.5; // sitProtection is 0.5
+    const sitBonus = sitOutCount * 0.5;
     if (byeBase !== 0) parts.push(`base: ${byeBase >= 0 ? "+" : ""}${byeBase.toFixed(2)}`);
     if (byeCount > 0) parts.push(`+${byeCount} byes`);
     if (sitBonus > 0) parts.push(`+${sitBonus.toFixed(2)} sitBonus`);
     if (byeMod > 0) parts.push(`+${byeMod.toFixed(2)} LateJoin`);
     return parts.join(" + ") || "base: 0";
+  };
+
+  // Score input component with validation
+  const ScoreInput = ({ 
+    value, 
+    onChange, 
+    teamColor, 
+    borderColor 
+  }: { 
+    value: number | undefined; 
+    onChange: (val: number) => void; 
+    teamColor: string;
+    borderColor: string;
+  }) => {
+    const invalid = isInvalidScore(value);
+    return (
+      <input
+        type="number"
+        min="0"
+        max="99"
+        className={`w-16 px-2 py-1.5 border rounded-lg text-center bg-white ${
+          invalid 
+            ? "border-red-500 border-2 bg-red-50" 
+            : `border-${borderColor}-300`
+        }`}
+        value={value ?? ""}
+        onChange={(e) => {
+          const val = e.target.value === "" ? undefined : parseInt(e.target.value);
+          onChange(val ?? 0);
+        }}
+        style={invalid ? { borderWidth: 2, borderColor: '#ef4444' } : {}}
+      />
+    );
   };
 
   const renderMatchCard = (match: Match) => {
@@ -131,8 +171,10 @@ export default function CourtsPanel({
                       className="w-full text-left rounded-lg px-3 py-2 bg-purple-100 border border-purple-200 hover:bg-purple-200 text-gray-700 transition-colors"
                     >
                       <div className="font-medium text-sm">{p.name}</div>
-                      {p.duprScore != null && (
-                        <div className="text-xs text-gray-500">{p.duprScore.toFixed(1)}</div>
+                      {(p.duprScore != null || p.manualDuprScore != null) && (
+                        <div className="text-xs text-gray-500">
+                          {(p.duprScore ?? p.manualDuprScore)?.toFixed(1)}
+                        </div>
                       )}
                     </button>
                   ))}
@@ -150,8 +192,10 @@ export default function CourtsPanel({
                       className="w-full text-left rounded-lg px-3 py-2 bg-green-100 border border-green-200 hover:bg-green-200 text-gray-700 transition-colors"
                     >
                       <div className="font-medium text-sm">{p.name}</div>
-                      {p.duprScore != null && (
-                        <div className="text-xs text-gray-500">{p.duprScore.toFixed(1)}</div>
+                      {(p.duprScore != null || p.manualDuprScore != null) && (
+                        <div className="text-xs text-gray-500">
+                          {(p.duprScore ?? p.manualDuprScore)?.toFixed(1)}
+                        </div>
                       )}
                     </button>
                   ))}
@@ -170,7 +214,7 @@ export default function CourtsPanel({
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
                       className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200 transition-colors border border-gray-200"
                     >
-                      {p.name} {p.duprScore != null ? `(${p.duprScore.toFixed(1)})` : ""}
+                      {p.name} {(p.duprScore ?? p.manualDuprScore) != null ? `(${((p.duprScore ?? p.manualDuprScore)!).toFixed(1)})` : ""}
                     </button>
                   ))}
                   {unselectedPlayers.length > 6 && (
@@ -182,25 +226,25 @@ export default function CourtsPanel({
               </div>
             )}
 
-            {/* Score inputs */}
+            {/* Score inputs with validation */}
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="text-center">
                 <div className="text-xs text-purple-500 mb-1">Team 1</div>
-                <input
-                  type="number"
-                  className="w-16 px-2 py-1.5 border border-purple-300 rounded-lg text-center bg-white"
-                  value={match.team1Score ?? ""}
-                  onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team1")}
+                <ScoreInput
+                  value={match.team1Score}
+                  onChange={(val) => onUpdateMatchScore(match.id, val, "team1")}
+                  teamColor="purple"
+                  borderColor="purple"
                 />
               </div>
               <div className="text-gray-400">vs</div>
               <div className="text-center">
                 <div className="text-xs text-green-500 mb-1">Team 2</div>
-                <input
-                  type="number"
-                  className="w-16 px-2 py-1.5 border border-green-300 rounded-lg text-center bg-white"
-                  value={match.team2Score ?? ""}
-                  onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team2")}
+                <ScoreInput
+                  value={match.team2Score}
+                  onChange={(val) => onUpdateMatchScore(match.id, val, "team2")}
+                  teamColor="green"
+                  borderColor="green"
                 />
               </div>
             </div>
@@ -228,7 +272,6 @@ export default function CourtsPanel({
             <button
               onClick={() => {
                 if (currentRoundNumber === 1) onRegenerateByes();
-                // Use defaultRoundFormat from settings
                 if (defaultRoundFormat === "PICK_PARTNER") {
                   onStartPickPartner();
                 } else {
