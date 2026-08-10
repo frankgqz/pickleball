@@ -19,7 +19,6 @@ interface Props {
   onStartNextRound?: () => void;
   onVetoBye?: (playerId: string) => void;
   submitted?: boolean;
-  // When true (typically after user attempts to submit) highlight invalid scores
   showValidation?: boolean;
 }
 
@@ -78,8 +77,8 @@ export default function CourtsPanel({
     return parts.join(' + ');
   };
 
-  // ScoreInput: local string buffer to make typing multi-digit numbers reliable.
-  // Commits numeric value on blur or Enter, allowing the parent to accept undefined to clear.
+  // ScoreInput: buffer locally; commit value to parent on blur or Enter.
+  // Use setTimeout(...,0) when committing on blur to avoid stealing focus when the user clicks another input.
   const ScoreInput = ({ value, onChange }: { value: number | undefined | null; onChange: (v: number | undefined) => void; }) => {
     const [local, setLocal] = useState<string>(value === undefined || value === null ? '' : String(value));
     const ref = useRef<HTMLInputElement | null>(null);
@@ -91,7 +90,8 @@ export default function CourtsPanel({
     const commit = () => {
       if (local === '') return onChange(undefined);
       const parsed = Number(local);
-      onChange(Number.isNaN(parsed) ? undefined : parsed);
+      // Delay the onChange to allow focus to move to the clicked input before a re-render occurs.
+      setTimeout(() => onChange(Number.isNaN(parsed) ? undefined : parsed), 0);
     };
 
     return (
