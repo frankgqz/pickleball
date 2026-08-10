@@ -122,6 +122,9 @@ export default function Page() {
     addPlayerToEventPool(player);
 
     // Create new standings entry
+    // Late joiners (after round 1) get the lateJoinBonus in their byeMod
+    const lateJoinBonus = currentRoundNumber > 1 ? config.lateJoinBonus : 0;
+    
     const newEntry: StandingsEntry = {
       id: player.id,
       name: player.name,
@@ -131,7 +134,7 @@ export default function Page() {
       seedAdjustment: 0,
       orderHistory: [],
       byeBase: -Math.random(),
-      byeMod: 0,
+      byeMod: lateJoinBonus,
       byeCount: 0,
       sitOutCount: 0,
       wins: 0,
