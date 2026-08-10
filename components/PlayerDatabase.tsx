@@ -313,12 +313,12 @@ export default function PlayerDatabase({
                         >
                           ✏️
                         </button>
-                        {/* Search button - highlighted if has webNumericID */}
+                        {/* Search button - highlighted if has numericID but no duprId (needs lookup) */}
                         <button 
                           onClick={() => fetchDuprFor(player.id)} 
                           className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${
-                            hasNumericId 
-                              ? "bg-yellow-200 border border-yellow-400 text-yellow-700 hover:bg-yellow-300 hover:border-yellow-500" 
+                            hasNumericId && !hasDuprId
+                              ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" 
                               : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"
                           }`}
                         >
