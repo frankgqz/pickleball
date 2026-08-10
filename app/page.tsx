@@ -15,6 +15,10 @@ import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
 
+// Format constants with proper literal types (avoids type inference issues)
+const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
+const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
+
 // ============================================================
 // MAIN PAGE COMPONENT
 // ============================================================
@@ -33,7 +37,7 @@ export default function Page() {
     roundHistory, 
     roundState, 
     currentRoundNumber,
-    setRoundState,  // Now on state object
+    setRoundState,
   } = eventSessionState;
   const { 
     updateConfig, 
@@ -95,10 +99,6 @@ export default function Page() {
   // HELPER FUNCTIONS
   // ============================================================
 
-  // Create format objects with explicit type assertions
-  const pickPartnerFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
-  const fixed14v23Format: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
-
   // Start a round with PICK_PARTNER or FIXED_14V23 format
   const startStandardRound = useCallback((format: MatchFormat) => {
     if (currentRoundNumber === 1) {
@@ -113,7 +113,7 @@ export default function Page() {
       matchGenActions.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
     } else {
       const roundFmt = config.roundFormat || "FIXED_14V23";
-      const format: MatchFormat = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
+      const format: MatchFormat = roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
       startStandardRound(format);
     }
   }, [config, matchGenActions, startStandardRound]);
@@ -144,7 +144,7 @@ export default function Page() {
     }));
     // Regenerate matches with updated bye values
     const roundFmt = config.roundFormat || "FIXED_14V23";
-    const format: MatchFormat = roundFmt === "PICK_PARTNER" ? pickPartnerFormat : fixed14v23Format;
+    const format: MatchFormat = roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
     matchGenActions.generateStandardMatches(format);
   }, [config.roundFormat, matchGenActions, setStandings]);
 
@@ -260,8 +260,8 @@ export default function Page() {
           standings={standings}
           currentRoundNumber={currentRoundNumber}
           defaultRoundFormat={config.roundFormat || "FIXED_14V23"}
-          onStartPickPartner={() => startStandardRound(pickPartnerFormat)}
-          onStartFixed14v23={() => startStandardRound(fixed14v23Format)}
+          onStartPickPartner={() => startStandardRound(PICK_PARTNER_FORMAT)}
+          onStartFixed14v23={() => startStandardRound(FIXED_14V23_FORMAT)}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
           onUpdateMatchScore={matchGenActions.updateMatchScore}
           onSwapPlayerTeam={matchGenActions.swapPlayerTeam}

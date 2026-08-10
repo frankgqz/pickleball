@@ -22,6 +22,9 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   finalsFormat: "top2",
 };
 
+// Format constants with proper literal types
+const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
+
 export interface EventSessionState {
   config: TournamentConfig;
   currentSession: GameSession;
@@ -60,15 +63,12 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(savedRounds);
-  const [roundState, setRoundState] = useState<RoundState>(() => { 
-    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
-    return { 
-      active: false, 
-      format: defaultFormat, 
-      matches: [], 
-      submitted: false 
-    };
-  });
+  const [roundState, setRoundState] = useState<RoundState>(() => ({ 
+    active: false, 
+    format: PICK_PARTNER_FORMAT, 
+    matches: [], 
+    submitted: false 
+  }));
 
   // Derived: rounds in current session
   const currentSessionRounds = useMemo(
@@ -114,10 +114,9 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const restartEvent = useCallback(() => {
     createNewSession();
     setRoundHistory([]);
-    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
     setRoundState({ 
       active: false, 
-      format: defaultFormat, 
+      format: PICK_PARTNER_FORMAT, 
       matches: [], 
       submitted: false 
     });
@@ -125,10 +124,9 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   }, [createNewSession]);
 
   const cancelCurrentRound = useCallback(() => {
-    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
     setRoundState({ 
       active: false, 
-      format: defaultFormat, 
+      format: PICK_PARTNER_FORMAT, 
       matches: [], 
       submitted: false 
     });

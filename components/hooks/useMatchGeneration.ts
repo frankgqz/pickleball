@@ -7,6 +7,9 @@ import { useCallback } from "react";
 import { Player, StandingsEntry, TournamentConfig, Match, MatchFormat, RoundState } from "@/components/Types";
 import { generateMatches } from "../MatchEngine";
 
+// Format constants with proper literal types (avoids type inference issues)
+const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
+
 export interface MatchGenerationState {
   roundState: RoundState;
   isRoundActive: boolean;
@@ -138,10 +141,9 @@ export function useMatchGeneration(
 
   // Cancel the current round
   const cancelRound = useCallback(() => {
-    const defaultFormat: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
     setRoundState({ 
       active: false, 
-      format: defaultFormat, 
+      format: PICK_PARTNER_FORMAT, 
       matches: [], 
       submitted: false 
     });
