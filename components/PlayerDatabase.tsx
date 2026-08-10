@@ -184,7 +184,7 @@ export default function PlayerDatabase({
           onChange={e => setDuprScore(e.target.value)} 
         />
         <button 
-          className="px-5 py-2 text-sm text-white bg-green-600 rounded hover:bg-green-700 font-bold" 
+          className="px-4 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700 font-bold" 
           onClick={handleAdd}
         >
           + Add
@@ -278,7 +278,14 @@ export default function PlayerDatabase({
                         <div className="font-medium text-xs truncate">{player.name}</div>
                         <div className="text-[10px] text-gray-500 truncate">
                           {player.duprId || player.duprNumericId || ''}
-                          {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore.toFixed(3)}</span>}
+                          {player.duprScore != null && (
+                            <span className="ml-1 font-semibold">
+                              {player.duprId 
+                                ? player.duprScore.toFixed(1)  // Has duprId = manually entered, 1 decimal
+                                : player.duprScore.toFixed(3)   // Only numericId = API, 3 decimals
+                              }
+                            </span>
+                          )}
                         </div>
                         {fetchFeedback?.playerId === player.id && (
                           <div className={`text-[10px] ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
