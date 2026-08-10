@@ -1,4 +1,4 @@
-260814
+260808
 
 
 	Built and managed with Node.js, Neon, Prisma and Vercel
@@ -8,7 +8,7 @@
     Built round generation for Standard matches
     Added editable past rounds: you can view, edit matchups and scores, save edits, and the app will replay rounds to recompute standings.
 
-260815
+260809
 
     Fixed a major performance issue by batching standings replay updates into a single setStandings call (avoids dozens of re-renders when editing/deleting rounds).
     Added CSV export of rounds (doubles, SIDEOUT format) with event/round naming and YYYY‑MM‑DD dates; export is session-aware.
@@ -22,3 +22,16 @@
     Ensured round edits now replay entirely but apply updates in one batched setStandings call to eliminate re-render storms.
     Persisted eventPool to localStorage and reduced player list height (scrollable on desktop) for a compact dashboard experience.
     Kept the code split: MatchEngine and standingsUtils hold core logic, while page.tsx and compact components handle UI and state orchestration.
+
+260810
+
+    Refactored app/page.tsx by extracting state and logic into focused hooks (useEventSession, usePlayerDatabase, useStandingsState, useMatchGeneration, useLocalStorage) to shorten the page and improve maintainability.
+    Centralized standings and match logic into utilities (standingsUtils) and restored a full-featured StandingsTable with sortable columns and touch-friendly scrolling.
+    Added separate fields for manual vs API DUPR: manualDuprScore (manual entry) and duprScore (API), plus lastRefreshed to track when a DUPR fetch occurred.
+    Implemented a per-event setting defaultDupr (default 2.5) and used it as the effective DUPR for sorting/seed calculations when no rating exists.
+    Restored and reordered standings columns to the requested layout (W, L, Win%, PF, PA, +/-, Pts%, Byes, Bye, DUPR, Order#) and made every column sortable.
+    Display rules: show API DUPR (3 decimals) when present, manual DUPR (1 decimal) when manually entered, otherwise show “—” while treating value as defaultDupr for sorting.
+    Change score-entry behavior: inputs accept any numeric typing (including negatives) and no longer block typing; validation (score < 0 or > 99) now runs at submit time and visually flags invalid matches rather than interrupting input.
+    Submission logic changed so only matches with both numeric scores are processed (prevents accidental 0–0 double-loss), and invalid matches are highlighted and reported at submit.
+    UI improvements: PlayerDatabase and EventPool aligned and compacted (white backgrounds, light borders, consistent row heights), EventPool capped height, Clear All button styled, and RoundHistory select width constrained to avoid blocking horizontal scrolling on mobile.
+    Fixed add/edit player flows and server actions: addPlayer/updatePlayer now use FormData, add auto-adds new players to the pool, DUPR fetch updates duprScore and lastRefreshed (without overwriting manualDuprScore), and Prisma schema was updated to include the new fields (manualDuprScore, lastRefreshed).

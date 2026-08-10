@@ -91,13 +91,12 @@ export default function RoundHistoryPanel({
 
     // Build CSV rows
     const rows: string[][] = [];
-    
+
     const eventName = config?.eventName || "Pickleball Event";
-    
+
     sessionRounds.forEach(round => {
       round.matches.forEach(match => {
         if (match.bye) {
-          // Skip byes in CSV (or you could include them differently)
           return;
         }
 
@@ -118,8 +117,8 @@ export default function RoundHistoryPanel({
         const game1B = match.team2Score !== undefined ? String(match.team2Score) : "";
 
         rows.push([
-          "D", // matchType - always doubles
-          "SIDEOUT", // scoreType
+          "D",
+          "SIDEOUT",
           eventWithRound,
           dateStr,
           pA1.name,
@@ -132,14 +131,14 @@ export default function RoundHistoryPanel({
           pB2.duprId,
           game1A,
           game1B,
-          "", // teamAGame2
-          "", // teamBGame2
-          "", // teamAGame3
-          "", // teamBGame3
-          "", // teamAGame4
-          "", // teamBGame4
-          "", // teamAGame5
-          ""  // teamBGame5
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
         ]);
       });
     });
@@ -194,80 +193,86 @@ export default function RoundHistoryPanel({
       const otherArr = [...m[otherTeam]];
       const playerIdx = fromArr.indexOf(playerId);
       if (playerIdx === -1) return m;
-      
+
       // Move player to other team
       fromArr.splice(playerIdx, 1);
       otherArr.push(playerId);
-      
+
       return { ...m, [fromTeam]: fromArr, [otherTeam]: otherArr };
     }));
   };
 
   return (
     <section className="bg-slate-800/50 backdrop-blur rounded-2xl border border-slate-700/50 p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-white">📜 Past Rounds</h2>
-        <div className="flex items-center gap-2">
+      {/* Header - Mobile-friendly layout */}
+      <div className="mb-4">
+        {/* Row 1: Title + Export */}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-white">📜 Past Rounds</h2>
           {sessionRounds.length > 0 && (
             <button
               onClick={exportToCSV}
-              className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+              className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
               title="Export to CSV"
             >
               📥 Export CSV
             </button>
           )}
-          <select
-            value={selectedRoundNumber === "" ? "" : selectedRoundNumber}
-            onChange={(e) => setSelectedRoundNumber(e.target.value ? parseInt(e.target.value) : "")}
-            className="px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-          >
-            <option value="">Select a round...</option>
-            {sessionRounds.map(r => (
-              <option key={r.roundNumber} value={r.roundNumber}>
-                Round {r.roundNumber} — {new Date(r.date).toLocaleString()}
-              </option>
-            ))}
-          </select>
-
-          {selectedRound && (
-            <>
-              {editMode ? (
-                <>
-                  <button
-                    onClick={cancelEditing}
-                    className="px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={saveEdits}
-                    className="px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
-                  >
-                    Save Changes
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={startEditing}
-                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm"
-                  >
-                    Edit Round
-                  </button>
-                  <button
-                    onClick={deleteRound}
-                    className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
-                  >
-                    Delete Round
-                  </button>
-                </>
-              )}
-            </>
-          )}
         </div>
+
+        {/* Row 2: Select dropdown */}
+        <select
+          value={selectedRoundNumber === "" ? "" : selectedRoundNumber}
+          onChange={(e) => setSelectedRoundNumber(e.target.value ? parseInt(e.target.value) : "")}
+          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-3"
+        >
+          <option value="">Select a round...</option>
+          {sessionRounds.map(r => (
+            <option key={r.roundNumber} value={r.roundNumber}>
+              Round {r.roundNumber} — {new Date(r.date).toLocaleString()}
+            </option>
+          ))}
+        </select>
+
+        {/* Row 3: Action buttons - Edit/Delete or Save/Cancel */}
+        {selectedRound && (
+          <div className="flex flex-wrap gap-2">
+            {editMode ? (
+              <>
+                <button
+                  onClick={cancelEditing}
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium"
+                >
+                  ✕ Cancel
+                </button>
+                <button
+                  onClick={saveEdits}
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                >
+                  ✓ Save Changes
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={startEditing}
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                >
+                  ✏️ Edit Round
+                </button>
+                <button
+                  onClick={deleteRound}
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium"
+                >
+                  🗑️ Delete Round
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Content */}
       {!selectedRound ? (
         <p className="text-slate-400 text-sm">Select a round to view its matches.</p>
       ) : (
@@ -291,9 +296,7 @@ export default function RoundHistoryPanel({
               return (
                 <div
                   key={m.id}
-                  className={`rounded-lg border p-3 ${
-                    m.bye ? "bg-orange-900/30 border-orange-500/50" : "bg-slate-900/50 border-slate-600"
-                  }`}
+                  className={`rounded-lg border p-3 ${m.bye ? "bg-orange-900/30 border-orange-500/50" : "bg-slate-900/50 border-slate-600"}`}
                 >
                   <div className="flex justify-between items-center mb-2">
                     <div className="font-semibold text-white">
@@ -343,7 +346,7 @@ export default function RoundHistoryPanel({
                           ))}
                         </div>
                       </div>
-                      
+
                       {editMode ? (
                         <div className="flex items-center justify-center gap-2 mt-2">
                           <div className="text-center">

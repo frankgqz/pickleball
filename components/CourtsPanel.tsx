@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Match, Player, StandingsEntry, RoundState } from "./Types";
 
 interface Props {
@@ -38,6 +38,9 @@ export default function CourtsPanel({
   onVetoBye,
   submitted = false,
 }: Props) {
+  const [scoreError, setScoreError] = useState<string | null>(null);
+  const [confirmOverride, setConfirmOverride] = useState<{ matchId: string; team: "team1" | "team2"; value: number } | null>(null);
+
   const findPlayer = (id?: string) => eventPool.find(p => p.id === id) || null;
 
   // Get all selected player IDs across all matches
@@ -90,6 +93,50 @@ export default function CourtsPanel({
     if (sitBonus > 0) parts.push(`+${sitBonus.toFixed(2)} sitBonus`);
     if (byeMod > 0) parts.push(`+${byeMod.toFixed(2)} LateJoin`);
     return parts.join(" + ") || "base: 0";
+  };
+
+  const handleSubmitRound = () => {
+    // Validate scores: check for scores > 99 or < 0
+    const invalidMatch = roundState.matches.find(m => {
+      if (m.bye) return false; // Skip bye matches
+      const s1 = m.team1Score;
+      const s2 = m.team2Score;
+      return (
+        (s1 !== null && (s1 > 99 || s1 < 0)) ||
+        (s2 !== null && (s2 > 99 || s2 < 0))
+      );
+    });
+
+    if (invalidMatch) {
+      // Find which specific score is invalid
+      let invalidTeam: "team1" | "team2" = "team1";
+      let invalidValue = invalidMatch.team1Score;
+      if (invalidMatch.team2Score !== null && (invalidMatch.team2Score > 99 || invalidMatch.team2Score < 0)) {
+        invalidTeam = "team2";
+        invalidValue = invalidMatch.team2Score;
+      } else if (invalidMatch.team1Score !== null && (invalidMatch.team1Score > 99 || invalidMatch.team1Score < 0)) {
+        invalidTeam = "team1";
+        invalidValue = invalidMatch.team1Score;
+      }
+      setConfirmOverride({ matchId: invalidMatch.id, team: invalidTeam, value: invalidValue! });
+      return;
+    }
+
+    // Clear any previous state
+    setScoreError(null);
+    setConfirmOverride(null);
+    // Proceed with submission
+    onSubmitRound();
+  };
+
+  const handleConfirmOverride = () => {
+    setConfirmOverride(null);
+    setScoreError(null);
+    onSubmitRound();
+  };
+
+  const handleCancelOverride = () => {
+    setConfirmOverride(null);
   };
 
   const renderMatchCard = (match: Match) => {
@@ -302,9 +349,32 @@ export default function CourtsPanel({
             </div>
           )}
 
+          {/* Confirmation dialog for invalid scores */}
+          {confirmOverride && (
+            <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-xl text-center">
+              <p className="text-red-600 font-medium mb-4">
+                ⚠️ On Court {roundState.matches.find(m => m.id === confirmOverride.matchId)?.court}: score "{confirmOverride.value}" is {confirmOverride.value > 99 ? "over 99" : "less than 0"}. Are you sure?
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleConfirmOverride}
+                  className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={handleCancelOverride}
+                  className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 flex justify-center gap-4">
             <button
-              onClick={onSubmitRound}
+              onClick={handleSubmitRound}
               disabled={roundState.submitted}
               className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-base disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
