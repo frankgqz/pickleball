@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Match, Player, StandingsEntry, RoundState } from "./Types";
 
 interface Props {
@@ -19,10 +19,11 @@ interface Props {
   onStartNextRound?: () => void;
   onVetoBye?: (playerId: string) => void;
   submitted?: boolean;
+  // When true (typically after user attempts to submit) highlight invalid scores
+  showValidation?: boolean;
 }
 
-// Helper to check if score is visually invalid ( >99 or <0 )
-export function isInvalidScore(value: number | undefined | null): boolean {
+function isInvalidScore(value: number | undefined | null): boolean {
   if (value === undefined || value === null) return false;
   const num = Number(value);
   return isNaN(num) ? false : (num > 99 || num < 0);
@@ -44,6 +45,7 @@ export default function CourtsPanel({
   onStartNextRound,
   onVetoBye,
   submitted = false,
+  showValidation = false,
 }: Props) {
   const findPlayer = (id?: string) => eventPool.find(p => p.id === id) || null;
 
@@ -76,21 +78,33 @@ export default function CourtsPanel({
     return parts.join(' + ');
   };
 
-  // Score input component - no blocking on invalid numbers; visual error only to be handled at submission
-  const ScoreInput = ({ value, onChange }: { value: number | undefined; onChange: (val: number | undefined) => void; }) => {
-    // render simple input; allow typing negatives; do not set min/max attributes that block input
+  // ScoreInput: local string buffer to make typing multi-digit numbers reliable.
+  // Commits numeric value on blur or Enter, allowing the parent to accept undefined to clear.
+  const ScoreInput = ({ value, onChange }: { value: number | undefined | null; onChange: (v: number | undefined) => void; }) => {
+    const [local, setLocal] = useState<string>(value === undefined || value === null ? '' : String(value));
+    const ref = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+      setLocal(value === undefined || value === null ? '' : String(value));
+    }, [value]);
+
+    const commit = () => {
+      if (local === '') return onChange(undefined);
+      const parsed = Number(local);
+      onChange(Number.isNaN(parsed) ? undefined : parsed);
+    };
+
     return (
       <input
+        ref={ref}
         inputMode="numeric"
-        className={`w-16 px-2 py-1.5 border rounded-lg text-center bg-white border-gray-300`}
-        value={value === undefined || value === null ? '' : String(value)}
-        onChange={(e) => {
-          const raw = e.target.value;
-          if (raw === '') return onChange(undefined);
-          // allow any numeric input (including negative)
-          const parsed = Number(raw);
-          onChange(Number.isNaN(parsed) ? undefined : parsed);
-        }}
+        spellCheck={false}
+        className="w-16 px-2 py-1.5 border rounded-lg text-center bg-white border-gray-300"
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={() => commit()}
+        onKeyDown={(e) => { if (e.key === 'Enter') { commit(); (e.target as HTMLInputElement).blur(); } }}
+        placeholder=""
       />
     );
   };
@@ -98,6 +112,9 @@ export default function CourtsPanel({
   const renderMatchCard = (match: Match) => {
     const team1Players = match.team1.map(id => findPlayer(id)).filter(Boolean) as Player[];
     const team2Players = match.team2.map(id => findPlayer(id)).filter(Boolean) as Player[];
+
+    const t1Invalid = isInvalidScore(match.team1Score);
+    const t2Invalid = isInvalidScore(match.team2Score);
 
     return (
       <div key={match.id} className={`rounded-xl border p-4 ${match.bye ? "border-orange-200 bg-orange-50/50" : "border-green-200 bg-green-50/50"}`}>
@@ -159,14 +176,18 @@ export default function CourtsPanel({
             <div className="flex items-center justify-center gap-4 mt-4">
               <div className="text-center">
                 <div className="text-xs text-purple-500 mb-1">Team 1</div>
-                <ScoreInput value={match.team1Score as number | undefined} onChange={(val) => onUpdateMatchScore(match.id, val, 'team1')} />
+                <div className={showValidation && t1Invalid ? 'inline-block border-2 border-red-500 rounded' : ''}>
+                  <ScoreInput value={match.team1Score as number | undefined} onChange={(val) => onUpdateMatchScore(match.id, val, 'team1')} />
+                </div>
               </div>
 
               <div className="text-gray-400">vs</div>
 
               <div className="text-center">
                 <div className="text-xs text-green-500 mb-1">Team 2</div>
-                <ScoreInput value={match.team2Score as number | undefined} onChange={(val) => onUpdateMatchScore(match.id, val, 'team2')} />
+                <div className={showValidation && t2Invalid ? 'inline-block border-2 border-red-500 rounded' : ''}>
+                  <ScoreInput value={match.team2Score as number | undefined} onChange={(val) => onUpdateMatchScore(match.id, val, 'team2')} />
+                </div>
               </div>
             </div>
           </>
@@ -185,7 +206,6 @@ export default function CourtsPanel({
             <div className={`text-4xl mb-4 ${submitted ? "text-purple-500" : "text-green-500"}`}>{submitted ? "✓" : "🎾"}</div>
             <h3 className="text-xl font-bold mb-2 text-gray-800">{submitted ? `Round ${currentRoundNumber - 1} Complete!` : `Ready to start Round ${currentRoundNumber}?`}</h3>
             <p className="text-gray-600 text-sm mb-6">{eventPool.filter(p => !p.isSitting).length} active players</p>
-
             <button onClick={() => { if (currentRoundNumber === 1) onRegenerateByes(); if (defaultRoundFormat === 'PICK_PARTNER') { onStartPickPartner(); } else { onStartFixed14v23(); } }} className="bg-green-500 hover:bg-green-600 text-white font-bold px-10 py-4 rounded-xl text-xl shadow-md hover:shadow-lg transition-all">🚀 Start Round {currentRoundNumber}</button>
           </div>
         </div>
@@ -195,13 +215,9 @@ export default function CourtsPanel({
             <h3 className="text-lg font-semibold text-gray-700">Round {currentRoundNumber} Matches</h3>
             {onCancelRound && (<button onClick={onCancelRound} className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors">✕ Cancel Round</button>)}
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{roundState.matches.filter(m => !m.bye).map(renderMatchCard)}</div>
-
           {byeMatches.length > 0 && (<div className="mt-4 bg-orange-50/50 rounded-xl p-4 border border-orange-200"><h4 className="font-semibold text-orange-700 mb-3 text-sm">😴 Players Having a Bye</h4><div className="flex flex-wrap gap-3">{byeMatches.map(m => { const player = findPlayer(m.byePlayerId); return (<div key={m.id} className="bg-white rounded-lg px-4 py-2 border border-orange-200 flex flex-col"><div className="flex items-center gap-2"><span className="font-medium text-gray-800">{player?.name}</span>{onVetoBye && m.byePlayerId && (<button onClick={() => onVetoBye(m.byePlayerId!)} className="text-orange-500 hover:text-orange-700 text-sm" title="No bye this round - add 0.25 to bye score">⏳</button>)}</div><span className="text-xs font-mono text-blue-600" title={formatByeBreakdown(m.byePlayerId || "")}>bye: {getPlayerByeTotal(m.byePlayerId || "").toFixed(2)}</span></div>); })}</div></div>)}
-
           {sittingOutPlayers.length > 0 && (<div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-200"><h4 className="font-semibold text-gray-500 mb-3 text-sm">💤 Sitting Out</h4><div className="flex flex-wrap gap-2">{sittingOutPlayers.map(p => (<span key={p.id} className="px-3 py-1 bg-gray-200 text-gray-500 rounded-full text-sm">{p.name}</span>))}</div></div>)}
-
           <div className="mt-6 flex justify-center gap-4">
             <button onClick={() => onSubmitRound()} className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-base transition-colors">✓ Submit Scores</button>
             <button onClick={onStartNextRound} disabled={!roundState.submitted} className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-3 rounded-xl text-base disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors">🚀 Start Next Round</button>
