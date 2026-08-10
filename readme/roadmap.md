@@ -10,6 +10,7 @@ Pool play bracket system
 Partner variety scoring, rally or sideout
 Handle game scores (best of 3)
 Mobile responsive design
+Scorevalidation upon submit
 
 
 ## Login System
@@ -25,3 +26,4 @@ Migrate to database tables, users table for login, players table with userId for
 - [ ] Pts% sort edge case (player with sit outs)
 
 
+ 
