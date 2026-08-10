@@ -325,6 +325,7 @@ export default function Page() {
           defaultDupr={config.defaultDupr}
           sortColumn={sortColumn}
           sortDirection={sortDirection}
+          onSortChange={toggleSortColumn}
           handleSort={toggleSortColumn}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
           getSeedTotal={(e) => e.seed + e.seedAdjustment}

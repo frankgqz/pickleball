@@ -190,7 +190,6 @@ export default function StandingsTable({
                 <tr key={e.id} className="border-t hover:bg-gray-50">
                   <td className={`p-2 ${e.effectiveDupr === defaultDupr ? "text-gray-400" : "text-gray-800"}`}>
                     <div className="font-medium">{e.name}</div>
-                    {e.duprId && <div className="text-xs text-gray-500">{e.duprId}</div>}
                   </td>
 
                   <td className="p-2 text-center text-green-600 font-bold">{e.wins}</td>
