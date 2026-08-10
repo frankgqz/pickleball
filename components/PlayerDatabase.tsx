@@ -193,7 +193,7 @@ export default function PlayerDatabase({
       {validationError && <div className="text-red-500 text-xs mb-1.5">{validationError}</div>}
 
       {/* Player list */}
-      <div style={{ maxHeight: '25vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1">
+      <div style={{ maxHeight: '25vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1 mt-2">
         {filtered.length === 0 ? (
           <div className="text-center text-gray-400 py-4 text-sm">No players</div>
         ) : filtered.map(player => {
@@ -278,7 +278,7 @@ export default function PlayerDatabase({
                         <div className="font-medium text-xs truncate">{player.name}</div>
                         <div className="text-[10px] text-gray-500 truncate">
                           {player.duprId || player.duprNumericId || ''}
-                          {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}
+                          {player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore.toFixed(3)}</span>}
                         </div>
                         {fetchFeedback?.playerId === player.id && (
                           <div className={`text-[10px] ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
@@ -293,7 +293,7 @@ export default function PlayerDatabase({
                           <button 
                             aria-label="Remove from pool" 
                             onClick={() => onRemoveFromPool?.(player.id)} 
-                            className="w-6 h-6 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold"
+                            className="w-7 h-7 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold"
                           >
                             −
                           </button>
@@ -301,7 +301,7 @@ export default function PlayerDatabase({
                           <button 
                             aria-label="Add to pool" 
                             onClick={() => onAddToPool?.(player)} 
-                            className="w-6 h-6 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-sm font-bold"
+                            className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold"
                           >
                             +
                           </button>
