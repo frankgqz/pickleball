@@ -1,12 +1,13 @@
+"use client";
+
 // usePlayerDatabase.ts - Player database and event pool management
 // Handles: loading players from DB, adding/removing from event pool, DUPR fetching
-// Renamed from usePlayers for clarity
 
 import { useState, useCallback, useEffect } from "react";
 import { Player, StandingsEntry, GameSession } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
 import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "@/app/actions";
-import { createStandingsEntry } from "./standingsUtils";
+import { createStandingsEntry } from "../standingsUtils";
 
 export interface PlayerDatabaseState {
   // All players in the database
