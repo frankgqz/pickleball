@@ -280,7 +280,10 @@ export default function PlayerDatabase({
                           {player.duprId || player.duprNumericId || ''}
                           {player.duprScore != null && (
                             <span className="ml-1 font-semibold">
-                              {player.duprScore.toFixed(3)}
+                              {player.lastRefreshed 
+                                ? player.duprScore.toFixed(3)   // API fetched = 3 decimals
+                                : player.duprScore.toFixed(1)    // Manual entry = 1 decimal
+                              }
                             </span>
                           )}
                         </div>
