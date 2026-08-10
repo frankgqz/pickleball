@@ -49,7 +49,11 @@ export default function PlayerDatabase({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = players.slice();
-    if (q) list = list.filter(p => (p.name || "").toLowerCase().includes(q) || (p.duprId || "").toLowerCase().includes(q) || (p.duprNumericId || "").toLowerCase().includes(q));
+    if (q) list = list.filter(p => 
+      (p.name || "").toLowerCase().includes(q) || 
+      (p.duprId || "").toLowerCase().includes(q) || 
+      (p.duprNumericId || "").toLowerCase().includes(q)
+    );
     if (sortBy === "alpha") list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     return list;
   }, [players, search, sortBy]);
@@ -65,7 +69,12 @@ export default function PlayerDatabase({
       return;
     }
     setValidationError("");
-    const payload = { name: trimmed, duprId: hasDuprId ? duprId.trim() : undefined, duprNumericId: hasNum ? duprNumericId.trim() : undefined, duprScore: hasScore ? parseFloat(duprScore) : undefined };
+    const payload = { 
+      name: trimmed, 
+      duprId: hasDuprId ? duprId.trim() : undefined, 
+      duprNumericId: hasNum ? duprNumericId.trim() : undefined, 
+      duprScore: hasScore ? parseFloat(duprScore) : undefined 
+    };
     try {
       await onAddPlayer?.(payload);
     } catch (e) {
@@ -86,7 +95,12 @@ export default function PlayerDatabase({
   const saveEdit = async () => {
     if (!editingId) return;
     try {
-      await onUpdatePlayer?.(editingId, { name: editName.trim(), duprId: editDuprId.trim() || null, duprNumericId: editDuprNumericId.trim() || null, duprScore: editDuprScore ? parseFloat(editDuprScore) : null });
+      await onUpdatePlayer?.(editingId, { 
+        name: editName.trim(), 
+        duprId: editDuprId.trim() || null, 
+        duprNumericId: editDuprNumericId.trim() || null, 
+        duprScore: editDuprScore ? parseFloat(editDuprScore) : null 
+      });
       cancelEdit();
     } catch (e) { console.error(e); }
   };
@@ -96,7 +110,7 @@ export default function PlayerDatabase({
     try {
       await onFetchDupr?.(id);
       const updated = players.find(p => p.id === id);
-      if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar fetched", success: true });
+      if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar", success: true });
       else if (updated?.duprScore) setFetchFeedback({ playerId: id, message: `✓ ${updated.duprScore}`, success: true });
       else setFetchFeedback({ playerId: id, message: "No rating", success: false });
     } catch (e) {
@@ -115,80 +129,197 @@ export default function PlayerDatabase({
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or ID" className="flex-1 md:flex-none px-2 py-1 border border-gray-300 rounded text-xs" />
-          <select value={sortBy} onChange={e => setSortBy(e.target.value as any)} className="px-2 py-1 border border-gray-300 rounded text-xs">
-            <option value="recent">Recent First</option>
-            <option value="alpha">A - Z</option>
+          <input 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+            placeholder="Search..." 
+            className="flex-1 md:flex-none px-2 py-1 border border-gray-300 rounded text-xs" 
+          />
+          <select 
+            value={sortBy} 
+            onChange={e => setSortBy(e.target.value as any)} 
+            className="px-2 py-1 border border-gray-300 rounded text-xs"
+          >
+            <option value="recent">Recent</option>
+            <option value="alpha">A-Z</option>
           </select>
         </div>
       </div>
 
-      {/* Add form compact */}
-      <div className="mb-2 grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-1.5 items-end text-xs">
-        <input className="px-2 py-1 border border-gray-300 rounded" placeholder="Name *" value={name} onChange={e => setName(e.target.value)} />
-        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-20" placeholder="DUPR ID" value={duprId} onChange={e => setDuprId(e.target.value)} />
-        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-20" placeholder="webNumericID" value={duprNumericId} onChange={e => setDuprNumericId(e.target.value)} />
-        <input className="px-2 py-1 border border-gray-300 rounded w-full md:w-16" placeholder="Rating" value={duprScore} onChange={e => setDuprScore(e.target.value)} />
-        <button className="text-xs text-white bg-green-600 px-3 py-1 rounded" onClick={handleAdd}>+ Add</button>
+      {/* Add form - 2 rows */}
+      <div className="mb-2 space-y-1.5">
+        {/* Row 1: Name */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-1.5">
+          <input 
+            className="px-2 py-1.5 border border-gray-300 rounded text-sm col-span-1 md:col-span-1" 
+            placeholder="Name *" 
+            value={name} 
+            onChange={e => setName(e.target.value)} 
+          />
+          <input 
+            className="px-2 py-1.5 border border-gray-300 rounded text-xs" 
+            placeholder="DUPR ID" 
+            value={duprId} 
+            onChange={e => setDuprId(e.target.value)} 
+          />
+          <input 
+            className="px-2 py-1.5 border border-gray-300 rounded text-xs" 
+            placeholder="webNumericID" 
+            value={duprNumericId} 
+            onChange={e => setDuprNumericId(e.target.value)} 
+          />
+          <input 
+            className="px-2 py-1.5 border border-gray-300 rounded text-xs" 
+            placeholder="Rating" 
+            value={duprScore} 
+            onChange={e => setDuprScore(e.target.value)} 
+          />
+        </div>
+        {/* Row 2: Add button + validation */}
+        <div className="flex items-center gap-2">
+          <button 
+            className="px-4 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded font-medium transition-colors" 
+            onClick={handleAdd}
+          >
+            + Add Player
+          </button>
+          {validationError && (
+            <span className="text-xs text-red-500">{validationError}</span>
+          )}
+        </div>
       </div>
-      {validationError && <div className="text-red-500 text-xs mb-2">{validationError}</div>}
 
-      <div style={{ maxHeight: '36vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1.5">
+      {/* Player list */}
+      <div style={{ maxHeight: '40vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1.5">
         {filtered.length === 0 ? (
-          <div className="text-center text-gray-400 py-4 text-xs">No players</div>
+          <div className="text-center text-gray-400 py-6 text-sm">No players found</div>
         ) : filtered.map(player => {
-          const hasDupr = !!player.duprId || !!player.duprNumericId;
+          const hasDuprId = !!player.duprId;
+          const hasNumericId = !!player.duprNumericId;
+          const hasId = hasDuprId || hasNumericId;
           const inPool = inPoolIds.has(player.id);
           const initials = player.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
+          // Background color based on state
+          let bgClass = "bg-gray-50";
+          if (inPool) {
+            bgClass = "bg-green-50";
+          } else if (!hasId) {
+            bgClass = "bg-yellow-50";
+          }
+
           return (
-            <div key={player.id} className={`p-1.5 rounded-lg border ${inPool ? 'bg-green-50' : 'bg-white'}`}>
-              <div className="flex items-center gap-2">
+            <div key={player.id} className={`p-2 rounded-lg border ${bgClass}`}>
+              <div className="flex items-center gap-3">
+                {/* Avatar */}
                 <div className="flex-none">
                   {player.imageUrl ? (
-                    <img src={player.imageUrl} alt={player.name} className={`w-7 h-7 rounded-full object-cover ${player.isSitting ? 'opacity-50' : ''}`} />
+                    <img src={player.imageUrl} alt={player.name} className="w-9 h-9 rounded-full object-cover" />
                   ) : (
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] ${hasDupr ? 'bg-gradient-to-br from-green-500 to-green-700 text-white' : 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-yellow-900'}`} style={{ textTransform: 'uppercase' }}>{initials}</div>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm bg-gray-200 text-gray-600" style={{ textTransform: 'uppercase' }}>
+                      {initials}
+                    </div>
                   )}
                 </div>
 
-                {/* single-line compact info */}
-                <div className="flex-1 min-w-0 text-xs">
+                {/* Info */}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="truncate">
-                      <div className="font-medium truncate">{player.name}</div>
-                      <div className="text-[10px] text-gray-500 truncate">{player.duprId || player.duprNumericId || ''}{player.duprScore != null && <span className="ml-1 font-semibold">{player.duprScore}</span>}</div>
-                      {fetchFeedback?.playerId === player.id && (<div className={`text-[10px] ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>{fetchFeedback.message}</div>)}
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm text-gray-800 truncate">{player.name}</div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {player.duprId || player.duprNumericId || ''}
+                        {player.duprScore != null && <span className="ml-1.5 font-semibold text-gray-700">{player.duprScore}</span>}
+                      </div>
+                      {fetchFeedback?.playerId === player.id && (
+                        <div className={`text-xs ${fetchFeedback.success ? 'text-green-600' : 'text-red-500'}`}>
+                          {fetchFeedback.message}
+                        </div>
+                      )}
                     </div>
 
-                    {/* compact actions: + first, then edit/fetch/delete */}
-                    <div className="flex-none flex items-center gap-0.5">
+                    {/* Action buttons - always visible, not cramped */}
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {inPool ? (
-                        <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-6 h-6 rounded text-orange-600 bg-white border text-xs">−</button>
+                        <button 
+                          aria-label="Remove from pool" 
+                          onClick={() => onRemoveFromPool?.(player.id)}
+                          className="px-2.5 py-1 text-xs bg-gray-200 hover:bg-red-500 hover:text-white text-gray-600 rounded transition-colors"
+                        >
+                          − Pool
+                        </button>
                       ) : (
-                        <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-6 h-6 rounded bg-transparent border border-green-600 text-green-600 text-xs">+</button>
+                        <button 
+                          aria-label="Add to pool" 
+                          onClick={() => onAddToPool?.(player)}
+                          className="px-2.5 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded transition-colors"
+                        >
+                          + Pool
+                        </button>
                       )}
 
-                      <button onClick={() => startEditing(player)} aria-label="Edit" className="px-1 py-0.5 bg-white border rounded text-[10px] text-blue-600 hover:bg-blue-50">✏️</button>
-                      <button onClick={() => fetchDuprFor(player.id)} aria-label="Fetch DUPR" className="px-1 py-0.5 bg-white border rounded text-[10px] text-purple-600 hover:bg-purple-50">🔍</button>
-                      <button onClick={() => onDeletePlayer?.(player.id)} aria-label="Delete" className="px-1 py-0.5 bg-white border rounded text-[10px] text-red-500 hover:bg-red-50">🗑️</button>
+                      <button 
+                        onClick={() => startEditing(player)} 
+                        aria-label="Edit" 
+                        className="px-2 py-1 text-xs bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-700 rounded border border-gray-200 transition-colors"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        onClick={() => fetchDuprFor(player.id)} 
+                        aria-label="Fetch DUPR" 
+                        className="px-2 py-1 text-xs bg-gray-100 hover:bg-purple-100 text-gray-600 hover:text-purple-700 rounded border border-gray-200 transition-colors"
+                      >
+                        🔍
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (confirm(`Delete ${player.name}?`)) {
+                            onDeletePlayer?.(player.id);
+                          }
+                        }} 
+                        aria-label="Delete" 
+                        className="px-2 py-1 text-xs bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded border border-gray-200 transition-colors"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* compact inline edit appears below (rare) */}
+              {/* Inline edit form */}
               {editingId === player.id && (
-                <div className="mt-1.5 bg-slate-50 p-1.5 rounded">
-                  <div className="flex gap-1 flex-wrap">
-                    <input value={editName} onChange={e => setEditName(e.target.value)} className="flex-1 px-2 py-0.5 border border-gray-300 rounded text-xs min-w-[80px]" placeholder="Name" />
-                    <input value={editDuprId} onChange={e => setEditDuprId(e.target.value)} placeholder="DUPR ID" className="w-16 px-1 py-0.5 border border-gray-300 rounded text-xs" />
-                    <input value={editDuprNumericId} onChange={e => setEditDuprNumericId(e.target.value)} placeholder="webID" className="w-16 px-1 py-0.5 border border-gray-300 rounded text-xs" />
-                    <input value={editDuprScore} onChange={e => setEditDuprScore(e.target.value)} placeholder="Rating" className="w-14 px-1 py-0.5 border border-gray-300 rounded text-xs" />
+                <div className="mt-2 bg-slate-100 p-2 rounded">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+                    <input 
+                      value={editName} 
+                      onChange={e => setEditName(e.target.value)} 
+                      className="px-2 py-1 border border-gray-300 rounded text-sm" 
+                      placeholder="Name" 
+                    />
+                    <input 
+                      value={editDuprId} 
+                      onChange={e => setEditDuprId(e.target.value)} 
+                      placeholder="DUPR ID" 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs" 
+                    />
+                    <input 
+                      value={editDuprNumericId} 
+                      onChange={e => setEditDuprNumericId(e.target.value)} 
+                      placeholder="webID" 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs" 
+                    />
+                    <input 
+                      value={editDuprScore} 
+                      onChange={e => setEditDuprScore(e.target.value)} 
+                      placeholder="Rating" 
+                      className="px-2 py-1 border border-gray-300 rounded text-xs" 
+                    />
                   </div>
-                  <div className="mt-1 flex gap-1">
-                    <button onClick={saveEdit} className="px-2 py-0.5 bg-green-600 text-white rounded text-xs">Save</button>
-                    <button onClick={cancelEdit} className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs">Cancel</button>
+                  <div className="flex gap-2">
+                    <button onClick={saveEdit} className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">Save</button>
+                    <button onClick={cancelEdit} className="px-3 py-1 bg-gray-300 text-gray-700 text-xs rounded hover:bg-gray-400">Cancel</button>
                   </div>
                 </div>
               )}
