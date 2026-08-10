@@ -21,7 +21,7 @@ export interface PlayerDatabaseState {
 export interface PlayerDatabaseActions {
   // Database operations
   loadPlayersFromDatabase: () => Promise<void>;
-  addNewPlayer: (p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => Promise<void>;
+  addNewPlayer: (formData: FormData) => Promise<void>;
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
   deleteExistingPlayer: (id: string) => Promise<void>;
   fetchDuprForPlayer: (playerId: string) => Promise<void>;
