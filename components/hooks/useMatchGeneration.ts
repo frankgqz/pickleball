@@ -4,7 +4,7 @@
 
 import { useCallback } from "react";
 import { Player, StandingsEntry, TournamentConfig, Match, MatchFormat, RoundState } from "@/components/Types";
-import { generateMatches } from "./MatchEngine";
+import { generateMatches } from "../MatchEngine";
 
 export interface MatchGenerationState {
   // Current round state

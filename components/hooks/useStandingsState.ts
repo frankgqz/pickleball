@@ -10,7 +10,7 @@ import {
   computeStandingsEntries,
   recalculateStandingsFromHistory,
   processMatchResult,
-} from "./standingsUtils";
+} from "../standingsUtils";
 
 export interface StandingsState {
   // Raw standings entries
