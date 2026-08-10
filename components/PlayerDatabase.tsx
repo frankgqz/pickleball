@@ -324,6 +324,7 @@ export default function PlayerDatabase({
                         {/* Search button - highlighted if has numericID but no duprId (needs lookup) */}
                         <button 
                           onClick={() => fetchDuprFor(player.id)} 
+                          title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleString()}` : "Fetch DUPR rating"}
                           className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${
                             hasNumericId && !hasDuprId
                               ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" 

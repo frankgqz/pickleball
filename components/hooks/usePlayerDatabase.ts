@@ -75,15 +75,7 @@ export function usePlayerDatabase(
     }
   }, [setIsAppLoading]);
 
-  const addNewPlayer = useCallback(async (
-    p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }
-  ) => {
-    const formData = new FormData();
-    formData.append("name", p.name);
-    formData.append("duprId", p.duprId || "");
-    formData.append("duprNumericId", p.duprNumericId || "");
-    formData.append("duprScore", p.duprScore ? String(p.duprScore) : "");
-
+  const addNewPlayer = useCallback(async (formData: FormData) => {
     const result = await addPlayer(formData);
     if (result.success && result.player) {
       setAllPlayers(prev => [result.player!, ...prev]);
@@ -95,7 +87,7 @@ export function usePlayerDatabase(
     if (updates.name) formData.append("name", updates.name);
     if (updates.duprId !== undefined && updates.duprId !== null) formData.append("duprId", updates.duprId);
     if (updates.duprNumericId !== undefined && updates.duprNumericId !== null) formData.append("duprNumericId", updates.duprNumericId);
-    if (updates.duprScore !== undefined && updates.duprScore !== null) formData.append("duprScore", String(updates.duprScore));
+    if (updates.manualDuprScore !== undefined && updates.manualDuprScore !== null) formData.append("manualDuprScore", String(updates.manualDuprScore));
 
     const result = await updatePlayer(id, formData);
     if (result.success && result.player) {
