@@ -6,7 +6,7 @@ import { Player } from "@/components/Types";
 interface Props {
   players: Player[];
   eventPool?: Player[];
-  onAddPlayer?: (p: { name: string; duprId?: string; duprNumericId?: string; duprScore?: number }) => Promise<any> | void;
+  onAddPlayer?: (formData: FormData) => Promise<any> | void;
   onUpdatePlayer?: (id: string, p: Partial<Player>) => Promise<any> | void;
   onDeletePlayer?: (id: string) => Promise<any> | void;
   onFetchDupr?: (id: string) => Promise<any> | void;
@@ -354,4 +354,3 @@ export default function PlayerDatabase({
     </section>
   );
 }
-
