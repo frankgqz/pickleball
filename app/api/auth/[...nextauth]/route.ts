@@ -1,4 +1,3 @@
-// app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaClient } from "@prisma/client";
@@ -12,7 +11,7 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const handler = NextAuth({
+const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
@@ -36,7 +35,6 @@ const handler = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      // Create User record in database when someone first signs in
       await prisma.user.create({
         data: {
           id: user.id!,
@@ -47,7 +45,9 @@ const handler = NextAuth({
       });
     },
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
-export { handler as GET, handler as POST, handler as authOptions };
+export { authOptions };
