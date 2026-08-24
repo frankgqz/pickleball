@@ -14,6 +14,8 @@ interface Props {
   onFetchDupr?: (id: string) => Promise<any> | void;
   onAddToPool?: (player: Player) => void;
   onRemoveFromPool?: (id: string) => void;
+  onRefreshPlayers?: () => void; 
+
 }
 
 export default function PlayerDatabase({
@@ -27,6 +29,7 @@ export default function PlayerDatabase({
   onFetchDupr,
   onAddToPool,
   onRemoveFromPool,
+  onRefreshPlayers,  // ← Add this
 }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "alpha">("recent");
@@ -206,12 +209,12 @@ export default function PlayerDatabase({
     if (!confirm(`Remove ${player.name} from your roster?`)) return;
     
     try {
-      // If userId is available, use safe delete (remove from roster only)
       if (userId && onRemoveFromClubRoster) {
         await onRemoveFromClubRoster(player.id);
+        onRefreshPlayers?.();  // ← Add this line
       } else {
-        // Fallback to global delete if no userId (shouldn't happen when logged in)
         await onDeletePlayer?.(player.id);
+        onRefreshPlayers?.();  // ← And this
       }
     } catch (e) {
       console.error(e);

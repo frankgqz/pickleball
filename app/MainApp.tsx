@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { addPlayer, getClubPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer, removeClubPlayer } from "@/app/actions";
+import { removeClubPlayer } from "@/app/actions";
 
 
 
@@ -309,6 +309,7 @@ export default function Page() {
             onUpdatePlayer={updateExistingPlayer}
             onAddToPool={(player) => addToPoolWithStandings(player, userId)}
             onRemoveFromPool={removeFromPoolWithStandings}
+            onRefreshPlayers={() => loadPlayersFromDatabase(session?.user?.id)}  // ← Add this
           />
           <EventPool
             eventPool={eventPool}
