@@ -1,10 +1,6 @@
-// app/page.tsx
-// Server Component - just renders the client app
-import dynamic from "next/dynamic";
-
-// Disable SSR for this component - needed for useSession/Context
-const MainApp = dynamic(() => import("./MainApp"), { ssr: false });
+// Server Component - just renders the client wrapper
+import ClientWrapper from "./ClientWrapper";
 
 export default function Page() {
-  return <MainApp />;
+  return <ClientWrapper />;
 }
