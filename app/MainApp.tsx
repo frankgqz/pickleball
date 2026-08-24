@@ -11,7 +11,8 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { removeClubPlayer } from "@/app/actions";
+import { addPlayer, getClubPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer, removeClubPlayer } from "@/app/actions";
+
 
 
 
@@ -69,7 +70,6 @@ export default function Page() {
     clearEventPool, 
     togglePlayerSitting,
     resetPlayers,
-    removeClubPlayer  // <-- Add this
   } = playerDbActions;
 
   // ====== STANDINGS STATE HOOK ======
