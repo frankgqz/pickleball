@@ -62,27 +62,37 @@ const handler = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
-  cookies: {
-    sessionToken: {
-      name: `.next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    csrfToken: {
-      name: `__Host-next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
   callbacks: {
+    async signIn({ user }: { user: any }) {
+      console.log("=== SIGN IN ===");
+      console.log("User:", user.id, user.email);
+      
+      try {
+        // Check if user exists
+        const existing = await prisma.user.findUnique({
+          where: { email: user.email! },
+        });
+        
+        if (!existing) {
+          console.log("Creating new user...");
+          await prisma.user.create({
+            data: {
+              id: user.id!,
+              email: user.email!,
+              name: user.name,
+              image: user.image,
+            },
+          });
+          console.log("User created!");
+        } else {
+          console.log("User already exists:", existing.email);
+        }
+      } catch (err: any) {
+        console.error("Error:", err.message);
+      }
+      
+      return true;  // Allow sign in
+    },
     async session({ session, token }: { session: any; token: any }) {
       if (session?.user) {
         // @ts-ignore
@@ -95,28 +105,6 @@ const handler = NextAuth({
         token.sub = user.id;
       }
       return token;
-    },
-  },
-  events: {
-    async createUser({ user }: { user: any }) {
-      console.log("=== CREATE USER EVENT ===");
-      console.log("User data:", JSON.stringify(user, null, 2));
-      
-      try {
-        const result = await prisma.user.create({
-          data: {
-            id: user.id!,
-            email: user.email!,
-            name: user.name,
-            image: user.image,
-          },
-        });
-        console.log("✅ User created in DB:", result.id, result.email);
-      } catch (err: any) {
-        console.error("❌ FAILED to create user:", err.message);
-        console.error("Error code:", err.code);
-        console.error("Error meta:", err.meta);
-      }
     },
   },
 });
