@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Player, StandingsEntry, GameSession } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
-import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer } from "@/app/actions";
+import { addPlayer, getClubPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer } from "@/app/actions";
 import { createStandingsEntry } from "../standingsUtils";
 
 
@@ -65,9 +65,9 @@ export function usePlayerDatabase(
 
   // ============ DATABASE OPERATIONS ============
 
-  const loadPlayersFromDatabase = useCallback(async () => {
+  const loadPlayersFromDatabase = useCallback(async (userId?: string) => {
     try {
-      const result = await getPlayers();
+      const result = await getClubPlayers(userId);
       if (result.success && result.players && result.players.length > 0) {
         setAllPlayers(result.players);
       }
