@@ -221,7 +221,7 @@ export async function fetchDuprRating(playerId: string) {
     });
 
     if (response.ok) {
-      const data = response.json();
+      const data = await response.json();
       let rating = data.result?.ratings?.doubles;
       if (rating === "NR" || !rating) {
         rating = null;
