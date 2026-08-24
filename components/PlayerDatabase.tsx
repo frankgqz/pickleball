@@ -74,13 +74,32 @@ export default function PlayerDatabase({
       const result = await findPlayerByDupr(duprId.trim() || undefined, duprNumericId.trim() || undefined);
       
       if (result.player) {
-        // Set highlights for matched fields
-        if (result.player.duprId === duprId.trim()) setDuprIdExists(true);
-        if (result.player.duprNumericId === duprNumericId.trim()) setNumericIdExists(true);
+        const hasApiScore = result.player.duprScore != null;
+        const matchedByNumeric = result.player.duprNumericId === duprNumericId.trim();
+        const matchedByDuprId = result.player.duprId === duprId.trim();
         
-        // Prefill missing fields
-        if (!name.trim() && result.player.name) setName(result.player.name);
-        if (!duprScore.trim() && result.player.duprScore != null) setDuprScore(String(result.player.duprScore));
+        // Set highlights for matched fields
+        if (matchedByDuprId) setDuprIdExists(true);
+        if (matchedByNumeric) setNumericIdExists(true);
+        
+        // If matched by duprId only → gentle prefill (only empty fields)
+        if (matchedByDuprId && !matchedByNumeric) {
+          if (!name.trim() && result.player.name) setName(result.player.name);
+          if (!duprNumericId.trim() && result.player.duprNumericId) setDuprNumericId(result.player.duprNumericId);
+          if (!duprScore.trim() && result.player.duprScore != null) setDuprScore(String(result.player.duprScore));
+        }
+        // If matched by duprNumericId without API score → gentle prefill
+        else if (matchedByNumeric && !hasApiScore) {
+          if (!name.trim() && result.player.name) setName(result.player.name);
+          if (!duprId.trim() && result.player.duprId) setDuprId(result.player.duprId);
+          if (!duprScore.trim() && result.player.manualDuprScore != null) setDuprScore(String(result.player.manualDuprScore));
+        }
+        // If matched by duprNumericId WITH API score → aggressive overwrite
+        else if (matchedByNumeric && hasApiScore) {
+          if (result.player.name) setName(result.player.name);
+          if (result.player.duprId) setDuprId(result.player.duprId);
+          setDuprScore(String(result.player.duprScore));
+        }
       } else {
         setDuprIdExists(false);
         setNumericIdExists(false);

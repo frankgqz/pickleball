@@ -69,6 +69,7 @@ model ClubPlayer {
   createdAt     DateTime @default(now())
 
   @@unique([userId, playerId])
+  @@index([playerName])
   @@index([userId])
   @@index([playerId])
 }
