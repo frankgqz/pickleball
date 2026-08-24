@@ -33,9 +33,9 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
 
       {/* Event Name - for CSV export */}
       {/* CSV Export Settings Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-        {/* Event Name - wider on desktop (2 cols = 50%) */}
-        <div className="col-span-2 md:col-span-2">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-2">
+        {/* Event Name - 50% */}
+        <div className="col-span-1 md:col-span-3">
           <label className="text-xs font-medium text-gray-600 mb-0.5 block">Event Name (for CSV)</label>
           <input
             type="text"
@@ -46,8 +46,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
           />
         </div>
 
-        {/* Match Type */}
-        <div>
+        {/* Match Type - ~16.6% */}
+        <div className="col-span-1">
           <label className="text-xs font-medium text-gray-600 mb-0.5 block">Match Type</label>
           <select
             value={config.matchType || "D"}
@@ -59,8 +59,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
           </select>
         </div>
 
-        {/* Score Type */}
-        <div>
+        {/* Score Type - ~16.6% */}
+        <div className="col-span-1">
           <label className="text-xs font-medium text-gray-600 mb-0.5 block">Score Type</label>
           <select
             value={config.scoreType || "SIDEOUT"}
@@ -72,8 +72,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
           </select>
         </div>
 
-        {/* Best Of */}
-        <div>
+        {/* Best Of - ~16.6% */}
+        <div className="col-span-1">
           <label className="text-xs font-medium text-gray-600 mb-0.5 block">Best Of</label>
           <select
             value={config.bestOf || 1}
