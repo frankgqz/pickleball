@@ -34,16 +34,21 @@ const authOptions = {
     },
   },
   events: {
-    async createUser({ user }: { user: any }) {  // ADD { user: any }
-      console.log("Creating user:", user.email);
-      await prisma.user.create({
-        data: {
-          id: user.id!,
-          email: user.email!,
-          name: user.name,
-          image: user.image,
-        },
-      });
+    async createUser({ user }: { user: any }) {
+      console.log("✅ Creating user:", user.email, "id:", user.id);
+      try {
+        await prisma.user.create({
+          data: {
+            id: user.id!,
+            email: user.email!,
+            name: user.name,
+            image: user.image,
+          },
+        });
+        console.log("✅ User created successfully");
+      } catch (err) {
+        console.error("❌ Error creating user:", err);
+      }
     },
   },
 };
