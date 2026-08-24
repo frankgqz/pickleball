@@ -62,7 +62,7 @@ const handler = NextAuth({
   ],
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: `.next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
@@ -71,6 +71,7 @@ const handler = NextAuth({
       },
     },
     csrfToken: {
+      name: `__Host-next-auth.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
