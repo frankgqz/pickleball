@@ -77,8 +77,8 @@ export async function getPlayers() {
   }
 }
 
-// Add a new player to global database
-export async function addPlayer(formData: FormData) {
+// Add a new player to global database (with upsert/merge logic)
+export async function addPlayer(formData: FormData, userId?: string) {
   const name = formData.get("name") as string;
   const duprId = formData.get("duprId") as string;
   const duprNumericId = formData.get("duprNumericId") as string;
@@ -89,24 +89,80 @@ export async function addPlayer(formData: FormData) {
   }
 
   try {
-    const player = await prisma.player.create({
-      data: {
-        name: name.trim(),
-        duprId: duprId?.trim() || null,
-        duprNumericId: duprNumericId?.trim() || null,
-        manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
-      },
-    });
-    return { success: true, player };
+    // First, try to find existing player by duprId or duprNumericId
+    let existingPlayer = null;
+
+    if (duprId?.trim()) {
+      existingPlayer = await prisma.player.findFirst({
+        where: { duprId: duprId.trim() },
+      });
+    }
+
+    if (!existingPlayer && duprNumericId?.trim()) {
+      existingPlayer = await prisma.player.findFirst({
+        where: { duprNumericId: duprNumericId.trim() },
+      });
+    }
+
+    let player;
+    let merged = false;
+
+    if (existingPlayer) {
+      // Update existing player - merge information, don't overwrite unless new info provided
+      player = await prisma.player.update({
+        where: { id: existingPlayer.id },
+        data: {
+          name: name.trim(),
+          // Only update duprId if provided and existing is null
+          duprId: existingPlayer.duprId ?? (duprId?.trim() || null),
+          // Only update duprNumericId if provided and existing is null
+          duprNumericId: existingPlayer.duprNumericId ?? (duprNumericId?.trim() || null),
+          // Only update manualDuprScore if provided and existing is null
+          manualDuprScore: existingPlayer.manualDuprScore ?? (manualDuprScore ? parseFloat(manualDuprScore) : null),
+        },
+      });
+      merged = true;
+    } else {
+      // Create new player
+      player = await prisma.player.create({
+        data: {
+          name: name.trim(),
+          duprId: duprId?.trim() || null,
+          duprNumericId: duprNumericId?.trim() || null,
+          manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
+        },
+      });
+    }
+
+    // If userId provided, also add to their club roster
+    if (userId) {
+      // Check if already in their roster
+      const existingClubPlayer = await prisma.clubPlayer.findFirst({
+        where: { userId, playerId: player.id },
+      });
+
+      if (!existingClubPlayer) {
+        await prisma.clubPlayer.create({
+          data: { userId, playerId: player.id },
+        });
+      }
+    }
+
+    return { success: true, player, merged };
   } catch (error) {
     console.error("Error adding player:", error);
     return { success: false, error: "Failed to add player" };
   }
 }
 
-// Delete a player from global database
+// Delete a player from global database (and all club associations)
 export async function deletePlayer(id: string) {
   try {
+    // First delete all club associations
+    await prisma.clubPlayer.deleteMany({
+      where: { playerId: id },
+    });
+    // Then delete the player
     await prisma.player.delete({
       where: { id },
     });
@@ -150,10 +206,12 @@ export async function fetchDuprRating(playerId: string) {
     if (!player || !player.duprNumericId) {
       return { success: false, error: "Player or Numeric DUPR ID not found" };
     }
+
     const token = await getDuprToken();
     if (!token) {
       return { success: false, error: "Failed to login to DUPR" };
     }
+
     const response = await fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
       method: "GET",
       headers: {
@@ -161,8 +219,9 @@ export async function fetchDuprRating(playerId: string) {
         "Content-Type": "application/json",
       },
     });
+
     if (response.ok) {
-      const data = await response.json();
+      const data = response.json();
       let rating = data.result?.ratings?.doubles;
       if (rating === "NR" || !rating) {
         rating = null;
@@ -170,6 +229,7 @@ export async function fetchDuprRating(playerId: string) {
         rating = parseFloat(rating);
       }
       const imageUrl = data.result?.imageUrl || null;
+
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
@@ -178,9 +238,10 @@ export async function fetchDuprRating(playerId: string) {
           duprNumericId: data.result?.id?.toString() || player.duprNumericId,
           duprScore: rating,
           imageUrl: imageUrl,
-          lastRefreshed: new Date(), // Changed from string to DateTime
+          lastRefreshed: new Date(),
         },
       });
+
       return {
         success: true,
         player: updatedPlayer,
@@ -202,10 +263,10 @@ export async function getClubPlayers(userId: string) {
     const clubPlayers = await prisma.clubPlayer.findMany({
       where: { userId },
       include: {
-        player: true, // Include the global player data
+        player: true,
       },
       orderBy: [
-        { eventCount: "desc" }, // Most frequent first
+        { eventCount: "desc" },
         { lastAttended: "desc" },
       ],
     });

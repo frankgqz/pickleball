@@ -83,7 +83,7 @@ export function usePlayerDatabase(
   }, [setIsAppLoading]);
 
   const addNewPlayer = useCallback(async (formData: FormData, userId?: string) => {
-    const result = await addPlayer(formData);
+    const result = await addPlayer(formData, userId);
     console.log("addPlayer result:", result);
     if (result.success && result.player) {
       setAllPlayers(prev => {
