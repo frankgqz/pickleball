@@ -28,6 +28,8 @@ const authOptions = {
     },
     async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
+        console.log("=== JWT Callback - New User ===");
+        console.log("User:", user.id, user.email);
         token.sub = user.id;
       }
       return token;
@@ -97,15 +99,24 @@ const handler = NextAuth({
   },
   events: {
     async createUser({ user }: { user: any }) {
-      console.log("Creating user:", user.email);
-      await prisma.user.create({
-        data: {
-          id: user.id!,
-          email: user.email!,
-          name: user.name,
-          image: user.image,
-        },
-      });
+      console.log("=== CREATE USER EVENT ===");
+      console.log("User data:", JSON.stringify(user, null, 2));
+      
+      try {
+        const result = await prisma.user.create({
+          data: {
+            id: user.id!,
+            email: user.email!,
+            name: user.name,
+            image: user.image,
+          },
+        });
+        console.log("✅ User created in DB:", result.id, result.email);
+      } catch (err: any) {
+        console.error("❌ FAILED to create user:", err.message);
+        console.error("Error code:", err.code);
+        console.error("Error meta:", err.meta);
+      }
     },
   },
 });
