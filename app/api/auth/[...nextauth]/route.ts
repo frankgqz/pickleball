@@ -53,7 +53,61 @@ const authOptions = {
   },
 };
 
-const handler = NextAuth(authOptions);
+const handler = NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    }),
+  ],
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+    csrfToken: {
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
+  callbacks: {
+    async session({ session, token }: { session: any; token: any }) {
+      if (session?.user) {
+        // @ts-ignore
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+    async jwt({ token, user }: { token: any; user: any }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+  },
+  events: {
+    async createUser({ user }: { user: any }) {
+      console.log("Creating user:", user.email);
+      await prisma.user.create({
+        data: {
+          id: user.id!,
+          email: user.email!,
+          name: user.name,
+          image: user.image,
+        },
+      });
+    },
+  },
+});
 
 export { handler as GET, handler as POST };
 export { authOptions };
