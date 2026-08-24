@@ -1,7 +1,7 @@
 "use client";
-
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Player } from "@/components/Types";
+import { findPlayerByDupr } from "@/app/actions";
 
 interface Props {
   players: Player[];
@@ -34,6 +34,10 @@ export default function PlayerDatabase({
   const [duprScore, setDuprScore] = useState("");
   const [validationError, setValidationError] = useState("");
 
+  // Blue highlight state for existing player match
+  const [duprIdExists, setDuprIdExists] = useState(false);
+  const [numericIdExists, setNumericIdExists] = useState(false);
+
   // Edit
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -58,25 +62,57 @@ export default function PlayerDatabase({
     return list;
   }, [players, search, sortBy]);
 
+  // Check for existing player when dupr fields change
+  useEffect(() => {
+    const checkExisting = async () => {
+      if (!duprId.trim() && !duprNumericId.trim()) {
+        setDuprIdExists(false);
+        setNumericIdExists(false);
+        return;
+      }
+      
+      const result = await findPlayerByDupr(duprId.trim() || undefined, duprNumericId.trim() || undefined);
+      
+      if (result.player) {
+        // Check which field matched
+        if (result.player.duprId === duprId.trim()) {
+          setDuprIdExists(true);
+        }
+        if (result.player.duprNumericId === duprNumericId.trim()) {
+          setNumericIdExists(true);
+        }
+      } else {
+        setDuprIdExists(false);
+        setNumericIdExists(false);
+      }
+    };
+
+    const timeout = setTimeout(checkExisting, 300);
+    return () => clearTimeout(timeout);
+  }, [duprId, duprNumericId]);
+
   const handleAdd = async () => {
     const trimmed = name.trim();
     if (!trimmed) return;
+
     const hasDuprId = duprId.trim();
     const hasNum = duprNumericId.trim();
     const hasScore = duprScore.trim();
+
     if (!hasDuprId && !hasNum && !hasScore) {
       setValidationError("Provide at least DUPR ID, webNumericID, or rating");
       return;
     }
+
     setValidationError("");
     const formData = new FormData();
     formData.append("name", trimmed);
     if (hasDuprId) formData.append("duprId", duprId.trim());
     if (hasNum) formData.append("duprNumericId", duprNumericId.trim());
     if (hasScore) formData.append("manualDuprScore", duprScore);
+
     try {
       const result = await onAddPlayer?.(formData);
-      // Also add to pool automatically
       if (result?.player) {
         onAddToPool?.(result.player);
       }
@@ -84,7 +120,10 @@ export default function PlayerDatabase({
       console.error(e);
       setValidationError("Failed to add player");
     }
+
     setName(""); setDuprId(""); setDuprNumericId(""); setDuprScore("");
+    setDuprIdExists(false);
+    setNumericIdExists(false);
   };
 
   const startEditing = (p: Player) => {
@@ -92,7 +131,6 @@ export default function PlayerDatabase({
     setEditName(p.name || "");
     setEditDuprId(p.duprId || "");
     setEditDuprNumericId(p.duprNumericId || "");
-    // Show manualDuprScore if available, otherwise duprScore (API fetched)
     const scoreToShow = p.manualDuprScore ?? p.duprScore;
     setEditDuprScore(scoreToShow != null ? String(scoreToShow) : "");
   };
@@ -107,21 +145,13 @@ export default function PlayerDatabase({
 
   const saveEdit = async () => {
     if (!editingId) return;
-    console.log("saveEdit called:", {
-      id: editingId,
-      name: editName.trim(),
-      duprId: editDuprId.trim() || null,
-      duprNumericId: editDuprNumericId.trim() || null,
-      manualDuprScore: editDuprScore ? parseFloat(editDuprScore) : null
-    });
     try {
-      const result = await onUpdatePlayer?.(editingId, { 
+      await onUpdatePlayer?.(editingId, { 
         name: editName.trim(), 
         duprId: editDuprId.trim() || null, 
         duprNumericId: editDuprNumericId.trim() || null, 
         manualDuprScore: editDuprScore ? parseFloat(editDuprScore) : null
       });
-      console.log("saveEdit result:", result);
       cancelEdit();
     } catch (e) { 
       console.error(e); 
@@ -151,7 +181,6 @@ export default function PlayerDatabase({
           <h2 className="text-lg font-semibold">🎾 Player Database</h2>
           <div className="text-xs text-gray-500">({players.length})</div>
         </div>
-
         <div className="flex items-center gap-2">
           <input 
             value={search} 
@@ -179,16 +208,16 @@ export default function PlayerDatabase({
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className="px-2 py-1.5 border border-gray-300 rounded text-xs w-20" 
+          className={`px-2 py-1.5 border rounded text-xs w-20 ${duprIdExists ? 'border-purple-500 bg-blue-50' : 'border-gray-300'}`}
           placeholder="DUPR ID" 
           value={duprId} 
-          onChange={e => setDuprId(e.target.value)} 
+          onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className="px-2 py-1.5 border border-gray-300 rounded text-xs w-20" 
+          className={`px-2 py-1.5 border rounded text-xs w-20 ${numericIdExists ? 'border-purple-500 bg-blue-50' : 'border-gray-300'}`}
           placeholder="webNumericID" 
           value={duprNumericId} 
-          onChange={e => setDuprNumericId(e.target.value)} 
+          onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
         <input 
           className="px-2 py-1.5 border border-gray-300 rounded text-xs w-16" 
@@ -220,7 +249,6 @@ export default function PlayerDatabase({
           return (
             <div key={player.id} className={`px-2 py-1 rounded-lg border border-gray-300 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
               {isEditing ? (
-                /* Inline edit form */
                 <div className="space-y-1.5 py-1">
                   <div className="flex flex-wrap gap-1.5 items-end">
                     <input 
@@ -249,42 +277,21 @@ export default function PlayerDatabase({
                     />
                   </div>
                   <div className="flex gap-1.5">
-                    <button 
-                      onClick={saveEdit} 
-                      className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-medium"
-                    >
-                      Save
-                    </button>
-                    <button 
-                      onClick={cancelEdit} 
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
+                    <button onClick={saveEdit} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-medium">Save</button>
+                    <button onClick={cancelEdit} className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300">Cancel</button>
                   </div>
                 </div>
               ) : (
-                /* Normal display */
                 <div className="flex items-center gap-2.5">
-                  {/* Avatar */}
                   <div className="flex-none">
                     {player.imageUrl ? (
-                      <img 
-                        src={player.imageUrl} 
-                        alt={player.name} 
-                        className="w-7 h-7 rounded-full object-cover border border-gray-300" 
-                      />
+                      <img src={player.imageUrl} alt={player.name} className="w-7 h-7 rounded-full object-cover border border-gray-300" />
                     ) : (
-                      <div 
-                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} 
-                        style={{ textTransform: 'uppercase' }}
-                      >
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>
                         {initials}
                       </div>
                     )}
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
@@ -292,11 +299,8 @@ export default function PlayerDatabase({
                         <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleDateString()}` : undefined}>
                           {player.duprId || player.duprNumericId || ''}
                           {(player.duprScore != null || player.manualDuprScore != null) && (
-                            <span className="ml-1 font-semibold">
-                              {player.duprScore != null 
-                                ? player.duprScore.toFixed(3)        // API fetched = 3 decimals
-                                : player.manualDuprScore!.toFixed(1)  // Manual = 1 decimal
-                              }
+                            <span className={`ml-1 font-semibold ${player.duprScore != null ? 'text-green-600' : 'text-purple-600'}`}>
+                              {player.duprScore != null ? player.duprScore.toFixed(3) : player.manualDuprScore!.toFixed(1)}
                             </span>
                           )}
                         </div>
@@ -306,55 +310,15 @@ export default function PlayerDatabase({
                           </div>
                         )}
                       </div>
-
-                      {/* Action buttons */}
                       <div className="flex items-center gap-1.5">
                         {inPool ? (
-                          <button 
-                            aria-label="Remove from pool" 
-                            onClick={() => onRemoveFromPool?.(player.id)} 
-                            className="w-7 h-7 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold"
-                          >
-                            −
-                          </button>
+                          <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold">−</button>
                         ) : (
-                          <button 
-                            aria-label="Add to pool" 
-                            onClick={() => onAddToPool?.(player)} 
-                            className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10" //shifting + button to left 10 pixels
-                          >
-                            +
-                          </button>
+                          <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10">+</button>
                         )}
-
-                        <button 
-                          onClick={() => startEditing(player)} 
-                          className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors" 
-                        >
-                          ✏️
-                        </button>
-                        {/* Search button - highlighted if has numericID but no duprId (needs lookup) */}
-                        <button 
-                          onClick={() => fetchDuprFor(player.id)} 
-                          title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"}
-                          className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${
-                            hasNumericId && player.duprScore == null
-                              ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" 
-                              : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"
-                          }`}
-                        >
-                          🔍
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (confirm(`Delete ${player.name}?`)) {
-                              onDeletePlayer?.(player.id);
-                            }
-                          }} 
-                          className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors" 
-                        >
-                          🗑️
-                        </button>
+                        <button onClick={() => startEditing(player)} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors">✏️</button>
+                        <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"} className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>
+                        <button onClick={() => { if (confirm(`Delete ${player.name}?`)) { onDeletePlayer?.(player.id); } }} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors">🗑️</button>
                       </div>
                     </div>
                   </div>

@@ -22,21 +22,6 @@ interface DuprTokenResponse {
   };
 }
 
-interface DuprUserResponse {
-  status: string;
-  result: {
-    id: number;
-    fullName: string;
-    referralCode: string;
-    imageUrl: string;
-    stats: {
-      singles: string;
-      doubles: string;
-      defaultRating: string;
-    };
-  };
-}
-
 // ===== DUPR Authentication =====
 async function getDuprToken(): Promise<string | null> {
   const email = process.env.DUPR_EMAIL;
@@ -74,6 +59,31 @@ export async function getPlayers() {
   } catch (error) {
     console.error("Error fetching players:", error);
     return { success: false, players: [], error: "Failed to fetch players" };
+  }
+}
+
+// Find a player by duprId or duprNumericId (for prefill)
+export async function findPlayerByDupr(duprId?: string, duprNumericId?: string) {
+  try {
+    if (!duprId?.trim() && !duprNumericId?.trim()) {
+      return { success: true, player: null };
+    }
+    
+    let player = null;
+    if (duprId?.trim()) {
+      player = await prisma.player.findFirst({
+        where: { duprId: duprId.trim() },
+      });
+    }
+    if (!player && duprNumericId?.trim()) {
+      player = await prisma.player.findFirst({
+        where: { duprNumericId: duprNumericId.trim() },
+      });
+    }
+    return { success: true, player };
+  } catch (error) {
+    console.error("Error finding player:", error);
+    return { success: false, player: null, error: "Failed to find player" };
   }
 }
 
@@ -323,16 +333,29 @@ export async function addClubPlayer(userId: string, playerId: string, note?: str
   }
 }
 
-// Remove a player from user's roster
-export async function removeClubPlayer(clubPlayerId: string) {
+// Remove a player from user's roster (safe delete - keep in global if has API duprScore)
+export async function removeClubPlayer(userId: string, playerId: string) {
   try {
+    // Get the player to check if they have API dupr
+    const player = await prisma.player.findUnique({ where: { id: playerId } });
+    
+    // Remove from this user's roster
     await prisma.clubPlayer.delete({
-      where: { id: clubPlayerId },
+      where: { userId_playerId: { userId, playerId } },
     });
+    
+    // Only delete from global if: no API duprScore AND no other club links
+    if (player && (player.duprScore == null || player.duprScore == undefined)) {
+      const otherLinks = await prisma.clubPlayer.count({ where: { playerId } });
+      if (otherLinks === 0) {
+        await prisma.player.delete({ where: { id: playerId } });
+      }
+    }
+    
     return { success: true };
   } catch (error) {
-    console.error("Error removing club player:", error);
-    return { success: false, error: "Failed to remove from roster" };
+    console.error("Error removing from club roster:", error);
+    return { success: false, error: "Failed to remove" };
   }
 }
 
