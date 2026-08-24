@@ -140,10 +140,13 @@ export async function addPlayer(formData: FormData, userId?: string) {
       const existingClubPlayer = await prisma.clubPlayer.findFirst({
         where: { userId, playerId: player.id },
       });
-
       if (!existingClubPlayer) {
         await prisma.clubPlayer.create({
-          data: { userId, playerId: player.id },
+          data: { 
+            userId, 
+            playerId: player.id,
+            playerName: player.name,  // ← ADD THIS
+          },
         });
       }
     }
@@ -282,7 +285,7 @@ export async function addClubPlayer(userId: string, playerId: string, note?: str
   try {
     // Get player name first
     const player = await prisma.player.findUnique({ where: { id: playerId } });
-
+    
     const clubPlayer = await prisma.clubPlayer.upsert({
       where: { userId_playerId: { userId, playerId } },
       update: {},
