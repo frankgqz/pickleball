@@ -128,7 +128,7 @@ export async function addPlayer(formData: FormData, userId?: string) {
           // Only update duprNumericId if provided and existing is null
           duprNumericId: existingPlayer.duprNumericId ?? (duprNumericId?.trim() || null),
           // Only update manualDuprScore if provided and existing is null
-          manualDuprScore: existingPlayer.manualDuprScore ?? (manualDuprScore ? parseFloat(manualDuprScore) : null),
+          manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : existingPlayer.manualDuprScore ?? null,
         },
       });
       merged = true;
