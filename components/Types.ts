@@ -40,7 +40,7 @@ export interface Player {
   manualDuprScore?: number | null; // Manually entered (1 decimal)
   imageUrl?: string | null;
   isSitting?: boolean;
-  lastRefreshed?: string | null; // ISO date string when DUPR was last fetched
+  lastRefreshed?: Date | null;  // Was: string | null | undefined
 }
 
 // ============================================================

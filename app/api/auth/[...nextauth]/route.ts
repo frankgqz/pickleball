@@ -19,14 +19,14 @@ const authOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       if (session?.user) {
         // @ts-ignore
         session.user.id = token.sub;
       }
-      return session;
+      return session;  // ADD THIS LINE
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.sub = user.id;
       }
@@ -34,15 +34,8 @@ const authOptions = {
     },
   },
   events: {
-    async createUser({ user }) {
-      await prisma.user.create({
-        data: {
-          id: user.id!,
-          email: user.email!,
-          name: user.name,
-          image: user.image,
-        },
-      });
+    async createUser({ user }: { user: any }) {
+      // ...
     },
   },
 };

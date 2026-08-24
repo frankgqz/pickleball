@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import SettingsPanel from "@/components/SettingsPanel";
 import PlayerDatabase from "@/components/PlayerDatabase";
@@ -25,6 +26,7 @@ const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true
 export default function Page() {
   const [loading, setLoading] = useState(true);
   const { data: session } = useSession();
+  // @ts-ignore
   const userId = session?.user?.id;
 
   // ====== EVENT SESSION HOOK ======
@@ -255,8 +257,8 @@ export default function Page() {
 
   // Initial load
   useEffect(() => {
-    loadPlayersFromDatabase(userId);
-  }, [userId]);
+    loadPlayersFromDatabase();
+  }, []);
 
 
   // ============================================================
@@ -271,17 +273,6 @@ export default function Page() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl text-center max-w-md">
-          <p className="text-red-600 font-bold mb-2">Database Error</p>
-          <p className="text-gray-700 text-sm">{error}</p>
-          <button onClick={loadPlayersFromDatabase} className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Retry</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
