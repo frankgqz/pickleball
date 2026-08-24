@@ -280,14 +280,17 @@ export async function getClubPlayers(userId: string) {
 // Add a player to user's roster (creates ClubPlayer link)
 export async function addClubPlayer(userId: string, playerId: string, note?: string) {
   try {
-    const clubPlayer = await prisma.clubPlayer.create({
-      data: {
+    // Get player name first
+    const player = await prisma.player.findUnique({ where: { id: playerId } });
+    
+    const clubPlayer = await prisma.clubPlayer.upsert({
+      where: { userId_playerId: { userId, playerId } },
+      update: {},
+      create: {
         userId,
         playerId,
+        playerName: player?.name || "Unknown",  // ← ADD THIS
         note: note || null,
-      },
-      include: {
-        player: true,
       },
     });
     return { success: true, clubPlayer };

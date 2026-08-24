@@ -321,7 +321,7 @@ export default function PlayerDatabase({
                           <button 
                             aria-label="Add to pool" 
                             onClick={() => onAddToPool?.(player)} 
-                            className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10"
+                            className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10" //shifting + button to left 10 pixels
                           >
                             +
                           </button>
