@@ -292,7 +292,7 @@ export default function PlayerDatabase({
                         <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleDateString()}` : undefined}>
                           {player.duprId || player.duprNumericId || ''}
                           {(player.duprScore != null || player.manualDuprScore != null) && (
-                            <span className={`ml-1 font-semibold ${player.duprScore != null ? 'text-green-600' : 'text-purple-600'}`}>
+                            <span className="ml-1 font-semibold">
                               {player.duprScore != null 
                                 ? player.duprScore.toFixed(3)        // API fetched = 3 decimals
                                 : player.manualDuprScore!.toFixed(1)  // Manual = 1 decimal

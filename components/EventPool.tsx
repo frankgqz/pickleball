@@ -117,11 +117,15 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 {/* Name + DUPR in one line */}
                 <div className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
                   <span className="text-xs font-medium truncate">{player.name}</span>
-                  {player.duprScore !== null && player.duprScore !== undefined && (
+                  {player.duprScore != null ? (
                     <span className="flex-none px-1.5 py-0.5 rounded bg-green-600 text-white text-[10px] font-bold">
-                      {player.duprScore}
+                      {player.duprScore.toFixed(3)}
                     </span>
-                  )}
+                  ) : player.manualDuprScore != null ? (
+                    <span className="flex-none px-1.5 py-0.5 rounded bg-amber-500 text-amber-950 text-[10px] font-bold">
+                      {player.manualDuprScore.toFixed(1)}
+                    </span>
+                  ) : null}
                 </div>
 
                 {/* Actions */}
