@@ -9,6 +9,7 @@ import CourtsPanel from "@/components/CourtsPanel";
 import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
+import { signIn, signOut } from "next-auth/react";
 
 
 
