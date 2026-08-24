@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import SettingsPanel from "@/components/SettingsPanel";
 import PlayerDatabase from "@/components/PlayerDatabase";
 import EventPool from "@/components/EventPool";
@@ -8,6 +8,8 @@ import CourtsPanel from "@/components/CourtsPanel";
 import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
+
+
 
 // Hooks
 import { useEventSession } from "@/components/hooks/useEventSession";
@@ -22,7 +24,8 @@ const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true
 
 export default function Page() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   // ====== EVENT SESSION HOOK ======
   const [eventSessionState, eventSessionActions] = useEventSession();
@@ -41,6 +44,8 @@ export default function Page() {
     deleteRoundFromHistory, 
     restartEvent,
   } = eventSessionActions;
+
+
 
   // ====== PLAYER DATABASE HOOK ======
   const [playerDbState, playerDbActions] = usePlayerDatabase(loading, setLoading);
@@ -114,7 +119,7 @@ export default function Page() {
   // ============================================================
   // ADD PLAYER TO POOL
   // ============================================================
-  const addToPoolWithStandings = useCallback((player: Player) => {
+  const addToPoolWithStandings = useCallback((player: Player, userId?: string) => {
     // Don't add duplicates
     if (standings.find(s => s.id === player.id)) return;
 
@@ -250,8 +255,9 @@ export default function Page() {
 
   // Initial load
   useEffect(() => {
-    loadPlayersFromDatabase();
-  }, []);
+    loadPlayersFromDatabase(userId);
+  }, [userId]);
+
 
   // ============================================================
   // RENDER
@@ -295,7 +301,7 @@ export default function Page() {
             onDeletePlayer={deleteExistingPlayer}
             onFetchDupr={fetchDuprForPlayer}
             onUpdatePlayer={updateExistingPlayer}
-            onAddToPool={addToPoolWithStandings}
+            onAddToPool={(player) => addToPoolWithStandings(player, userId)}
             onRemoveFromPool={removeFromPoolWithStandings}
           />
           <EventPool

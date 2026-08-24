@@ -6,8 +6,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { Player, StandingsEntry, GameSession } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
-import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer } from "@/app/actions";
+import { addPlayer, getPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer } from "@/app/actions";
 import { createStandingsEntry } from "../standingsUtils";
+
 
 export interface PlayerDatabaseState {
   // All players in the database
@@ -20,20 +21,22 @@ export interface PlayerDatabaseState {
 
 export interface PlayerDatabaseActions {
   // Database operations
-  loadPlayersFromDatabase: () => Promise<void>;
+loadPlayersFromDatabase: (userId?: string) => Promise<void>;
   addNewPlayer: (formData: FormData) => Promise<void>;
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
   deleteExistingPlayer: (id: string) => Promise<void>;
   fetchDuprForPlayer: (playerId: string) => Promise<void>;
   
   // Event pool operations
-  addPlayerToEventPool: (player: Player) => void;
+  addPlayerToEventPool: (player: Player, userId?: string) => void;
   removePlayerFromEventPool: (playerId: string) => void;
   clearEventPool: (newSession: GameSession) => void;
   togglePlayerSitting: (playerId: string) => void;
   
   // Get standings entries for all players in pool
   getPoolStandingsEntries: (orderGap: number, currentRoundNumber: number, lateJoinBonus: number) => StandingsEntry[];
+
+  
 }
 
 export function usePlayerDatabase(
@@ -134,11 +137,16 @@ export function usePlayerDatabase(
 
   // ============ EVENT POOL OPERATIONS ============
 
-  const addPlayerToEventPool = useCallback((player: Player) => {
+const addPlayerToEventPool = useCallback(async (player: Player, userId?: string) => {
     setEventPool(prev => {
       if (prev.find(p => p.id === player.id)) return prev;
       return [player, ...prev];
     });
+    
+    // If userId provided, also create ClubPlayer record in database
+    if (userId) {
+      await addClubPlayer(userId, player.id);
+    }
   }, []);
 
   const removePlayerFromEventPool = useCallback((playerId: string) => {
@@ -196,3 +204,4 @@ export function usePlayerDatabase(
 
   return [state, actions];
 }
+

@@ -1,5 +1,4 @@
 "use server";
-
 import { prisma } from "@/lib/prisma";
 
 // ===== DUPR API Configuration =====
@@ -42,21 +41,17 @@ interface DuprUserResponse {
 async function getDuprToken(): Promise<string | null> {
   const email = process.env.DUPR_EMAIL;
   const password = process.env.DUPR_PASSWORD;
-
   if (!email || !password) {
     console.error("DUPR credentials not configured");
     return null;
   }
-
   try {
     const response = await fetch(`${DUPR_API_BASE}/auth/v1.0/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-
     const data: DuprTokenResponse = await response.json();
-
     if (data.status === "SUCCESS" && data.result?.accessToken) {
       return data.result.accessToken;
     }
@@ -67,13 +62,13 @@ async function getDuprToken(): Promise<string | null> {
   }
 }
 
-// ===== PLAYER ACTIONS =====
+// ===== PLAYER ACTIONS (Global lookup) =====
 
-// Get all players from database
+// Get all players from database (for autocomplete)
 export async function getPlayers() {
   try {
     const players = await prisma.player.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { name: "asc" },
     });
     return { success: true, players };
   } catch (error) {
@@ -82,14 +77,12 @@ export async function getPlayers() {
   }
 }
 
-// Add a new player
+// Add a new player to global database
 export async function addPlayer(formData: FormData) {
   const name = formData.get("name") as string;
-  const duprId = formData.get("duprId") as string; // Letter ID
-  const duprNumericId = formData.get("duprNumericId") as string; // Numeric ID
-  const manualDuprScore = formData.get("manualDuprScore") as string; // Manually entered score
-
-  console.log("addPlayer called:", { name, duprId, duprNumericId, manualDuprScore });
+  const duprId = formData.get("duprId") as string;
+  const duprNumericId = formData.get("duprNumericId") as string;
+  const manualDuprScore = formData.get("manualDuprScore") as string;
 
   if (!name?.trim()) {
     return { success: false, error: "Name is required" };
@@ -102,10 +95,8 @@ export async function addPlayer(formData: FormData) {
         duprId: duprId?.trim() || null,
         duprNumericId: duprNumericId?.trim() || null,
         manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
-        orderScore: manualDuprScore ? parseFloat(manualDuprScore) : 5,
       },
     });
-    console.log("Player created:", player);
     return { success: true, player };
   } catch (error) {
     console.error("Error adding player:", error);
@@ -113,7 +104,7 @@ export async function addPlayer(formData: FormData) {
   }
 }
 
-// Delete a player
+// Delete a player from global database
 export async function deletePlayer(id: string) {
   try {
     await prisma.player.delete({
@@ -126,14 +117,12 @@ export async function deletePlayer(id: string) {
   }
 }
 
-// Update a player
+// Update a player in global database
 export async function updatePlayer(playerId: string, formData: FormData) {
   const name = formData.get("name") as string;
   const duprId = formData.get("duprId") as string;
   const duprNumericId = formData.get("duprNumericId") as string;
   const manualDuprScore = formData.get("manualDuprScore") as string;
-
-  console.log("updatePlayer called:", { playerId, name, duprId, duprNumericId, manualDuprScore });
 
   try {
     const player = await prisma.player.update({
@@ -145,7 +134,6 @@ export async function updatePlayer(playerId: string, formData: FormData) {
         manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
       },
     });
-    console.log("Player updated:", player);
     return { success: true, player };
   } catch (error) {
     console.error("Error updating player:", error);
@@ -159,17 +147,13 @@ export async function fetchDuprRating(playerId: string) {
     const player = await prisma.player.findUnique({
       where: { id: playerId },
     });
-
     if (!player || !player.duprNumericId) {
       return { success: false, error: "Player or Numeric DUPR ID not found" };
     }
-
     const token = await getDuprToken();
     if (!token) {
       return { success: false, error: "Failed to login to DUPR" };
     }
-
-    // Fetch by numeric ID
     const response = await fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
       method: "GET",
       headers: {
@@ -177,45 +161,107 @@ export async function fetchDuprRating(playerId: string) {
         "Content-Type": "application/json",
       },
     });
-
     if (response.ok) {
       const data = await response.json();
-
       let rating = data.result?.ratings?.doubles;
-
       if (rating === "NR" || !rating) {
         rating = null;
       } else {
         rating = parseFloat(rating);
       }
-
-      // Get imageUrl from response
       const imageUrl = data.result?.imageUrl || null;
-
-      // Update with all available data (name, letter ID, rating, imageUrl, lastRefreshed)
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
           name: data.result?.fullName || player.name,
-          duprId: data.result?.duprId || player.duprId, // Letter ID
-          duprNumericId: data.result?.id?.toString() || player.duprNumericId, // Numeric ID
+          duprId: data.result?.duprId || player.duprId,
+          duprNumericId: data.result?.id?.toString() || player.duprNumericId,
           duprScore: rating,
-          imageUrl: imageUrl, // Save avatar URL
-          lastRefreshed: new Date().toISOString(), // Track when DUPR was last fetched
+          imageUrl: imageUrl,
+          lastRefreshed: new Date(), // Changed from string to DateTime
         },
       });
-
       return {
         success: true,
         player: updatedPlayer,
         message: rating ? `Fetched: ${data.result.fullName} - ${rating}${imageUrl ? " ✓" : ""}` : "Player found but no rating (NR)"
       };
     }
-
     return { success: false, error: "Could not fetch player from DUPR" };
-
   } catch (error) {
     console.error("Error fetching DUPR rating:", error);
     return { success: false, error: "Failed to fetch rating" };
+  }
+}
+
+// ===== CLUB PLAYER ACTIONS (User's roster) =====
+
+// Get user's roster (ClubPlayers for a specific user)
+export async function getClubPlayers(userId: string) {
+  try {
+    const clubPlayers = await prisma.clubPlayer.findMany({
+      where: { userId },
+      include: {
+        player: true, // Include the global player data
+      },
+      orderBy: [
+        { eventCount: "desc" }, // Most frequent first
+        { lastAttended: "desc" },
+      ],
+    });
+    return { success: true, clubPlayers };
+  } catch (error) {
+    console.error("Error fetching club players:", error);
+    return { success: false, clubPlayers: [], error: "Failed to fetch roster" };
+  }
+}
+
+// Add a player to user's roster (creates ClubPlayer link)
+export async function addClubPlayer(userId: string, playerId: string, note?: string) {
+  try {
+    const clubPlayer = await prisma.clubPlayer.create({
+      data: {
+        userId,
+        playerId,
+        note: note || null,
+      },
+      include: {
+        player: true,
+      },
+    });
+    return { success: true, clubPlayer };
+  } catch (error) {
+    console.error("Error adding club player:", error);
+    return { success: false, error: "Failed to add to roster" };
+  }
+}
+
+// Remove a player from user's roster
+export async function removeClubPlayer(clubPlayerId: string) {
+  try {
+    await prisma.clubPlayer.delete({
+      where: { id: clubPlayerId },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing club player:", error);
+    return { success: false, error: "Failed to remove from roster" };
+  }
+}
+
+// Update club player (note, eventCount, lastAttended)
+export async function updateClubPlayer(clubPlayerId: string, data: { note?: string; eventCount?: number; lastAttended?: Date }) {
+  try {
+    const clubPlayer = await prisma.clubPlayer.update({
+      where: { id: clubPlayerId },
+      data,
+      include: {
+        player: true,
+      },
+    });
+    return { success: true, clubPlayer };
+  } catch (error) {
+    console.error("Error updating club player:", error);
+    return { success: false, error: "Failed to update" };
   }
 }

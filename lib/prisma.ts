@@ -1,13 +1,16 @@
-// We need to use require() for the generated Prisma client
-const { PrismaPg } = require("@prisma/adapter-pg");
+// lib/prisma.ts
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const globalForPrisma = global as any;
+// Use global to prevent multiple connections in dev
+const globalForPrisma = global as unknown as { prisma: PrismaClient | undefined };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL!;
-  const adapter = new PrismaPg({ connectionString });
-  const { PrismaClient } = require("@prisma/client");
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL!,
+  });
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
