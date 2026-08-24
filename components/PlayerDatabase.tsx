@@ -197,7 +197,7 @@ export default function PlayerDatabase({
           onChange={e => setDuprScore(e.target.value)} 
         />
         <button 
-          className="px-4 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700 font-bold" 
+          className="px-4 py-1.5 text-sm text-white bg-green-600 rounded hover:bg-green-700 font-bold ml-[-10px]" 
           onClick={handleAdd}
         >
           + Add
