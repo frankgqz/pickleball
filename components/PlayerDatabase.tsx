@@ -338,7 +338,7 @@ export default function PlayerDatabase({
                           onClick={() => fetchDuprFor(player.id)} 
                           title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"}
                           className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${
-                            hasNumericId && !hasDuprId
+                            hasNumericId && player.duprScore == null
                               ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" 
                               : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"
                           }`}
