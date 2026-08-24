@@ -1,14 +1,11 @@
 "use client";
-
 // usePlayerDatabase.ts - Player database and event pool management
 // Handles: loading players from DB, adding/removing from event pool, DUPR fetching
-
 import { useState, useCallback, useEffect } from "react";
 import { Player, StandingsEntry, GameSession } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
 import { addPlayer, getClubPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer } from "@/app/actions";
 import { createStandingsEntry } from "../standingsUtils";
-
 
 export interface PlayerDatabaseState {
   // All players in the database
@@ -21,22 +18,20 @@ export interface PlayerDatabaseState {
 
 export interface PlayerDatabaseActions {
   // Database operations
-loadPlayersFromDatabase: (userId?: string) => Promise<void>;
+  loadPlayersFromDatabase: (userId?: string) => Promise<void>;
   addNewPlayer: (formData: FormData) => Promise<void>;
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
   deleteExistingPlayer: (id: string) => Promise<void>;
   fetchDuprForPlayer: (playerId: string) => Promise<void>;
-  
+
   // Event pool operations
   addPlayerToEventPool: (player: Player, userId?: string) => void;
   removePlayerFromEventPool: (playerId: string) => void;
   clearEventPool: (newSession: GameSession) => void;
   togglePlayerSitting: (playerId: string) => void;
-  
+
   // Get standings entries for all players in pool
   getPoolStandingsEntries: (orderGap: number, currentRoundNumber: number, lateJoinBonus: number) => StandingsEntry[];
-
-  
 }
 
 export function usePlayerDatabase(
@@ -67,9 +62,11 @@ export function usePlayerDatabase(
 
   const loadPlayersFromDatabase = useCallback(async (userId?: string) => {
     try {
-      const result = await getClubPlayers(userId);
-      if (result.success && result.players && result.players.length > 0) {
-        setAllPlayers(result.players);
+      const result = await getClubPlayers(userId ?? '');
+      if (result.success && result.clubPlayers && result.clubPlayers.length > 0) {
+        // Extract the player from each ClubPlayer wrapper
+        const players = result.clubPlayers.map(cp => cp.player);
+        setAllPlayers(players);
       }
     } catch (err) {
       console.warn("Database load failed, using local data:", err);
@@ -137,12 +134,11 @@ export function usePlayerDatabase(
 
   // ============ EVENT POOL OPERATIONS ============
 
-const addPlayerToEventPool = useCallback(async (player: Player, userId?: string) => {
+  const addPlayerToEventPool = useCallback(async (player: Player, userId?: string) => {
     setEventPool(prev => {
       if (prev.find(p => p.id === player.id)) return prev;
       return [player, ...prev];
     });
-    
     // If userId provided, also create ClubPlayer record in database
     if (userId) {
       await addClubPlayer(userId, player.id);
@@ -194,6 +190,7 @@ const addPlayerToEventPool = useCallback(async (player: Player, userId?: string)
     updateExistingPlayer,
     deleteExistingPlayer,
     fetchDuprForPlayer,
+
     // Pool
     addPlayerToEventPool,
     removePlayerFromEventPool,
@@ -204,4 +201,3 @@ const addPlayerToEventPool = useCallback(async (player: Player, userId?: string)
 
   return [state, actions];
 }
-
