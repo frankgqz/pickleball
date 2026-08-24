@@ -9,7 +9,8 @@ interface AuthHeaderProps {
 
 export function AuthHeader({ session }: AuthHeaderProps) {
   return (
-    <div className="flex justify-between items-center mb-4">
+    <div className="max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
       <div className="text-green-100 text-sm">
         {!session && (
           <span className="flex items-center gap-2">
@@ -40,6 +41,7 @@ export function AuthHeader({ session }: AuthHeaderProps) {
             Sign In with Google
           </button>
         )}
+      </div>
       </div>
     </div>
   );
