@@ -66,7 +66,8 @@ export default function Page() {
     addPlayerToEventPool, 
     removePlayerFromEventPool, 
     clearEventPool, 
-    togglePlayerSitting 
+    togglePlayerSitting,
+    resetPlayers  // <-- ADD THIS
   } = playerDbActions;
 
   // ====== STANDINGS STATE HOOK ======
@@ -263,6 +264,12 @@ export default function Page() {
     }, [session?.user?.id, loadPlayersFromDatabase]);
 
 
+    useEffect(() => {
+    if (!session) {
+        resetPlayers();
+    }
+    }, [session, resetPlayers]);
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -342,3 +349,5 @@ export default function Page() {
     </div>
   );
 }
+
+

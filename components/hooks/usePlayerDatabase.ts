@@ -23,6 +23,7 @@ export interface PlayerDatabaseActions {
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
   deleteExistingPlayer: (id: string) => Promise<void>;
   fetchDuprForPlayer: (playerId: string) => Promise<void>;
+  resetPlayers: () => void;
 
   // Event pool operations
   addPlayerToEventPool: (player: Player, userId?: string) => void;
@@ -135,12 +136,18 @@ export function usePlayerDatabase(
     }
   }, []);
 
+  const resetPlayers = useCallback(() => {
+  setAllPlayers([]);
+  setEventPool([]);
+  }, []);
+
   const fetchDuprForPlayer = useCallback(async (playerId: string) => {
     const result = await fetchDuprRating(playerId);
     if (result.success && result.player) {
       setAllPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
     }
   }, []);
+
 
   // ============ EVENT POOL OPERATIONS ============
 
@@ -200,6 +207,7 @@ export function usePlayerDatabase(
     updateExistingPlayer,
     deleteExistingPlayer,
     fetchDuprForPlayer,
+    resetPlayers,  // <-- Add this
 
     // Pool
     addPlayerToEventPool,
