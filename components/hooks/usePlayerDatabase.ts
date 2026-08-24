@@ -19,7 +19,7 @@ export interface PlayerDatabaseState {
 export interface PlayerDatabaseActions {
   // Database operations
   loadPlayersFromDatabase: (userId?: string) => Promise<void>;
-  addNewPlayer: (formData: FormData) => Promise<void>;
+  addNewPlayer: (formData: FormData, userId?: string) => Promise<void>;
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
   deleteExistingPlayer: (id: string) => Promise<void>;
   fetchDuprForPlayer: (playerId: string) => Promise<void>;
@@ -81,7 +81,7 @@ export function usePlayerDatabase(
     }
   }, [setIsAppLoading]);
 
-  const addNewPlayer = useCallback(async (formData: FormData) => {
+  const addNewPlayer = useCallback(async (formData: FormData, userId?: string) => {
     const result = await addPlayer(formData);
     console.log("addPlayer result:", result);
     if (result.success && result.player) {
@@ -97,6 +97,10 @@ export function usePlayerDatabase(
         console.log("Updated eventPool:", updated);
         return updated;
       });
+      // Auto-add to user's roster if logged in
+      if (userId) {
+        await addClubPlayer(userId, result.player.id);
+      }
     } else {
       console.error("Failed to add player:", result.error);
     }

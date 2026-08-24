@@ -292,7 +292,7 @@ export default function Page() {
           <PlayerDatabase
             players={allPlayers}
             eventPool={eventPool}
-            onAddPlayer={addNewPlayer}
+            onAddPlayer={(formData) => addNewPlayer(formData, session?.user?.id)}
             onDeletePlayer={deleteExistingPlayer}
             onFetchDupr={fetchDuprForPlayer}
             onUpdatePlayer={updateExistingPlayer}
