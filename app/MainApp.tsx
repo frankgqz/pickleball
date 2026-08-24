@@ -284,6 +284,29 @@ export default function Page() {
       <div className="max-w-6xl mx-auto space-y-6">
         <SettingsPanel config={config} updateConfig={updateConfig} onRestartEvent={handleRestartEvent} />
 
+        <div className="text-right mb-4">
+        {session ? (
+            <div className="flex items-center gap-4">
+            <span className="text-white text-sm">
+                Signed in as {session.user?.name}
+            </span>
+            <button 
+                onClick={() => signOut()}
+                className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm"
+            >
+                Sign Out
+            </button>
+            </div>
+        ) : (
+            <button 
+            onClick={() => signIn("google")}
+            className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm"
+            >
+            Sign In with Google
+            </button>
+        )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PlayerDatabase
             players={allPlayers}
