@@ -1,6 +1,5 @@
 260808
 
-
 	Built and managed with Node.js, Neon, Prisma and Vercel
     Initialized the Pickleball Event Manager and moved toward a componentized UI: SettingsPanel, PlayerDatabase, EventPool, CourtsPanel, StandingsTable, and RoundHistoryPanel.
 	Centralized types in a shared Types.ts and split heavy logic into MatchEngine.ts and standingsUtils.ts to keep page.tsx small and focused.

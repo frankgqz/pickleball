@@ -6,63 +6,133 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // url is now in prisma.config.ts
 }
 
 // ============================================
-// PLAYER — A person in the tournament
+// PLAYER — Global player database (shared lookup)
 // ============================================
 model Player {
-  id              String    @id @default(uuid())
+  id              String        @id @default(cuid())
   name            String
-  duprId          String?   // Letter ID for DUPR export (e.g., "5E64ZL")
-  duprNumericId   String?   // Numeric ID for API lookups (e.g., "7438750465")
-  duprScore       Float?    // From API (3 decimals)
-  manualDuprScore Float?    // ADD THIS - Manual entry (1 decimal)
-  imageUrl        String?   // DUPR profile avatar image URL
-  seed            Int       @default(999)
-  isSitting       Boolean   @default(false)
-  orderScore      Float     @default(0)
-  lastRefreshed   String?   // ADD THIS - When DUPR was last fetched
-  createdAt       DateTime  @default(now())
-  tournament      Tournament? @relation(fields: [tournamentId], references: [id])
-  tournamentId    String?
+  duprId          String?
+  duprNumericId   String?
+  duprScore       Float?
+  manualDuprScore Float?
+  imageUrl        String?
+  lastRefreshed   DateTime?
+  
+  clubPlayers     ClubPlayer[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([name])
+  @@index([duprId])
+  @@index([duprNumericId])
 }
 
+// ============================================
+// USER — Club/organization (NextAuth)
+// ============================================
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  image        String?
+  
+  clubPlayers  ClubPlayer[]
+  events       Event[]
+  
+  createdAt    DateTime      @default(now())
+}
 
 // ============================================
-// TOURNAMENT — The event itself
+// CLUBPLAYER — Player in a club's roster
 // ============================================
-model Tournament {
-  id            String   @id @default(uuid())
-  name          String
-  format        String   // "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY"
-  pointsPerGame Int      @default(11)
-  winByTwo      Boolean  @default(true)
-  courtCount    Int      @default(2)
-  status        String   @default("SETUP") // "SETUP" | "ACTIVE" | "COMPLETED"
-  orderDelta    Int      @default(2)       // Points to add/subtract on win/loss
+model ClubPlayer {
+  id            String   @id @default(cuid())
+  
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  playerId      String
+  player        Player   @relation(fields: [playerId], references: [id])
+  
+  eventCount    Int      @default(0)
+  lastAttended  DateTime?
+  note          String?
+  
+  eventPlayers  EventPlayer[]
+  
   createdAt     DateTime @default(now())
-  
-  players Player[]
-  matches Match[]
+
+  @@unique([userId, playerId])
+  @@index([userId])
+  @@index([playerId])
 }
 
 // ============================================
-// MATCH — A single game between two teams
+// EVENT — An event/tournament
 // ============================================
-model Match {
-  id            String   @id @default(uuid())
-  round         Int
-  court         Int
-  team1Player1  String
-  team1Player2  String
-  team2Player1  String
-  team2Player2  String
-  team1Score    Int?
-  team2Score    Int?
-  winner        String?  // "TEAM1" | "TEAM2" | null
-  isComplete    Boolean  @default(false)
-  tournamentId  String
+model Event {
+  id            String        @id @default(cuid())
+  name          String
+  format        String        @default("STANDARD")
+  pointsPerGame Int           @default(11)
+  winByTwo      Boolean       @default(true)
+  courtCount    Int           @default(5)
+  orderDelta    Int           @default(2)
+  status        String        @default("SETUP")
   
-  tournament Tournament @relation(fields: [tournamentId], references: [id])
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  
+  eventPlayers  EventPlayer[]
+  rounds        EventRound[]
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// ============================================
+// EVENTPLAYER — Player in an event
+// ============================================
+model EventPlayer {
+  id          String     @id @default(cuid())
+  
+  eventId     String
+  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  clubPlayerId String
+  clubPlayer   ClubPlayer @relation(fields: [clubPlayerId], references: [id], onDelete: Cascade)
+  
+  isSitting   Boolean    @default(false)
+  orderScore  Float      @default(0)
+  seed        Int        @default(999)
+  
+  createdAt   DateTime   @default(now())
+
+  @@unique([eventId, clubPlayerId])
+  @@index([clubPlayerId])
+  @@index([eventId])
+}
+
+// ============================================
+// EVENTROUND — Round in an event
+// ============================================
+model EventRound {
+  id          String   @id @default(cuid())
+  
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  roundNumber Int
+  matches     Json
+  sittingOut  Json?
+  format      String?
+  date        DateTime @default(now())
+
+  @@index([eventId])
+  @@index([eventId, roundNumber])
 }
