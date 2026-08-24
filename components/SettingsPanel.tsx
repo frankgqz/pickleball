@@ -33,9 +33,9 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
 
       {/* Event Name - for CSV export */}
       {/* CSV Export Settings Row */}
-      <div className="grid grid-cols-4 gap-2 mb-2">
-        {/* Event Name */}
-        <div className="col-span-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+        {/* Event Name - wider on desktop (2 cols = 50%) */}
+        <div className="col-span-2 md:col-span-2">
           <label className="text-xs font-medium text-gray-600 mb-0.5 block">Event Name (for CSV)</label>
           <input
             type="text"
@@ -80,9 +80,9 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
             onChange={(e) => handleChange("bestOf" as any, parseInt(e.target.value) as 1 | 3 | 5)}
             className="w-full px-2 py-1 border border-gray-300 rounded text-xs bg-white"
           >
-            <option value="1">1 (No limit)</option>
-            <option value="3">3 (Best of 3)</option>
-            <option value="5">5 (Best of 5)</option>
+            <option value="1">1</option>
+            <option value="3">3</option>
+            <option value="5">5</option>
           </select>
         </div>
       </div>
