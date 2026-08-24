@@ -34,3 +34,14 @@
     Submission logic changed so only matches with both numeric scores are processed (prevents accidental 0–0 double-loss), and invalid matches are highlighted and reported at submit.
     UI improvements: PlayerDatabase and EventPool aligned and compacted (white backgrounds, light borders, consistent row heights), EventPool capped height, Clear All button styled, and RoundHistory select width constrained to avoid blocking horizontal scrolling on mobile.
     Fixed add/edit player flows and server actions: addPlayer/updatePlayer now use FormData, add auto-adds new players to the pool, DUPR fetch updates duprScore and lastRefreshed (without overwriting manualDuprScore), and Prisma schema was updated to include the new fields (manualDuprScore, lastRefreshed).
+
+260825
+
+    Restructured DB schema: Players → ClubPlayers — Players are now global (no userId), associations stored in a separate ClubPlayer join table so players can be shared across users.
+    Replaced global player queries with club-scoped queries — getPlayers(userId) replaced with getClubPlayers(userId) to fetch only the current user's roster.
+    Split player deletion into two modes — Global deletePlayer (hard delete) vs. removeClubPlayer (soft remove from roster only), passed to PlayerDatabase via onRemoveFromClubRoster.
+    Added player list refresh after roster removal — onRefreshPlayers callback wired through PlayerDatabase so the list reflects DB changes immediately after removing a player from the club roster.
+    Removed dead imports in MainApp.tsx — Cleaned up 6 unused server actions (addPlayer, getClubPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer) that were replaced by hook-based logic.
+    Added CSV export settings to TournamentConfig — New fields matchType (D/S), scoreType (SIDEOUT/RALLY), bestOf (1/3/5) added to Types for tournament metadata.
+    Fixed CSV export showing duprNumericId. And improved CSV settings UI. 
+    Planned session persistence architecture — Designed 2-table DB schema (EventSession, SessionRound) for saving/loading complete tournaments with matches, standings, and config (pending implementation).

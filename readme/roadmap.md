@@ -1,29 +1,37 @@
-## Pickleball Event Manager
+## Pickleball Event Organiser
 
 ### Matching settings
 Options to sort matches by seed, by partner repeat avoidance
-RR by pools, Top third, middle third, bottom third. 
-Fixed partner 
-Singles
-Pool play bracket system options
-Handle game scores (best of 3)
+Venn-Pool, Top pool, shared pool, bottom pool. 
+Fixed partner, Singles, Pool play bracket system options
+Handle game Scores (best of 3)
 
 ### Login System
-Login system, to differentiate player pool, access past sessions, save sessions
+Store and View past sessions
+View on Standings Table
+Edit and continue sessions
+Database restructure
+    Event
+        config json - CSV impacting
+                    - Non CSV impacting
+        playerIDs json
+    Session
+        id, sessionID , round, date
+        format json
+        matches IDs & scores
+        sitting out json array
+    
 
-### Player persepctive
-later maybe there is a way to look up player and see their
+### Player Persepctive
+Feature to look up player and see their past games
+Log in add dupr account, find all games involved in
 
-### Event
-that sorts player in user’s playerdatabase, to the more frequent joiners
+### Player Database
+Feature to sort player in user’s playerdatabase, to the more frequent joiners
 
 ### Design
 Mobile responsive design
 Mobile standings table visibility
 Shadows, curved edge, pastel theme
-
-## CSV
-when exporting to csv, it is putting in duprNumId where there is no dupr.
-rally or side out - checkbox for logging
 
  
