@@ -122,6 +122,12 @@ export async function addPlayer(formData: FormData, userId?: string) {
         },
       });
       merged = true;
+
+      // Sync playerName to all ClubPlayer entries
+      await prisma.clubPlayer.updateMany({
+        where: { playerId: player.id },
+        data: { playerName: name.trim() },
+      });
     } else {
       // Create new player
       player = await prisma.player.create({
@@ -142,10 +148,10 @@ export async function addPlayer(formData: FormData, userId?: string) {
       });
       if (!existingClubPlayer) {
         await prisma.clubPlayer.create({
-          data: { 
-            userId, 
+          data: {
+            userId,
             playerId: player.id,
-            playerName: player.name,  // ← ADD THIS
+            playerName: player.name,
           },
         });
       }
@@ -193,6 +199,13 @@ export async function updatePlayer(playerId: string, formData: FormData) {
         manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
       },
     });
+
+    // Sync playerName to all ClubPlayer entries
+    await prisma.clubPlayer.updateMany({
+      where: { playerId },
+      data: { playerName: name.trim() },
+    });
+
     return { success: true, player };
   } catch (error) {
     console.error("Error updating player:", error);
@@ -245,6 +258,14 @@ export async function fetchDuprRating(playerId: string) {
         },
       });
 
+      // Sync playerName if name changed from API
+      if (data.result?.fullName) {
+        await prisma.clubPlayer.updateMany({
+          where: { playerId },
+          data: { playerName: data.result.fullName },
+        });
+      }
+
       return {
         success: true,
         player: updatedPlayer,
@@ -285,14 +306,13 @@ export async function addClubPlayer(userId: string, playerId: string, note?: str
   try {
     // Get player name first
     const player = await prisma.player.findUnique({ where: { id: playerId } });
-    
     const clubPlayer = await prisma.clubPlayer.upsert({
       where: { userId_playerId: { userId, playerId } },
       update: {},
       create: {
         userId,
         playerId,
-        playerName: player?.name || "Unknown",  // ← ADD THIS
+        playerName: player?.name || "Unknown",
         note: note || null,
       },
     });

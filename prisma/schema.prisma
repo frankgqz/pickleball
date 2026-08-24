@@ -58,7 +58,7 @@ model ClubPlayer {
   
   playerId      String
   player        Player   @relation(fields: [playerId], references: [id])
-  playerName    String   
+  playerName    String   @default("")
   
   eventCount    Int      @default(0)
   lastAttended  DateTime?
