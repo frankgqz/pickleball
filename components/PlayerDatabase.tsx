@@ -289,7 +289,7 @@ export default function PlayerDatabase({
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-xs truncate">{player.name}</div>
-                        <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleString()}` : undefined}>
+                        <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleDateString()}` : undefined}>
                           {player.duprId || player.duprNumericId || ''}
                           {(player.duprScore != null || player.manualDuprScore != null) && (
                             <span className="ml-1 font-semibold">
@@ -336,7 +336,7 @@ export default function PlayerDatabase({
                         {/* Search button - highlighted if has numericID but no duprId (needs lookup) */}
                         <button 
                           onClick={() => fetchDuprFor(player.id)} 
-                          title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleString()}` : "Fetch DUPR rating"}
+                          title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"}
                           className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${
                             hasNumericId && !hasDuprId
                               ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" 
