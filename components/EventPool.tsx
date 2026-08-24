@@ -122,7 +122,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       {player.duprScore.toFixed(3)}
                     </span>
                   ) : player.manualDuprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded bg-amber-500 text-amber-950 text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-900 text-[10px] font-bold">
                       {player.manualDuprScore.toFixed(1)}
                     </span>
                   ) : null}
