@@ -265,18 +265,3 @@ export async function updateClubPlayer(clubPlayerId: string, data: { note?: stri
     return { success: false, error: "Failed to update" };
   }
 }
-
-// Get user's roster (ClubPlayers with Player data)
-export async function getClubPlayers(userId: string) {
-  try {
-    const clubPlayers = await prisma.clubPlayer.findMany({
-      where: { userId },
-      include: { player: true },
-      orderBy: { eventCount: "desc" },
-    });
-    return { success: true, clubPlayers };
-  } catch (error) {
-    console.error("Error fetching club players:", error);
-    return { success: false, clubPlayers: [], error: "Failed to fetch roster" };
-  }
-}
