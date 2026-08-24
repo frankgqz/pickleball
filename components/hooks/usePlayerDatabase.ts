@@ -62,12 +62,18 @@ export function usePlayerDatabase(
 
   const loadPlayersFromDatabase = useCallback(async (userId?: string) => {
     try {
-      const result = await getClubPlayers(userId ?? '');
-      if (result.success && result.clubPlayers && result.clubPlayers.length > 0) {
-        // Extract the player from each ClubPlayer wrapper
-        const players = result.clubPlayers.map(cp => cp.player);
-        setAllPlayers(players);
+      // Only query club-specific players if user is logged in
+      if (userId) {
+        const result = await getClubPlayers(userId);
+        if (result.success && result.clubPlayers && result.clubPlayers.length > 0) {
+          // Extract the player from each ClubPlayer wrapper
+          const players = result.clubPlayers.map(cp => cp.player);
+          setAllPlayers(players);
+          return; // Successfully loaded from DB, done
+        }
       }
+      // If not logged in OR DB query returned empty, keep using localStorage
+      // (allPlayers is already initialized from localStorage in useState)
     } catch (err) {
       console.warn("Database load failed, using local data:", err);
     } finally {

@@ -10,6 +10,7 @@ import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
+import { AuthHeader } from "@/components/AuthHeader";
 
 
 
@@ -257,9 +258,9 @@ export default function Page() {
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
   // Initial load
-  useEffect(() => {
-    loadPlayersFromDatabase();
-  }, []);
+    useEffect(() => {
+    loadPlayersFromDatabase(session?.user?.id);
+    }, [session?.user?.id, loadPlayersFromDatabase]);
 
 
   // ============================================================
@@ -282,28 +283,7 @@ export default function Page() {
         <p className="text-green-100 text-sm">Tournament Management & Round Robin Scheduling</p>
       </header>
 
-    <div className="text-right mb-4">
-    {session ? (
-        <div className="flex items-center gap-4">
-        <span className="text-white text-sm">
-            Signed in as {session.user?.name}
-        </span>
-        <button 
-            onClick={() => signOut()}
-            className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm"
-        >
-            Sign Out
-        </button>
-        </div>
-    ) : (
-        <button 
-        onClick={() => signIn("google")}
-        className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm"
-        >
-        Sign In with Google
-        </button>
-    )}
-    </div>
+      <AuthHeader session={session} />
 
       <div className="max-w-6xl mx-auto space-y-6">
         <SettingsPanel config={config} updateConfig={updateConfig} onRestartEvent={handleRestartEvent} />
