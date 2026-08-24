@@ -34,8 +34,16 @@ const authOptions = {
     },
   },
   events: {
-    async createUser({ user }: { user: any }) {
-      // ...
+    async createUser({ user }) {
+      console.log("Creating user:", user.email);  // ADD THIS LINE
+      await prisma.user.create({
+        data: {
+          id: user.id!,
+          email: user.email!,
+          name: user.name,
+          image: user.image,
+        },
+      });
     },
   },
 };
