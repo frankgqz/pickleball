@@ -62,7 +62,7 @@ export default function PlayerDatabase({
     return list;
   }, [players, search, sortBy]);
 
-  // Check for existing player when dupr fields change
+  // Check for existing player when dupr fields change - prefill missing fields
   useEffect(() => {
     const checkExisting = async () => {
       if (!duprId.trim() && !duprNumericId.trim()) {
@@ -74,13 +74,13 @@ export default function PlayerDatabase({
       const result = await findPlayerByDupr(duprId.trim() || undefined, duprNumericId.trim() || undefined);
       
       if (result.player) {
-        // Check which field matched
-        if (result.player.duprId === duprId.trim()) {
-          setDuprIdExists(true);
-        }
-        if (result.player.duprNumericId === duprNumericId.trim()) {
-          setNumericIdExists(true);
-        }
+        // Set highlights for matched fields
+        if (result.player.duprId === duprId.trim()) setDuprIdExists(true);
+        if (result.player.duprNumericId === duprNumericId.trim()) setNumericIdExists(true);
+        
+        // Prefill missing fields
+        if (!name.trim() && result.player.name) setName(result.player.name);
+        if (!duprScore.trim() && result.player.duprScore != null) setDuprScore(String(result.player.duprScore));
       } else {
         setDuprIdExists(false);
         setNumericIdExists(false);
@@ -208,13 +208,13 @@ export default function PlayerDatabase({
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded text-xs w-20 ${duprIdExists ? 'border-purple-500 bg-blue-50' : 'border-gray-300'}`}
+          className={`px-2 py-1.5 border rounded text-xs w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
           placeholder="DUPR ID" 
           value={duprId} 
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded text-xs w-20 ${numericIdExists ? 'border-purple-500 bg-blue-50' : 'border-gray-300'}`}
+          className={`px-2 py-1.5 border rounded text-xs w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
           placeholder="webNumericID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
