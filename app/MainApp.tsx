@@ -298,6 +298,7 @@ export default function Page() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PlayerDatabase
             players={allPlayers}
+            userId={session?.user?.id}  // ← Add this
             eventPool={eventPool}
             onAddPlayer={(formData) => addNewPlayer(formData, session?.user?.id)}
             onDeletePlayer={deleteExistingPlayer}

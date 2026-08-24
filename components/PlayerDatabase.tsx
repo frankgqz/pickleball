@@ -5,10 +5,12 @@ import { findPlayerByDupr } from "@/app/actions";
 
 interface Props {
   players: Player[];
+  userId?: string;  // Current user's ID for safe delete
   eventPool?: Player[];
   onAddPlayer?: (formData: FormData) => Promise<any> | void;
   onUpdatePlayer?: (id: string, p: Partial<Player>) => Promise<any> | void;
-  onDeletePlayer?: (id: string) => Promise<any> | void;
+  onDeletePlayer?: (id: string) => Promise<any> | void;  // Global delete (keep for special cases)
+  onRemoveFromClubRoster?: (playerId: string) => Promise<any> | void;  // Safe delete from user's roster
   onFetchDupr?: (id: string) => Promise<any> | void;
   onAddToPool?: (player: Player) => void;
   onRemoveFromPool?: (id: string) => void;
@@ -16,10 +18,12 @@ interface Props {
 
 export default function PlayerDatabase({
   players,
+  userId,
   eventPool = [],
   onAddPlayer,
   onUpdatePlayer,
   onDeletePlayer,
+  onRemoveFromClubRoster,
   onFetchDupr,
   onAddToPool,
   onRemoveFromPool,
@@ -78,27 +82,33 @@ export default function PlayerDatabase({
         const matchedByNumeric = result.player.duprNumericId === duprNumericId.trim();
         const matchedByDuprId = result.player.duprId === duprId.trim();
         
-        // Set highlights for matched fields
+        // Set highlights
         if (matchedByDuprId) setDuprIdExists(true);
         if (matchedByNumeric) setNumericIdExists(true);
         
-        // If matched by duprId only → gentle prefill (only empty fields)
-        if (matchedByDuprId && !matchedByNumeric) {
-          if (!name.trim() && result.player.name) setName(result.player.name);
-          if (!duprNumericId.trim() && result.player.duprNumericId) setDuprNumericId(result.player.duprNumericId);
-          if (!duprScore.trim() && result.player.duprScore != null) setDuprScore(String(result.player.duprScore));
-        }
-        // If matched by duprNumericId without API score → gentle prefill
-        else if (matchedByNumeric && !hasApiScore) {
-          if (!name.trim() && result.player.name) setName(result.player.name);
-          if (!duprId.trim() && result.player.duprId) setDuprId(result.player.duprId);
-          if (!duprScore.trim() && result.player.manualDuprScore != null) setDuprScore(String(result.player.manualDuprScore));
-        }
-        // If matched by duprNumericId WITH API score → aggressive overwrite
-        else if (matchedByNumeric && hasApiScore) {
+        // If matched by numericId WITH API score → aggressive overwrite
+        if (matchedByNumeric && hasApiScore) {
           if (result.player.name) setName(result.player.name);
           if (result.player.duprId) setDuprId(result.player.duprId);
           setDuprScore(String(result.player.duprScore));
+        }
+        // If matched (no API score) → gentle prefill, but overwrite manualDuprScore if new value exists
+        else if (matchedByDuprId || matchedByNumeric) {
+          if (!name.trim() && result.player.name) setName(result.player.name);
+          if (!duprId.trim() && result.player.duprId) setDuprId(result.player.duprId);
+          if (!duprNumericId.trim() && result.player.duprNumericId) setDuprNumericId(result.player.duprNumericId);
+          
+          // If new form has manual score → use it (overwrite existing)
+          if (duprScore.trim()) {
+            setDuprScore(duprScore);
+          } else if (result.player.manualDuprScore != null) {
+            setDuprScore(String(result.player.manualDuprScore));
+          }
+          
+          // Also prefill API score if exists and no manual score in form
+          if (!duprScore.trim() && result.player.duprScore != null) {
+            setDuprScore(String(result.player.duprScore));
+          }
         }
       } else {
         setDuprIdExists(false);
@@ -108,7 +118,7 @@ export default function PlayerDatabase({
 
     const timeout = setTimeout(checkExisting, 300);
     return () => clearTimeout(timeout);
-  }, [duprId, duprNumericId]);
+  }, [duprId, duprNumericId, duprScore]);
 
   const handleAdd = async () => {
     const trimmed = name.trim();
@@ -190,6 +200,22 @@ export default function PlayerDatabase({
       setFetchFeedback({ playerId: id, message: "Error", success: false });
     }
     setTimeout(() => setFetchFeedback(null), 3000);
+  };
+
+  const handleDelete = async (player: Player) => {
+    if (!confirm(`Remove ${player.name} from your roster?`)) return;
+    
+    try {
+      // If userId is available, use safe delete (remove from roster only)
+      if (userId && onRemoveFromClubRoster) {
+        await onRemoveFromClubRoster(player.id);
+      } else {
+        // Fallback to global delete if no userId (shouldn't happen when logged in)
+        await onDeletePlayer?.(player.id);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
@@ -337,7 +363,7 @@ export default function PlayerDatabase({
                         )}
                         <button onClick={() => startEditing(player)} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors">✏️</button>
                         <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"} className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>
-                        <button onClick={() => { if (confirm(`Delete ${player.name}?`)) { onDeletePlayer?.(player.id); } }} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors">🗑️</button>
+                        <button onClick={() => handleDelete(player)} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors">🗑️</button>
                       </div>
                     </div>
                   </div>
