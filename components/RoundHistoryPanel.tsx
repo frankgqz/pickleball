@@ -85,7 +85,7 @@ export default function RoundHistoryPanel({
       const player = eventPool.find(p => p.id === id);
       return {
         name: player?.name || "",
-        duprId: player?.duprId || player?.duprNumericId || ""
+        duprId: player?.duprId || ""
       };
     };
 

@@ -9,6 +9,9 @@ import { localStorageDb } from "./useLocalStorage";
 
 export const DEFAULT_CONFIG: TournamentConfig = {
   format: "STANDARD",
+  matchType: "D",         // ← ADD
+  scoreType: "SIDEOUT",   // ← ADD
+  bestOf: 1,              // ← ADD
   orderGap: 0.25,
   band: 1,
   winLossMagnitude: 1,

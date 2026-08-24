@@ -85,6 +85,9 @@ export interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
   roundFormat?: "FIXED_14V23" | "PICK_PARTNER";
   eventName?: string;
+  matchType: "D" | "S";              // ← ADD THIS LINE (doubles/singles)
+  scoreType: "SIDEOUT" | "RALLY";    // ← ADD THIS LINE (scoring method)
+  bestOf: 1 | 3 | 5;                 // ← ADD THIS LINE (games per match)
   orderGap: number;
   band: number;
   winLossMagnitude: number;

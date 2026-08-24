@@ -32,16 +32,62 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
       </div>
 
       {/* Event Name - for CSV export */}
-      <div className="mb-2">
-        <label className="text-xs font-medium text-gray-600 mb-0.5 block">Event Name (for CSV export)</label>
-        <input
-          type="text"
-          value={config.eventName || ""}
-          onChange={(e) => handleChange("eventName" as any, e.target.value)}
-          placeholder="e.g. Fun Pickleball Tournament - 3.5 Division"
-          className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
-        />
+      {/* CSV Export Settings Row */}
+      <div className="grid grid-cols-4 gap-2 mb-2">
+        {/* Event Name */}
+        <div className="col-span-1">
+          <label className="text-xs font-medium text-gray-600 mb-0.5 block">Event Name (for CSV)</label>
+          <input
+            type="text"
+            value={config.eventName || ""}
+            onChange={(e) => handleChange("eventName" as any, e.target.value)}
+            placeholder="e.g. Fun Pickleball Tournament"
+            className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+          />
+        </div>
+
+        {/* Match Type */}
+        <div>
+          <label className="text-xs font-medium text-gray-600 mb-0.5 block">Match Type</label>
+          <select
+            value={config.matchType || "D"}
+            onChange={(e) => handleChange("matchType" as any, e.target.value as "D" | "S")}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-xs bg-white"
+          >
+            <option value="D">Doubles (D)</option>
+            <option value="S">Singles (S)</option>
+          </select>
+        </div>
+
+        {/* Score Type */}
+        <div>
+          <label className="text-xs font-medium text-gray-600 mb-0.5 block">Score Type</label>
+          <select
+            value={config.scoreType || "SIDEOUT"}
+            onChange={(e) => handleChange("scoreType" as any, e.target.value as "SIDEOUT" | "RALLY")}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-xs bg-white"
+          >
+            <option value="SIDEOUT">Sideout</option>
+            <option value="RALLY">Rally</option>
+          </select>
+        </div>
+
+        {/* Best Of */}
+        <div>
+          <label className="text-xs font-medium text-gray-600 mb-0.5 block">Best Of</label>
+          <select
+            value={config.bestOf || 1}
+            onChange={(e) => handleChange("bestOf" as any, parseInt(e.target.value) as 1 | 3 | 5)}
+            className="w-full px-2 py-1 border border-gray-300 rounded text-xs bg-white"
+          >
+            <option value="1">1 (No limit)</option>
+            <option value="3">3 (Best of 3)</option>
+            <option value="5">5 (Best of 5)</option>
+          </select>
+        </div>
       </div>
+
+      
 
       {/* Format Row */}
       <div className="flex flex-wrap gap-2 mb-2">
