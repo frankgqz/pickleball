@@ -33,5 +33,6 @@ Feature to sort player in user’s playerdatabase, to the more frequent joiners
 Mobile responsive design
 Mobile standings table visibility
 Shadows, curved edge, pastel theme
+View of matches in viewport able to be shared on a screen. fit nicely 
 
  
