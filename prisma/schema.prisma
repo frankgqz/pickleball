@@ -75,66 +75,36 @@ model ClubPlayer {
 }
 
 // ============================================
-// EVENT — An event/tournament
+// SESSION — The Session's details
 // ============================================
-model Event {
-  id            String        @id @default(cuid())
-  name          String
-  format        String        @default("STANDARD")
-  pointsPerGame Int           @default(11)
-  winByTwo      Boolean       @default(true)
-  courtCount    Int           @default(5)
-  orderDelta    Int           @default(2)
-  status        String        @default("SETUP")
-  
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  
-  eventPlayers  EventPlayer[]
-  rounds        EventRound[]
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+  isEnded   Boolean  @default(false)
+  config    Json     // matchType, scoreType, bestOf, format, etc.
+  playerIds Json     // [playerId, ...]
+
+  rounds    SessionRound[]
+
+  @@index([userId])
 }
 
 // ============================================
-// EVENTPLAYER — Player in an event
+// SESSIONROUND — Rounds in a session
 // ============================================
-model EventPlayer {
-  id          String     @id @default(cuid())
-  
-  eventId     String
-  event       Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
-  clubPlayerId String
-  clubPlayer   ClubPlayer @relation(fields: [clubPlayerId], references: [id], onDelete: Cascade)
-  
-  isSitting   Boolean    @default(false)
-  orderScore  Float      @default(0)
-  seed        Int        @default(999)
-  
-  createdAt   DateTime   @default(now())
-
-  @@unique([eventId, clubPlayerId])
-  @@index([clubPlayerId])
-  @@index([eventId])
-}
-
-// ============================================
-// EVENTROUND — Round in an event
-// ============================================
-model EventRound {
-  id          String   @id @default(cuid())
-  
-  eventId     String
-  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+model SessionRound {
+  id          String  @id @default(cuid())
+  sessionId   String
+  session     Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   roundNumber Int
+  date        String
+  format      Json
   matches     Json
   sittingOut  Json?
-  format      String?
-  date        DateTime @default(now())
 
-  @@index([eventId])
-  @@index([eventId, roundNumber])
+  @@unique([sessionId, roundNumber])
+  @@index([sessionId])
 }

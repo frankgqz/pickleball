@@ -1,77 +1,78 @@
 // Shared types for Pickleball Tournament Manager
-
 // ============================================================
 // MATCH FORMATS (Discriminated Unions)
 // ============================================================
-
-export type MatchFormat = 
+export type MatchFormat =
   | { type: "PICK_PARTNER"; allowPartnerRepeat?: boolean }
   | { type: "FIXED_14V23"; partnerLock?: boolean }
-  | { type: "POOL_PLAY"; poolsCount: number };
+  | { type: "POOL_PLAY"; poolsCount: number }
+  | { type: "KING_OF_HILL" }
+  | { type: "SEMIS" }
+  | { type: "FINALS" };
 
 // Convenience constants for format creation
 export const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
 export const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 export const POOL_PLAY_FORMAT = (poolsCount: number): MatchFormat => ({ type: "POOL_PLAY", poolsCount });
+export const KING_OF_HILL_FORMAT: MatchFormat = { type: "KING_OF_HILL" };
+export const SEMIS_FORMAT: MatchFormat = { type: "SEMIS" };
+export const FINALS_FORMAT: MatchFormat = { type: "FINALS" };
 
 // Helper to check format type
 export function isPickPartnerFormat(fmt: MatchFormat): boolean {
   return fmt.type === "PICK_PARTNER";
 }
-
 export function isFixed14v23Format(fmt: MatchFormat): boolean {
   return fmt.type === "FIXED_14V23";
 }
-
 export function isPoolPlayFormat(fmt: MatchFormat): boolean {
   return fmt.type === "POOL_PLAY";
+}
+export function isKingOfHillFormat(fmt: MatchFormat): boolean {
+  return fmt.type === "KING_OF_HILL";
+}
+export function isFinalsFormat(fmt: MatchFormat): boolean {
+  return fmt.type === "FINALS" || fmt.type === "SEMIS";
 }
 
 // ============================================================
 // PLAYER
 // ============================================================
-
 export interface Player {
   id: string;
   name: string;
   duprId?: string | null;
   duprNumericId?: string | null;
-  duprScore?: number | null; // Only from DUPR API (3 decimals)
+  duprScore?: number | null;       // Only from DUPR API (3 decimals)
   manualDuprScore?: number | null; // Manually entered (1 decimal)
   imageUrl?: string | null;
   isSitting?: boolean;
-  lastRefreshed?: Date | null;  // Was: string | null | undefined
+  lastRefreshed?: Date | null;
 }
 
 // ============================================================
 // STANDINGS
 // ============================================================
-
 export interface StandingsEntry {
   id: string;
   name: string;
   duprId?: string | null;
   duprScore?: number | null;
-
   // Seed fields
   seed: number;
   seedAdjustment: number;
-
   // Order history per round
   orderHistory: { round: number; change: number; reason: string }[];
-
   // Bye calculations
   byeBase: number;
   byeMod: number;
   byeCount: number;
   sitOutCount: number;
-
   // Results
   wins: number;
   losses: number;
   pointsFor: number;
   pointsAgainst: number;
-  
   // Computed fields (optional)
   winPct?: number | null;
   ptsPct?: number | null;
@@ -80,14 +81,15 @@ export interface StandingsEntry {
 // ============================================================
 // TOURNAMENT CONFIG
 // ============================================================
-
 export interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
   roundFormat?: "FIXED_14V23" | "PICK_PARTNER";
   eventName?: string;
-  matchType: "D" | "S";              // ← ADD THIS LINE (doubles/singles)
-  scoreType: "SIDEOUT" | "RALLY";    // ← ADD THIS LINE (scoring method)
-  bestOf: 1 | 3 | 5;                 // ← ADD THIS LINE (games per match)
+  // CSV export settings
+  matchType: "D" | "S";                        // "D" = doubles, "S" = singles
+  scoreType: "SIDEOUT" | "RALLY";
+  bestOf: 1 | 3 | 5;
+  // Match engine settings
   orderGap: number;
   band: number;
   winLossMagnitude: number;
@@ -110,12 +112,11 @@ export interface TournamentConfig {
 // ============================================================
 // MATCH
 // ============================================================
-
 export interface Match {
   id: string;
   court: number;
-  team1: string[];
-  team2: string[];
+  team1: string[];   // player IDs
+  team2: string[];   // player IDs
   team1Score?: number;
   team2Score?: number;
   bye?: boolean;
@@ -125,7 +126,6 @@ export interface Match {
 // ============================================================
 // COMPLETED ROUND
 // ============================================================
-
 export interface CompletedRound {
   roundNumber: number;
   date: string;
@@ -136,9 +136,8 @@ export interface CompletedRound {
 }
 
 // ============================================================
-// GAME SESSION
+// GAME SESSION (in-memory, current session)
 // ============================================================
-
 export interface GameSession {
   sessionId: string;
   startDate: string;
@@ -146,9 +145,8 @@ export interface GameSession {
 }
 
 // ============================================================
-// ROUND STATE
+// ROUND STATE (in-memory, active round)
 // ============================================================
-
 export interface RoundState {
   active: boolean;
   format: MatchFormat;
@@ -156,4 +154,42 @@ export interface RoundState {
   submitted: boolean;
   stage?: "pool" | "quarters" | "semis" | "finals";
   poolId?: string;
+}
+
+// ============================================================
+// SESSION (from DB)
+// ============================================================
+export interface Session {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: string;
+  isEnded: boolean;
+  config: TournamentConfig;
+  playerIds: string[];
+  rounds?: SessionRound[];
+}
+
+// ============================================================
+// SESSION ROUND (from DB)
+// ============================================================
+export interface SessionRound {
+  id: string;
+  sessionId: string;
+  roundNumber: number;
+  date: string;
+  format: MatchFormat;
+  matches: Match[];
+  sittingOut: string[];
+}
+
+// ============================================================
+// PLAYER PERSPECTIVE (future)
+// ============================================================
+export interface PlayerProfile {
+  id: string;
+  name: string;
+  email?: string;
+  duprNumericId?: string;
+  duprId?: string;
 }
