@@ -278,7 +278,10 @@ export default function Page() {
     const result = await loadSession(sessionId);
     if (result.success && result.session) {
       const { session } = result;
-      setCurrentSession({ sessionId: session.id, startDate: session.createdAt });
+      setCurrentSession({
+        sessionId: session.id,
+        startDate: new Date(session.createdAt).toISOString(),
+      });
       setDbSessionId(sessionId);
       setRoundHistory([]);
       setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
