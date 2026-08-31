@@ -110,10 +110,12 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   // --- START NEW SESSION (creates DB session) ---
   const startNewSession = useCallback(async (userId: string, playerIds: string[]): Promise<string> => {
     const now = new Date();
-    const dateStr = `${now.getFullYear()} ${now.toLocaleString("default", { month: "short" })} ${now.getDate()}`;
+    const dateStr = [now.getFullYear(), now.toLocaleString("default", { month: "short" }), now.getDate()].join("/");
     const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    const name = config.eventName?.trim() || `${dateStr} ${timeStr} - ${playerIds.length} players`;
-
+    const ts = `${dateStr} ${timeStr}`;
+    const name = config.eventName?.trim()
+      ? `${config.eventName.trim()} (${ts})`
+      : `${playerIds.length} players (${ts})`;
     const result = await createSession(userId, name, config as object, playerIds);
     if (!result.success || !result.session) throw new Error("Failed to create session");
 
