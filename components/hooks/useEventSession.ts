@@ -35,7 +35,10 @@ export interface EventSessionState {
   roundState: RoundState;
   currentRoundNumber: number;
   setRoundState: React.Dispatch<React.SetStateAction<RoundState>>;
-  dbSessionId?: string;     // actual DB session ID — undefined until Start Round 1
+  setRoundHistory: React.Dispatch<React.SetStateAction<CompletedRound[]>>;    // ← ADD
+  setCurrentSession: React.Dispatch<React.SetStateAction<GameSession>>;    // ← ADD
+  setDbSessionId: React.Dispatch<React.SetStateAction<string | undefined>>; // ← ADD
+  dbSessionId?: string;
 }
 
 export interface EventSessionActions {
@@ -224,6 +227,9 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     roundState,
     currentRoundNumber,
     setRoundState,
+    setRoundHistory,     // ← ADD
+    setCurrentSession,   // ← ADD
+    setDbSessionId,      // ← ADD
     dbSessionId,
   };
 

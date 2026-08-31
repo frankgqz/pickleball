@@ -20,7 +20,6 @@ import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
 import { createStandingsEntry } from "@/components/standingsUtils";
-import { localStorageDb } from "@/components/hooks/useEventSession";
 
 
 // Format constants
@@ -34,7 +33,17 @@ export default function Page() {
   const userId = session?.user?.id;
 
   // ====== EVENT SESSION HOOK ======
-  const [eventSessionState, eventSessionActions] = useEventSession();  // ← MISSING
+  const [eventSessionState, eventSessionActions] = useEventSession();  // ← THIS LINE IS MISSING
+
+  const { 
+      updateConfig, 
+      addRoundToHistory, 
+      updateRoundInHistory, 
+      deleteRoundFromHistory, 
+      restartEvent,
+      startNewSession,
+    } = eventSessionActions;
+
   // NEW — add dbSessionId and startNewSession:
   const { 
       config, 
@@ -48,16 +57,6 @@ export default function Page() {
       dbSessionId, 
       setDbSessionId,       // ← ADD
   } = eventSessionState;
-
-  const { 
-    updateConfig, 
-    addRoundToHistory, 
-    updateRoundInHistory, 
-    deleteRoundFromHistory, 
-    restartEvent,
-    startNewSession,       // ← ADD
-  } = eventSessionActions;
-
 
 
   // ====== PLAYER DATABASE HOOK ======
@@ -275,60 +274,62 @@ export default function Page() {
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
   const handleLoadSession = useCallback(async (sessionId: string) => {
-    const result = await loadSession(sessionId);
-    if (result.success && result.session) {
-      const { session } = result;
+      const result = await loadSession(sessionId);
+      if (result.success && result.session) {
+        const { session } = result;
 
-      // ── anchor to the loaded session ──
-      setCurrentSession(session);
-      localStorageDb.saveSession(session);
-      setDbSessionId(sessionId);
+        // ── anchor to the loaded session ──
+        setCurrentSession(session);
+        setDbSessionId(sessionId);
 
-      // ── clear stale state before loading ──
-      setRoundHistory([]);
-      setRoundState({
-        active: false,
-        format: PICK_PARTNER_FORMAT,
-        matches: [],
-        submitted: false
-      });
+        // ── clear stale state before loading ──
+        setRoundHistory([]);
+        setRoundState({
+          active: false,
+          format: PICK_PARTNER_FORMAT,
+          matches: [],
+          submitted: false
+        });
 
-      // Load players into pool
-      const rawPlayerIds = session.playerIds as unknown as string;
-      if (rawPlayerIds && rawPlayerIds.length > 0) {
-        try {
-          const playerIdArray = JSON.parse(rawPlayerIds) as string[];
-          const playersResult = await getPlayersByIds(playerIdArray);
-          if (playersResult.success && playersResult.players) {
-            setAllPlayers(playersResult.players);
-            setEventPool(playersResult.players);
+        // Load players into pool
+        const rawPlayerIds = session.playerIds as unknown as string;
+        if (rawPlayerIds && rawPlayerIds.length > 0) {
+          try {
+            const playerIdArray = JSON.parse(rawPlayerIds) as string[];
+            const playersResult = await getPlayersByIds(playerIdArray);
+            if (playersResult.success && playersResult.players) {
+              setAllPlayers(playersResult.players);
+              setEventPool(playersResult.players);
+            }
+          } catch (e) {
+            console.warn("Failed to parse playerIds:", e);
           }
-        } catch (e) {
-          console.warn("Failed to parse playerIds:", e);
+        }
+
+        // Restore event name
+        if (session.config) {
+          updateConfig("eventName", String((session.config as any).eventName ?? ""));
+        }
+
+        // Populate rounds
+        if (session.rounds) {
+          const loadedRounds = session.rounds as unknown as CompletedRound[];
+          loadedRounds.forEach(round => addRoundToHistory(round));
+          recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
         }
       }
-
-      // Restore event name
-      if (session.config) {
-        updateConfig("eventName", String((session.config as any).eventName ?? ""));
-      }
-
-      // Populate rounds — now that history is already cleared, this is all there is
-      if (session.rounds) {
-        const loadedRounds = session.rounds as unknown as CompletedRound[];
-        loadedRounds.forEach(round => addRoundToHistory(round));
-        recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
-      }
-    }
-  }, [
-    config,
-    eventPool,
-    updateConfig,
-    addRoundToHistory,
-    recalculateStandingsFromHistory,
-    setAllPlayers,
-    setEventPool,
-  ]);
+    }, [
+      config,
+      eventPool,
+      updateConfig,
+      addRoundToHistory,
+      recalculateStandingsFromHistory,
+      setAllPlayers,
+      setEventPool,
+      setCurrentSession,
+      setDbSessionId,
+      setRoundHistory,
+    ]);
 
   // Initial load
     useEffect(() => {
