@@ -45,14 +45,10 @@ View of matches in viewport able to be shared on a screen. fit nicely
 
 ### Misc 
 for user, it should say duprURL# by default in the box instead of duprNumericID
-
+searching dupr, should update their dupr in event pool
 
 ### Current - immmediate
-onLoadSession currently does nothing in MainApp.tsx 
-Wire onLoadSession (restore pool/config/history from a saved session)
-Fix bidirectional Unicode in Gist paste
-Add handleEndEvent + End Event button
-Add session dropdown + Load Session button
-Fix selectedSessionId state
-
-
+when I log into google, it pulls the matches, doesn't populate players into eventpool, I can't add from playerdatabase, 
+when I shift between past rounds, names are all squiggly (like their ID instead of name), I think because eventpool is empty?
+it's missing a load session dropdown
+missing end session button - I want this in the pastrounds section. I'm also cognizant this file is getting big. 
