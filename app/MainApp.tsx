@@ -415,8 +415,8 @@ export default function Page() {
             // Clear UI state — only the current session's session data
             setEventPool([]);
             setStandings([]);
-            setPastSessionsOpen(false);
-}}        />
+          }}
+          />
       </div>
     </div>
   );
