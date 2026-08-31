@@ -274,6 +274,7 @@ export default function Page() {
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
   const handleLoadSession = useCallback(async (sessionId: string) => {
+      console.log("[handleLoadSession] loading:", sessionId);
       const result = await loadSession(sessionId);
       if (result.success && result.session) {
         const { session } = result;
@@ -428,13 +429,19 @@ export default function Page() {
           onLoadSession={(id) => loadSession(id)}    // ← ADD (wired later)
           onEndSession={async (id) => {
             await endSession(id);
-            // Reset all local state
-            setEventPool([]);        // eventPool = who's playing today (reset every session)
+            setCurrentSession({ sessionId: Date.now().toString(), startDate: new Date().toISOString() });
+            setDbSessionId(undefined);
+            setRoundHistory([]);
+            setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
+            setEventPool([]);
             setStandings([]);
           }}
           onDeleteSession={async (id) => {
             await deleteSession(id);
-            // Clear UI state — only the current session's session data
+            setCurrentSession({ sessionId: Date.now().toString(), startDate: new Date().toISOString() });
+            setDbSessionId(undefined);
+            setRoundHistory([]);
+            setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
             setEventPool([]);
             setStandings([]);
           }}
