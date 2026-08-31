@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession} from "@/app/actions";
+import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds} from "@/app/actions";
 
 
 // Hooks
@@ -272,10 +272,25 @@ export default function Page() {
   const handleLoadSession = useCallback(async (sessionId: string) => {
     const result = await loadSession(sessionId);
     if (result.success && result.session) {
-      // TODO: repopulate config, pool, roundHistory from result.session
-      console.log("Session loaded:", result.session.name);
+      const { session } = result;
+      // Restore players to pool
+      if (session.playerIds?.length > 0) {
+        const playersResult = await getPlayersByIds(session.playerIds);
+        if (playersResult.success && playersResult.players) {
+          setAllPlayers(playersResult.players);
+          setEventPool(playersResult.players);
+        }
+      }
+      // Restore config
+      if (session.config) {
+        updateConfig(session.config);
+      }
+      // Rebuild standings from loaded rounds
+      if (session.rounds) {
+        recalculateStandingsFromHistory(session.rounds, sessionId, config, eventPool);
+      }
     }
-  }, []);
+  }, [config, eventPool, updateConfig, recalculateStandingsFromHistory]);
 
   // Initial load
     useEffect(() => {

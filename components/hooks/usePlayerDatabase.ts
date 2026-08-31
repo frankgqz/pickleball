@@ -1,19 +1,13 @@
-"use client";
-// usePlayerDatabase.ts - Player database and event pool management
-// Handles: loading players from DB, adding/removing from event pool, DUPR fetching
 import { useState, useCallback, useEffect } from "react";
 import { Player, StandingsEntry, GameSession } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
 import { addPlayer, getClubPlayers, deletePlayer, fetchDuprRating, updatePlayer, addClubPlayer } from "@/app/actions";
-import { createStandingsEntry } from "../standingsUtils";
-import { getPlayersByIds } from "@/app/actions";
+import { createStandingsEntry } from "@/components/standingsUtils";
 
+// Flag to track initial load from DB
 export interface PlayerDatabaseState {
-  // All players in the database
   allPlayers: Player[];
-  // Players currently in the event pool
   eventPool: Player[];
-  // IDs of players in pool for quick lookup
   eventPoolIds: Set<string>;
 }
 
@@ -25,20 +19,22 @@ export interface PlayerDatabaseActions {
   deleteExistingPlayer: (id: string) => Promise<void>;
   fetchDuprForPlayer: (playerId: string) => Promise<void>;
   resetPlayers: () => void;
-
+  setAllPlayers: (players: Player[]) => void;    // ← ADD — replaces roster on session load
   // Event pool operations
-  addPlayerToEventPool: (player: Player, userId?: string) => void;
+  addPlayerToEventPool: (player: Player, currentRoundNumber: number, lateJoinBonus: number) => StandingsEntry[];
   removePlayerFromEventPool: (playerId: string) => void;
   clearEventPool: (newSession: GameSession) => void;
+  setEventPool: (players: Player[]) => void;      // ← ADD — replaces pool on session load
   togglePlayerSitting: (playerId: string) => void;
-
   // Get standings entries for all players in pool
-  getPoolStandingsEntries: (orderGap: number, currentRoundNumber: number, lateJoinBonus: number) => StandingsEntry[];
+  getPoolStandingsEntries: (orderGap: number) => StandingsEntry[];
 }
 
 export function usePlayerDatabase(
-  isAppLoading: boolean, 
-  setIsAppLoading: (v: boolean) => void
+  isAppLoading: boolean,
+  setIsAppLoading: (loading: boolean) => void,
+  currentRoundNumber: number,
+  lateJoinBonus: number = 0
 ): [PlayerDatabaseState, PlayerDatabaseActions] {
   // State
   const [allPlayers, setAllPlayers] = useState<Player[]>(() => localStorageDb.loadPlayers());
@@ -109,7 +105,6 @@ export function usePlayerDatabase(
   }, []);
 
   const updateExistingPlayer = useCallback(async (id: string, updates: Partial<Player>) => {
-    console.log("updateExistingPlayer called:", { id, updates });
     const formData = new FormData();
     if (updates.name) formData.append("name", updates.name);
     if (updates.duprId !== undefined && updates.duprId !== null) formData.append("duprId", updates.duprId);
@@ -117,13 +112,9 @@ export function usePlayerDatabase(
     if (updates.manualDuprScore !== undefined && updates.manualDuprScore !== null) formData.append("manualDuprScore", String(updates.manualDuprScore));
 
     const result = await updatePlayer(id, formData);
-    console.log("updateExistingPlayer result:", result);
     if (result.success && result.player) {
-      setAllPlayers(prev => {
-        const updated = prev.map(p => p.id === id ? result.player! : p);
-        console.log("Updated players list:", updated);
-        return updated;
-      });
+      setAllPlayers(prev => prev.map(p => p.id === id ? result.player! : p));
+      setEventPool(prev => prev.map(p => p.id === id ? result.player! : p));
     } else {
       console.error("Failed to update player:", result.error);
     }
@@ -134,34 +125,40 @@ export function usePlayerDatabase(
     if (result.success) {
       setAllPlayers(prev => prev.filter(p => p.id !== id));
       setEventPool(prev => prev.filter(p => p.id !== id));
+    } else {
+      console.error("Failed to delete player:", result.error);
+    }
+  }, []);
+
+  const fetchDuprForPlayer = useCallback(async (playerId: string) => {
+    // Refetch the player to get their DUPR data
+    const result = await fetchDuprRating(playerId);
+    console.log("fetchDuprForPlayer result:", result);
+    if (result.success && result.player) {
+      setAllPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
+      setEventPool(prev => prev.map(p => p.id === playerId ? result.player! : p));
     }
   }, []);
 
   const resetPlayers = useCallback(() => {
-  setAllPlayers([]);
-  setEventPool([]);
+    setAllPlayers([]);
+    setEventPool([]);
   }, []);
 
-  const fetchDuprForPlayer = useCallback(async (playerId: string) => {
-    const result = await fetchDuprRating(playerId);
-    if (result.success && result.player) {
-      setAllPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
-    }
-  }, []);
+  // ============ POOL OPERATIONS ============
 
-
-  // ============ EVENT POOL OPERATIONS ============
-
-  const addPlayerToEventPool = useCallback(async (player: Player, userId?: string) => {
-    setEventPool(prev => {
-      if (prev.find(p => p.id === player.id)) return prev;
-      return [player, ...prev];
-    });
-    // If userId provided, also create ClubPlayer record in database
-    if (userId) {
-      await addClubPlayer(userId, player.id);
-    }
-  }, []);
+  const addPlayerToEventPool = useCallback(
+    (player: Player, currentRoundNumber: number, lateJoinBonus: number) => {
+      setEventPool(prev => {
+        const existing = prev.find(p => p.id === player.id);
+        if (existing) return prev;
+        return [...prev, player];
+      });
+      // Return updated standings entries for this pool
+      return getPoolStandingsEntries(1);
+    },
+    []
+  );
 
   const removePlayerFromEventPool = useCallback((playerId: string) => {
     setEventPool(prev => prev.filter(p => p.id !== playerId));
@@ -178,22 +175,14 @@ export function usePlayerDatabase(
     ));
   }, []);
 
-  const getPoolStandingsEntries = useCallback((
-    orderGap: number, 
-    currentRoundNumber: number, 
-    lateJoinBonus: number
-  ): StandingsEntry[] => {
-    return eventPool.map((player, i) => 
-      createStandingsEntry(
-        player,
-        i,
-        orderGap,
-        currentRoundNumber > 1 ? lateJoinBonus : 0
-      )
+  const getPoolStandingsEntries = useCallback(
+      (orderGap: number) => {
+        return eventPool
+          .filter(p => !p.isSitting)
+          .map((player, i) => createStandingsEntry(player, i, orderGap, 0));
+      },
+      [eventPool]
     );
-  }, [eventPool]);
-
-  // ============ COMBINE STATE & ACTIONS ============
 
   const state: PlayerDatabaseState = {
     allPlayers,
@@ -208,12 +197,13 @@ export function usePlayerDatabase(
     updateExistingPlayer,
     deleteExistingPlayer,
     fetchDuprForPlayer,
-    resetPlayers,  // <-- Add this
-
+    resetPlayers,
+    setAllPlayers,    // ← ADD
     // Pool
     addPlayerToEventPool,
     removePlayerFromEventPool,
     clearEventPool,
+    setEventPool,      // ← ADD
     togglePlayerSitting,
     getPoolStandingsEntries,
   };

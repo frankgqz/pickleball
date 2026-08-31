@@ -238,19 +238,50 @@ export default function RoundHistoryPanel({
       <div className="mb-4">
         {/* Row 1: Title + Export */}
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-white">📜 Past Rounds</h2>
-          {sessionRounds.length > 0 && (
+          <h2 className="text-lg font-bold text-white">📋 Session</h2>
+          <div className="flex gap-2">
             <button
-              onClick={exportToCSV}
-              className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
-              title="Export to CSV"
+              onClick={() => setPastSessionsOpen(o => !o)}
+              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
             >
-              📥 Export CSV
+              {pastSessionsOpen ? "▲ Hide Sessions" : "📂 Load Sessions"}
             </button>
-          )}
+            {sessionRounds.length > 0 && (
+              <button
+                onClick={exportToCSV}
+                className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                title="Export to CSV"
+              >
+                📥 Export CSV
+              </button>
+            )}
+          </div>
         </div>
 
+        {pastSessionsOpen && pastSessions.length > 0 && (
+          <div className="mb-3">
+            <select
+              value=""
+              onChange={(e) => {
+                const id = e.target.value;
+                if (id && onLoadSession && confirm("Load this session?")) {
+                  onLoadSession(id);
+                }
+              }}
+              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+            >
+              <option value="">— Select a session to load —</option>
+              {pastSessions.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.isEnded ? "✅ " : "🔄 "}{s.name} ({new Date(s.createdAt).toLocaleDateString()})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Row 2: Select dropdown */}
+        {sessionRounds.length > 0 ? (
         <select
           value={selectedRoundNumber === "" ? "" : selectedRoundNumber}
           onChange={(e) => setSelectedRoundNumber(e.target.value ? parseInt(e.target.value) : "")}
@@ -263,8 +294,25 @@ export default function RoundHistoryPanel({
             </option>
           ))}
         </select>
+        ) : (
+          <p className="text-slate-400 text-sm mb-3">No rounds yet — start a round to see history.</p>
+        )}
 
         {/* Row 3: Action buttons - Edit/Delete or Save/Cancel */}
+        {currentDbSessionId && currentDbSessionId === currentSessionId && (
+          <div className="mb-2">
+            <button
+              onClick={() => {
+                if (onEndSession && currentDbSessionId && confirm("End this session? You can still view and edit its rounds.")) {
+                  onEndSession(currentDbSessionId);
+                }
+              }}
+              className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
+            >
+              ⏹ End Session
+            </button>
+          </div>
+        )}
         {selectedRound && (
           <div className="flex flex-wrap gap-2">
             {editMode ? (
