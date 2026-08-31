@@ -301,37 +301,24 @@ export default function Page() {
         }
 
         // Load players into pool
-        const rawPlayerIds = session.playerIds as unknown as string;
-        if (rawPlayerIds && rawPlayerIds.length > 0) {
-          try {
-            const playerIdArray = JSON.parse(rawPlayerIds) as string[];
-            const playersResult = await getPlayersByIds(playerIdArray);
-            if (playersResult.success && playersResult.players) {
-              setAllPlayers(playersResult.players);
-              setEventPool(playersResult.players);
-
-              // Populate rounds only AFTER event pool is set
-              if (session.rounds) {
-                const loadedRounds = session.rounds as unknown as CompletedRound[];
-                loadedRounds.forEach(round => addRoundToHistory(round));
-                recalculateStandingsFromHistory(
-                  loadedRounds,
-                  sessionId,
-                  config,
-                  playersResult.players  // use loaded players, not stale eventPool
-                );
-              }
+        const rawPlayerIds = session.playerIds as unknown as string[];
+        const playerIdArray = Array.isArray(rawPlayerIds) ? rawPlayerIds : rawPlayerIds ? JSON.parse(rawPlayerIds as string) : [];
+        if (playerIdArray.length > 0) {
+          const playersResult = await getPlayersByIds(playerIdArray);
+          if (playersResult.success && playersResult.players) {
+            const loadedPlayers = playersResult.players;
+            setAllPlayers(loadedPlayers);
+            setEventPool(loadedPlayers);
+            if (session.rounds) {
+              const loadedRounds = session.rounds as unknown as CompletedRound[];
+              loadedRounds.forEach(round => addRoundToHistory(round));
+              recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
             }
-          } catch (e) {
-            console.warn("Failed to parse playerIds:", e);
           }
-        } else {
-          // No players in session — still repopulate rounds with empty pool
-          if (session.rounds) {
-            const loadedRounds = session.rounds as unknown as CompletedRound[];
-            loadedRounds.forEach(round => addRoundToHistory(round));
-            recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
-          }
+        } else if (session.rounds) {
+          const loadedRounds = session.rounds as unknown as CompletedRound[];
+          loadedRounds.forEach(round => addRoundToHistory(round));
+          recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
         }
       }
     }, [
