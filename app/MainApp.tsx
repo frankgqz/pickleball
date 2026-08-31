@@ -274,66 +274,43 @@ export default function Page() {
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
   const handleLoadSession = useCallback(async (sessionId: string) => {
-      console.log("[handleLoadSession] loading:", sessionId);
-      const result = await loadSession(sessionId);
-      if (result.success && result.session) {
-        const { session } = result;
+    console.log("[handleLoadSession] firing for:", sessionId);
+    const result = await loadSession(sessionId);
+    if (result.success && result.session) {
+      const { session } = result;
+      setCurrentSession({ sessionId: session.id, startDate: session.createdAt });
+      setDbSessionId(sessionId);
+      setRoundHistory([]);
+      setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
 
-        // ── anchor to the loaded session ──
-        setCurrentSession({
-          sessionId: session.id,
-          startDate: new Date().toISOString(),
-        });
-        setDbSessionId(sessionId);
-
-        // ── clear stale state before loading ──
-        setRoundHistory([]);
-        setRoundState({
-          active: false,
-          format: PICK_PARTNER_FORMAT,
-          matches: [],
-          submitted: false
-        });
-
-        // Load players into pool
-        // Restore event name first so config is fresh before standings recalculation
-        if (session.config) {
-          updateConfig("eventName", String((session.config as any).eventName ?? ""));
-        }
-
-        // Load players into pool
-        const rawPlayerIds = session.playerIds as unknown as string[];
-        const playerIdArray = Array.isArray(rawPlayerIds) ? rawPlayerIds : rawPlayerIds ? JSON.parse(rawPlayerIds as string) : [];
-        if (playerIdArray.length > 0) {
-          const playersResult = await getPlayersByIds(playerIdArray);
-          if (playersResult.success && playersResult.players) {
-            const loadedPlayers = playersResult.players;
-            setAllPlayers(loadedPlayers);
-            setEventPool(loadedPlayers);
-            if (session.rounds) {
-              const loadedRounds = session.rounds as unknown as CompletedRound[];
-              loadedRounds.forEach(round => addRoundToHistory(round));
-              recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
-            }
-          }
-        } else if (session.rounds) {
-          const loadedRounds = session.rounds as unknown as CompletedRound[];
-          loadedRounds.forEach(round => addRoundToHistory(round));
-          recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
-        }
+      if (session.config) {
+        const savedName = (session.config as any).eventName ?? "";
+        updateConfig("eventName", String(savedName));
       }
-    }, [
-      config,
-      eventPool,
-      updateConfig,
-      addRoundToHistory,
-      recalculateStandingsFromHistory,
-      setAllPlayers,
-      setEventPool,
-      setCurrentSession,
-      setDbSessionId,
-      setRoundHistory,
-    ]);
+
+      const rawPlayerIds = session.playerIds as unknown as string[];
+      const playerIdArray = Array.isArray(rawPlayerIds) ? rawPlayerIds : rawPlayerIds ? JSON.parse(rawPlayerIds as string) : [];
+
+      if (playerIdArray.length > 0) {
+        const playersResult = await getPlayersByIds(playerIdArray);
+        if (playersResult.success && playersResult.players) {
+          const loadedPlayers = playersResult.players;
+          setAllPlayers(loadedPlayers);
+          setEventPool(loadedPlayers);
+
+          if (session.rounds) {
+            const loadedRounds = session.rounds as unknown as CompletedRound[];
+            loadedRounds.forEach(round => addRoundToHistory(round));
+            recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
+          }
+        }
+      } else if (session.rounds) {
+        const loadedRounds = session.rounds as unknown as CompletedRound[];
+        loadedRounds.forEach(round => addRoundToHistory(round));
+        recalculateStandingsFromHistory(loadedRounds, sessionId, config, []);
+      }
+    }
+  }, [config, updateConfig, addRoundToHistory, recalculateStandingsFromHistory, setAllPlayers, setEventPool, setCurrentSession, setDbSessionId, setRoundHistory, setRoundState]);
 
   // Initial load
     useEffect(() => {

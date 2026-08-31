@@ -142,17 +142,21 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   }, []);
 
   const restartEvent = useCallback(() => {
-    createNewSession();
-    setRoundHistory([]);
-    setDbSessionId(undefined);     // no DB session active after restart
-    setRoundState({
-      active: false,
-      format: PICK_PARTNER_FORMAT,
-      matches: [],
-      submitted: false
-    });
-    localStorageDb.clearEventData();
-  }, [createNewSession]);
+      setRoundHistory([]);
+      setDbSessionId(undefined);
+      setRoundState({
+        active: false,
+        format: PICK_PARTNER_FORMAT,
+        matches: [],
+        submitted: false
+      });
+      localStorageDb.clearEventData();
+      const freshSession = {
+        sessionId: Date.now().toString(),
+        startDate: new Date().toISOString(),
+      };
+      setCurrentSession(freshSession);
+    }, []);
 
   const cancelCurrentRound = useCallback(() => {
     setRoundState({
