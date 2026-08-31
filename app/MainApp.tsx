@@ -301,10 +301,10 @@ export default function Page() {
           setEventPool(loadedPlayers);
           if (session.rounds) {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
-            loadedRounds.forEach(round => addRoundToHistory(round));
             const freshEntries = buildEntriesFromPlayers(loadedPlayers);
             setStandings(freshEntries);
             recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
+            loadedRounds.forEach(round => addRoundToHistory(round));
           }
         }
       } else if (session.rounds) {
