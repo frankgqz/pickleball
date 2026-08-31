@@ -45,4 +45,14 @@ View of matches in viewport able to be shared on a screen. fit nicely
 
 ### Misc 
 for user, it should say duprURL# by default in the box instead of duprNumericID
- 
+
+
+### Current - immmediate
+onLoadSession currently does nothing in MainApp.tsx 
+Wire onLoadSession (restore pool/config/history from a saved session)
+Fix bidirectional Unicode in Gist paste
+Add handleEndEvent + End Event button
+Add session dropdown + Load Session button
+Fix selectedSessionId state
+
+

@@ -45,3 +45,5 @@
     Added CSV export settings to TournamentConfig — New fields matchType (D/S), scoreType (SIDEOUT/RALLY), bestOf (1/3/5) added to Types for tournament metadata.
     Fixed CSV export showing duprNumericId. And improved CSV settings UI. 
     Planned session persistence architecture — Designed 2-table DB schema (EventSession, SessionRound) for saving/loading complete tournaments with matches, standings, and config (pending implementation).
+
+260831
