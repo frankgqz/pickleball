@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds} from "@/app/actions";
+import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds } from "@/app/actions";
 
 
 // Hooks
@@ -56,22 +56,24 @@ export default function Page() {
 
 
   // ====== PLAYER DATABASE HOOK ======
-  const [playerDbState, playerDbActions] = usePlayerDatabase(loading, setLoading);
+  const [playerDbState, playerDbActions] = usePlayerDatabase(loading, setLoading, currentRoundNumber, config.lateJoinBonus);
   const { 
     allPlayers, 
     eventPool 
   } = playerDbState;
-  const { 
-    loadPlayersFromDatabase, 
-    addNewPlayer, 
-    updateExistingPlayer, 
-    deleteExistingPlayer, 
-    fetchDuprForPlayer, 
-    addPlayerToEventPool, 
-    removePlayerFromEventPool, 
-    clearEventPool, 
+  const {
+    loadPlayersFromDatabase,
+    addNewPlayer,
+    updateExistingPlayer,
+    deleteExistingPlayer,
+    fetchDuprForPlayer,
+    addPlayerToEventPool,
+    removePlayerFromEventPool,
+    clearEventPool,
     togglePlayerSitting,
     resetPlayers,
+    setAllPlayers,
+    setEventPool,
   } = playerDbActions;
 
   // ====== STANDINGS STATE HOOK ======
@@ -275,7 +277,7 @@ export default function Page() {
       const { session } = result;
       // Restore players to pool
       if (session.playerIds?.length > 0) {
-        const playersResult = await getPlayersByIds(session.playerIds);
+        const playersResult = await getPlayersByIds(session.playerIds as string[]);
         if (playersResult.success && playersResult.players) {
           setAllPlayers(playersResult.players);
           setEventPool(playersResult.players);
@@ -283,11 +285,11 @@ export default function Page() {
       }
       // Restore config
       if (session.config) {
-        updateConfig(session.config);
+        updateConfig("eventName", (session.config as any).eventName || "");
       }
       // Rebuild standings from loaded rounds
       if (session.rounds) {
-        recalculateStandingsFromHistory(session.rounds, sessionId, config, eventPool);
+        recalculateStandingsFromHistory(session.rounds as CompletedRound[], sessionId, config, eventPool);
       }
     }
   }, [config, eventPool, updateConfig, recalculateStandingsFromHistory]);
