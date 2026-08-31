@@ -298,7 +298,6 @@ export default function Page() {
         const playersResult = await getPlayersByIds(playerIdArray);
         if (playersResult.success && playersResult.players) {
           const loadedPlayers = playersResult.players;
-          setAllPlayers(loadedPlayers);
           setEventPool(loadedPlayers);
 
           if (session.rounds) {

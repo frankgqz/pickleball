@@ -10,6 +10,8 @@ Handle game Scores (best of 3) - UI ready, logic not wired
 Event pool populating, but not Standings Table. 
 Delete session. Continue Session. 
 Session panel, UI - better layout, End session button. 
+Logging in loads prev session - local database? can it load empty instead.
+Loading players 
 
 ### Player Persepctive
 User has duprNumID entry field
