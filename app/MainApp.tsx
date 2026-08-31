@@ -20,6 +20,8 @@ import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
 import { createStandingsEntry } from "@/components/standingsUtils";
+import { localStorageDb } from "@/components/hooks/useEventSession";
+
 
 // Format constants
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
@@ -35,13 +37,16 @@ export default function Page() {
   const [eventSessionState, eventSessionActions] = useEventSession();  // ← MISSING
   // NEW — add dbSessionId and startNewSession:
   const { 
-    config, 
-    currentSession, 
-    roundHistory, 
-    roundState, 
-    currentRoundNumber,
-    setRoundState,
-    dbSessionId,          // ← ADD
+      config, 
+      currentSession, 
+      roundHistory, 
+      roundState, 
+      currentRoundNumber,
+      setRoundState,
+      setRoundHistory,       // ← ADD
+      setCurrentSession,    // ← ADD
+      dbSessionId, 
+      setDbSessionId,       // ← ADD
   } = eventSessionState;
 
   const { 
@@ -274,7 +279,21 @@ export default function Page() {
     if (result.success && result.session) {
       const { session } = result;
 
-      // ── BUG 2 FIX: parse JSON string playerIds before query ──
+      // ── anchor to the loaded session ──
+      setCurrentSession(session);
+      localStorageDb.saveSession(session);
+      setDbSessionId(sessionId);
+
+      // ── clear stale state before loading ──
+      setRoundHistory([]);
+      setRoundState({
+        active: false,
+        format: PICK_PARTNER_FORMAT,
+        matches: [],
+        submitted: false
+      });
+
+      // Load players into pool
       const rawPlayerIds = session.playerIds as unknown as string;
       if (rawPlayerIds && rawPlayerIds.length > 0) {
         try {
@@ -289,13 +308,12 @@ export default function Page() {
         }
       }
 
-      // Restore config
+      // Restore event name
       if (session.config) {
         updateConfig("eventName", String((session.config as any).eventName ?? ""));
       }
 
-      // ── BUG 3 FIX: populate roundHistory + rebuild standings ──
-      // Rebuild standings from loaded rounds
+      // Populate rounds — now that history is already cleared, this is all there is
       if (session.rounds) {
         const loadedRounds = session.rounds as unknown as CompletedRound[];
         loadedRounds.forEach(round => addRoundToHistory(round));
