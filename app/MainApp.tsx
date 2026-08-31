@@ -279,7 +279,10 @@ export default function Page() {
         const { session } = result;
 
         // ── anchor to the loaded session ──
-        setCurrentSession(session);
+        setCurrentSession({
+          sessionId: session.id,
+          startDate: session.startDate ?? new Date().toISOString(),
+        });
         setDbSessionId(sessionId);
 
         // ── clear stale state before loading ──
