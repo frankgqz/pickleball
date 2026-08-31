@@ -302,10 +302,11 @@ export default function RoundHistoryPanel({
         {currentDbSessionId && currentDbSessionId === currentSessionId && (
           <div className="mb-2">
             <button
-              onClick={() => {
-                if (onEndSession && currentDbSessionId && confirm("End this session? You can still view and edit its rounds.")) {
-                  onEndSession(currentDbSessionId);
-                }
+              onClick={async () => {
+                if (!onEndSession || !currentDbSessionId) return;
+                if (!confirm("End this session? You can still view and edit its rounds.")) return;
+                setPastSessionsOpen(false);
+                await onEndSession(currentDbSessionId);
               }}
               className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
             >

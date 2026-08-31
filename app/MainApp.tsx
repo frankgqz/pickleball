@@ -273,26 +273,44 @@ export default function Page() {
     const result = await loadSession(sessionId);
     if (result.success && result.session) {
       const { session } = result;
-      // Restore players to pool
-        const rawPlayerIds = session.playerIds as unknown as string;
-        if (rawPlayerIds && rawPlayerIds.length > 0) {
+
+      // ── BUG 2 FIX: parse JSON string playerIds before query ──
+      const rawPlayerIds = session.playerIds as unknown as string;
+      if (rawPlayerIds && rawPlayerIds.length > 0) {
+        try {
           const playerIdArray = JSON.parse(rawPlayerIds) as string[];
           const playersResult = await getPlayersByIds(playerIdArray);
-        if (playersResult.success && playersResult.players) {
-          setAllPlayers(playersResult.players);
-          setEventPool(playersResult.players);
+          if (playersResult.success && playersResult.players) {
+            setAllPlayers(playersResult.players);
+            setEventPool(playersResult.players);
+          }
+        } catch (e) {
+          console.warn("Failed to parse playerIds:", e);
         }
       }
+
       // Restore config
       if (session.config) {
         updateConfig("eventName", String((session.config as any).eventName ?? ""));
       }
+
+      // ── BUG 3 FIX: populate roundHistory + rebuild standings ──
       // Rebuild standings from loaded rounds
       if (session.rounds) {
-        recalculateStandingsFromHistory(session.rounds as unknown as CompletedRound[], sessionId, config, eventPool);
+        const loadedRounds = session.rounds as unknown as CompletedRound[];
+        loadedRounds.forEach(round => addRoundToHistory(round));
+        recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
       }
     }
-  }, [config, eventPool, updateConfig, recalculateStandingsFromHistory]);
+  }, [
+    config,
+    eventPool,
+    updateConfig,
+    addRoundToHistory,
+    recalculateStandingsFromHistory,
+    setAllPlayers,
+    setEventPool,
+  ]);
 
   // Initial load
     useEffect(() => {
@@ -386,7 +404,13 @@ export default function Page() {
           userId={session?.user?.id}           // ← ADD
           currentDbSessionId={dbSessionId}    // ← ADD
           onLoadSession={(id) => loadSession(id)}    // ← ADD (wired later)
-          onEndSession={(id) => endSession(id)}      // ← ADD (wired later)
+          onEndSession={async (id) => {
+            await endSession(id);
+            // Reset all local state
+            setAllPlayers([]);
+            setEventPool([]);
+            setStandings([]);
+          }}
           onDeleteSession={(id) => deleteSession(id)} // ← ADD (wired later)
         />
       </div>
