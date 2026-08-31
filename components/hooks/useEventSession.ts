@@ -112,22 +112,17 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
 
   // --- START NEW SESSION (creates DB session) ---
   const startNewSession = useCallback(async (userId: string, playerIds: string[]): Promise<string> => {
+    const name = config.eventName?.trim() || `${playerIds.length} players`;
+    const result = await createSession(userId, name, config as object, playerIds);
+    if (!result.success || !result.session) throw new Error("Failed to create session");
+    const newDbId = result.session.id;
+    setDbSessionId(newDbId);
     const now = new Date();
     const dateStr = [now.getFullYear(), now.toLocaleString("default", { month: "short" }), now.getDate()].join("/");
     const timeStr = now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    const ts = `${dateStr} ${timeStr}`;
-    const name = config.eventName?.trim()
-      ? `${config.eventName.trim()} (${ts})`
-      : `${playerIds.length} players (${ts})`;
-    const result = await createSession(userId, name, config as object, playerIds);
-    if (!result.success || !result.session) throw new Error("Failed to create session");
-
-    const newDbId = result.session.id;
-    setDbSessionId(newDbId);
-
     const newSession: GameSession = {
       sessionId: newDbId,
-      startDate: new Date().toISOString(),
+      startDate: `${dateStr} ${timeStr}`,
     };
     setCurrentSession(newSession);
     localStorageDb.saveSession(newSession);
@@ -136,9 +131,10 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   }, [config]);
 
   const createNewSession = useCallback((): GameSession => {
+    const name = config.eventName?.trim() || "Event";
     const session: GameSession = {
       sessionId: Date.now().toString(),
-      startDate: new Date().toISOString(),
+      startDate: name,
     };
     setCurrentSession(session);
     localStorageDb.saveSession(session);

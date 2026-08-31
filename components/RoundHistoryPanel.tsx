@@ -18,6 +18,13 @@ interface Props {
   userId?: string;       // ← ADD — needed for getSessionList
 }
 
+const formatSessionDate = (date: string | Date) => {
+  const d = new Date(date);
+  const dateStr = [d.getFullYear(), d.toLocaleString("default", { month: "short" }), d.getDate()].join("/");
+  const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${dateStr} ${timeStr}`;
+};
+
 export default function RoundHistoryPanel({
   roundHistory,
   currentSessionId,
@@ -273,7 +280,7 @@ export default function RoundHistoryPanel({
               <option value="">— Select a session to load —</option>
               {pastSessions.map(s => (
                 <option key={s.id} value={s.id}>
-                  {s.isEnded ? "✅ " : "🔄 "}{s.name} ({new Date(s.createdAt).toLocaleDateString()})
+                  {s.isEnded ? "✅ " : "🔄 "}{s.name}{" "}({formatSessionDate(s.createdAt)})
                 </option>
               ))}
             </select>
