@@ -137,12 +137,10 @@ export default function Page() {
     if (standings.find(s => s.id === player.id)) return;
 
     // Add player to pool
-    addPlayerToEventPool(player);
-
-    // Create new standings entry
     // Late joiners (after round 1) get the lateJoinBonus in their byeMod
     const lateJoinBonus = currentRoundNumber > 1 ? config.lateJoinBonus : 0;
-    
+    addPlayerToEventPool(player, currentRoundNumber, lateJoinBonus);
+
     // Use manualDuprScore if available, otherwise duprScore (API fetched)
     const scoreToUse = player.manualDuprScore ?? player.duprScore ?? null;
     
@@ -276,8 +274,10 @@ export default function Page() {
     if (result.success && result.session) {
       const { session } = result;
       // Restore players to pool
-      if (session.playerIds?.length > 0) {
-        const playersResult = await getPlayersByIds(session.playerIds as string[]);
+        const rawPlayerIds = session.playerIds as unknown as string;
+        if (rawPlayerIds && rawPlayerIds.length > 0) {
+          const playerIdArray = JSON.parse(rawPlayerIds) as string[];
+          const playersResult = await getPlayersByIds(playerIdArray);
         if (playersResult.success && playersResult.players) {
           setAllPlayers(playersResult.players);
           setEventPool(playersResult.players);
@@ -285,11 +285,11 @@ export default function Page() {
       }
       // Restore config
       if (session.config) {
-        updateConfig("eventName", (session.config as any).eventName || "");
+        updateConfig("eventName", String((session.config as any).eventName ?? ""));
       }
       // Rebuild standings from loaded rounds
       if (session.rounds) {
-        recalculateStandingsFromHistory(session.rounds as CompletedRound[], sessionId, config, eventPool);
+        recalculateStandingsFromHistory(session.rounds as unknown as CompletedRound[], sessionId, config, eventPool);
       }
     }
   }, [config, eventPool, updateConfig, recalculateStandingsFromHistory]);
