@@ -39,7 +39,11 @@ Feature to sort player in user’s playerdatabase, to the more frequent joiners
 Mobile responsive design
 Mobile standings table visibility
 Shadows, curved edge, pastel theme
+<<<<<<< HEAD
 Theme button, 4 themes originating from gqz.app cookie
+=======
+View of matches in viewport able to be shared on a screen. fit nicely 
+>>>>>>> f4967567bdd77b647f5edd6da9ba1ad391505798
 
 ### Misc 
 for user, it should say duprURL# by default in the box instead of duprNumericID
