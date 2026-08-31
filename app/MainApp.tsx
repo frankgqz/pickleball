@@ -19,7 +19,7 @@ import { useEventSession } from "@/components/hooks/useEventSession";
 import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
-import { createStandingsEntry } from "@/components/standingsUtils";
+import { createStandingsEntry, buildEntriesFromPlayers } from "@/components/standingsUtils";
 
 
 // Format constants
@@ -299,11 +299,11 @@ export default function Page() {
         if (playersResult.success && playersResult.players) {
           const loadedPlayers = playersResult.players;
           setEventPool(loadedPlayers);
-
           if (session.rounds) {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
             loadedRounds.forEach(round => addRoundToHistory(round));
-            setStandings([]);                        // ← ADD: clear stale before recalculating
+            const freshEntries = buildEntriesFromPlayers(loadedPlayers);
+            setStandings(freshEntries);
             recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
           }
         }

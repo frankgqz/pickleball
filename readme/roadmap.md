@@ -8,10 +8,7 @@ Handle game Scores (best of 3) - UI ready, logic not wired
 
 ### Login System
 Event pool populating, but not Standings Table. 
-Delete session. Continue Session. 
-Session panel, UI - better layout, End session button. 
-Logging in loads prev session - local database? can it load empty instead.
-Loading players 
+Session panel, UI - better layout, End session button. Delete session. Continue Session. 
 
 ### Player Persepctive
 User has duprNumID entry field
@@ -32,7 +29,4 @@ for user, it should say duprURL# by default in the box instead of duprNumericID
 searching dupr, should update their dupr in event pool
 
 ### Current - immmediate
-when I log into google, it pulls the matches, doesn't populate players into eventpool, I can't add from playerdatabase, 
-when I shift between past rounds, names are all squiggly (like their ID instead of name), I think because eventpool is empty?
-it's missing a load session dropdown
-missing end session button - I want this in the pastrounds section. I'm also cognizant this file is getting big. 
+refactor some bigger MainApp.tsx, also RoundHistoryPanel can be split? or actions.ts?

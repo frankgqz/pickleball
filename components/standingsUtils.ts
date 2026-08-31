@@ -145,6 +145,28 @@ export interface StandingsChanges {
   orderHistory: { round: number; change: number; reason: string }[];
 }
 
+
+// Build initial StandingsEntry objects for a list of players
+export function buildEntriesFromPlayers(players: Player[]): StandingsEntry[] {
+  return players.map(p => ({
+    id: p.id,
+    name: p.name,
+    duprId: p.duprId ?? null,
+    duprScore: p.duprScore ?? p.manualDuprScore ?? null,
+    seed: 0,
+    seedAdjustment: 0,
+    orderHistory: [],
+    byeBase: -Math.random(),
+    byeMod: 0,
+    byeCount: 0,
+    sitOutCount: 0,
+    wins: 0,
+    losses: 0,
+    pointsFor: 0,
+    pointsAgainst: 0,
+  }));
+}
+
 /**
  * Calculate standings changes from a set of rounds
  * Centralized logic to eliminate duplication across page.tsx handlers
