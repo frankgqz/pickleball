@@ -406,7 +406,7 @@ export default function Page() {
           onDeleteRound={handleDeleteRound}
           userId={session?.user?.id}           // ← ADD
           currentDbSessionId={dbSessionId}    // ← ADD
-          onLoadSession={(id) => loadSession(id)}    // ← ADD (wired later)
+          onLoadSession={handleLoadSession}
           onEndSession={async (id) => {
             await endSession(id);
             setCurrentSession({ sessionId: Date.now().toString(), startDate: new Date().toISOString() });
