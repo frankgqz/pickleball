@@ -198,7 +198,9 @@ export default function Page() {
       if (currentRoundNumber === 1) {
         regenerateByes(config.byeTopProtection, config.byeBonusTop);
         if (!dbSessionId && userId) {
-          await startNewSession(userId, eventPool.map(p => p.id));
+          // Ensure eventPool has allPlayers players before saving session
+          const sessionPlayers = eventPool.length > 0 ? eventPool : allPlayers;
+          await startNewSession(userId, sessionPlayers.map(p => p.id));
         }
       }
       matchGenActions.generateStandardMatches(format);
@@ -407,8 +409,7 @@ export default function Page() {
           onEndSession={async (id) => {
             await endSession(id);
             // Reset all local state
-            setAllPlayers([]);
-            setEventPool([]);
+            setEventPool([]);        // eventPool = who's playing today (reset every session)
             setStandings([]);
           }}
           onDeleteSession={(id) => deleteSession(id)} // ← ADD (wired later)
