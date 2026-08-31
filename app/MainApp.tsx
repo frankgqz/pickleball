@@ -281,7 +281,7 @@ export default function Page() {
         // ── anchor to the loaded session ──
         setCurrentSession({
           sessionId: session.id,
-          startDate: session.startDate ?? new Date().toISOString(),
+          startDate: new Date().toISOString(),
         });
         setDbSessionId(sessionId);
 
