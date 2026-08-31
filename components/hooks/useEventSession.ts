@@ -1,17 +1,17 @@
-"use client";
-
 // useEventSession.ts - Event config, session, and history management
 // Manages the overall event state: config settings, session ID, round history
-
 import { useState, useCallback, useMemo } from "react";
 import { TournamentConfig, CompletedRound, GameSession, MatchFormat, RoundState } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
+import { createSession, saveRound, updateRound } from "@/app/actions";
 
 export const DEFAULT_CONFIG: TournamentConfig = {
   format: "STANDARD",
-  matchType: "D",         // ← ADD
-  scoreType: "SIDEOUT",   // ← ADD
-  bestOf: 1,              // ← ADD
+  roundFormat: "FIXED_14V23",
+  eventName: "",
+  matchType: "D",           // ← ADD
+  scoreType: "SIDEOUT",     // ← ADD
+  bestOf: 1,                // ← ADD
   orderGap: 0.25,
   band: 1,
   winLossMagnitude: 1,
@@ -35,6 +35,7 @@ export interface EventSessionState {
   roundState: RoundState;
   currentRoundNumber: number;
   setRoundState: React.Dispatch<React.SetStateAction<RoundState>>;
+  dbSessionId?: string;     // actual DB session ID — undefined until Start Round 1
 }
 
 export interface EventSessionActions {
@@ -46,6 +47,7 @@ export interface EventSessionActions {
   restartEvent: () => void;
   createNewSession: () => GameSession;
   cancelCurrentRound: () => void;
+  startNewSession: (userId: string, playerIds: string[]) => Promise<string>; // returns dbSessionId
 }
 
 export function useEventSession(initialConfig?: TournamentConfig): [EventSessionState, EventSessionActions] {
@@ -72,6 +74,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     matches: [],
     submitted: false
   }));
+  const [dbSessionId, setDbSessionId] = useState<string | undefined>(undefined);
 
   // Derived: rounds in current session
   const currentSessionRounds = useMemo(
@@ -79,10 +82,10 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
       .sort((a, b) => a.roundNumber - b.roundNumber),
     [roundHistory, currentSession]
   );
-
   const currentRoundNumber = currentSessionRounds.length + 1;
 
-  // Actions
+  // ============ ACTIONS ============
+
   const updateConfig = useCallback(<K extends keyof TournamentConfig>(
     key: K,
     value: TournamentConfig[K]
@@ -104,6 +107,28 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     }
   }, []);
 
+  // --- START NEW SESSION (creates DB session) ---
+  const startNewSession = useCallback(async (userId: string, playerIds: string[]): Promise<string> => {
+    const now = new Date();
+    const dateStr = `${now.getFullYear()} ${now.toLocaleString("default", { month: "short" })} ${now.getDate()}`;
+    const name = config.eventName?.trim() || `${dateStr} - ${playerIds.length} players`;
+
+    const result = await createSession(userId, name, config as object, playerIds);
+    if (!result.success || !result.session) throw new Error("Failed to create session");
+
+    const newDbId = result.session.id;
+    setDbSessionId(newDbId);
+
+    const newSession: GameSession = {
+      sessionId: newDbId,
+      startDate: new Date().toISOString(),
+    };
+    setCurrentSession(newSession);
+    localStorageDb.saveSession(newSession);
+
+    return newDbId;
+  }, [config]);
+
   const createNewSession = useCallback((): GameSession => {
     const session: GameSession = {
       sessionId: Date.now().toString(),
@@ -117,6 +142,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const restartEvent = useCallback(() => {
     createNewSession();
     setRoundHistory([]);
+    setDbSessionId(undefined);     // no DB session active after restart
     setRoundState({
       active: false,
       format: PICK_PARTNER_FORMAT,
@@ -135,14 +161,27 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     });
   }, []);
 
+  // --- ADD ROUND TO HISTORY --- (also persists to DB)
   const addRoundToHistory = useCallback((round: CompletedRound) => {
+    // 1. Save to localStorage (existing behaviour)
     setRoundHistory(prev => {
       const updated = [...prev, round];
       localStorageDb.saveRounds(updated);
       return updated;
     });
     setRoundState(prev => ({ ...prev, submitted: true }));
-  }, []);
+
+    // 2. Persist new round to DB
+    if (dbSessionId) {
+      saveRound(dbSessionId, {
+        roundNumber: round.roundNumber,
+        date: round.date,
+        format: round.format,
+        matches: round.matches,
+        sittingOut: round.sittingOut,
+      }).catch(err => console.error("Failed to save round to DB:", err));
+    }
+  }, [dbSessionId]);
 
   const updateRoundInHistory = useCallback((roundNumber: number, updatedMatches: CompletedRound["matches"]) => {
     setRoundHistory(prev => {
@@ -154,7 +193,13 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
       localStorageDb.saveRounds(updated);
       return updated;
     });
-  }, [currentSession.sessionId]);
+
+    // Also update in DB
+    if (dbSessionId) {
+      updateRound(dbSessionId, roundNumber, { matches: updatedMatches })
+        .catch(err => console.error("Failed to update round in DB:", err));
+    }
+  }, [currentSession.sessionId, dbSessionId]);
 
   const deleteRoundFromHistory = useCallback((roundNumber: number, sessionId: string) => {
     setRoundHistory(prev => {
@@ -164,7 +209,10 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
       localStorageDb.saveRounds(updated);
       return updated;
     });
+    // TODO: also delete round row from DB
   }, []);
+
+  // ============ COMBINE STATE & ACTIONS ============
 
   const state: EventSessionState = {
     config,
@@ -173,6 +221,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     roundState,
     currentRoundNumber,
     setRoundState,
+    dbSessionId,
   };
 
   const actions: EventSessionActions = {
@@ -184,6 +233,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
     restartEvent,
     createNewSession,
     cancelCurrentRound,
+    startNewSession,
   };
 
   return [state, actions];

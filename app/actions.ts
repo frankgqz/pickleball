@@ -375,3 +375,139 @@ export async function updateClubPlayer(clubPlayerId: string, data: { note?: stri
     return { success: false, error: "Failed to update" };
   }
 }
+
+
+// ============================================================
+// SESSION ACTIONS
+// ============================================================
+
+// Get Players by IDs (for repopulating event pool on session load)
+export async function getPlayersByIds(ids: string[]) {
+  if (!ids || ids.length === 0) return { success: true, players: [] };
+  try {
+    const players = await prisma.player.findMany({
+      where: { id: { in: ids } },
+    });
+    return { success: true, players };
+  } catch (error) {
+    console.error("Error fetching players by IDs:", error);
+    return { success: false, players: [], error: "Failed to fetch players" };
+  }
+}
+
+// Create a new session (called on "Start Round 1")
+export async function createSession(
+  userId: string,
+  name: string,
+  config: object,
+  playerIds: string[]
+) {
+  try {
+    const session = await prisma.session.create({
+      data: { userId, name, config, playerIds },
+    });
+    return { success: true, session };
+  } catch (error) {
+    console.error("Error creating session:", error);
+    return { success: false, error: "Failed to create session" };
+  }
+}
+
+// List all past sessions for a user (for past rounds panel)
+export async function getSessionList(userId: string) {
+  try {
+    const sessions = await prisma.session.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      // Light payload — just metadata, no rounds in list view
+    });
+    return { success: true, sessions };
+  } catch (error) {
+    console.error("Error fetching sessions:", error);
+    return { success: false, sessions: [], error: "Failed to fetch sessions" };
+  }
+}
+
+// Load a full session with all rounds (when user clicks to load)
+export async function loadSession(sessionId: string) {
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { rounds: { orderBy: { roundNumber: "asc" } } },
+    });
+    if (!session) return { success: false, error: "Session not found" };
+    return { success: true, session };
+  } catch (error) {
+    console.error("Error loading session:", error);
+    return { success: false, error: "Failed to load session" };
+  }
+}
+
+// Save a new round (first time only — roundNumber not yet in DB)
+export async function saveRound(
+  sessionId: string,
+  roundData: {
+    roundNumber: number;
+    date: string;
+    format: object;
+    matches: object;
+    sittingOut: string[];
+  }
+) {
+  try {
+    const round = await prisma.sessionRound.create({
+      data: { sessionId, ...roundData },
+    });
+    return { success: true, round };
+  } catch (error) {
+    console.error("Error saving round:", error);
+    return { success: false, error: "Failed to save round" };
+  }
+}
+
+// Update/edit an existing round (upsert-style update)
+export async function updateRound(
+  sessionId: string,
+  roundNumber: number,
+  roundData: {
+    format?: object;
+    matches?: object;
+    sittingOut?: string[];
+  }
+) {
+  try {
+    const round = await prisma.sessionRound.update({
+      where: { sessionId_roundNumber: { sessionId, roundNumber } },
+      data: roundData,
+    });
+    return { success: true, round };
+  } catch (error) {
+    console.error("Error updating round:", error);
+    return { success: false, error: "Failed to update round" };
+  }
+}
+
+// Mark session as ended (prevents further edits)
+export async function endSession(sessionId: string) {
+  try {
+    const session = await prisma.session.update({
+      where: { id: sessionId },
+      data: { isEnded: true },
+    });
+    return { success: true, session };
+  } catch (error) {
+    console.error("Error ending session:", error);
+    return { success: false, error: "Failed to end session" };
+  }
+}
+
+// Delete a session and all its rounds (cascades automatically)
+export async function deleteSession(sessionId: string) {
+  try {
+    await prisma.session.delete({ where: { id: sessionId } });
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting session:", error);
+    return { success: false, error: "Failed to delete session" };
+  }
+}

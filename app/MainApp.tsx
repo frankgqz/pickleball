@@ -11,9 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { removeClubPlayer } from "@/app/actions";
-
-
+import { loadSession, removeClubPlayer, getSessionList, loadSession, endSession, deleteSession} from "@/app/actions";
 
 
 // Hooks
@@ -34,7 +32,8 @@ export default function Page() {
   const userId = session?.user?.id;
 
   // ====== EVENT SESSION HOOK ======
-  const [eventSessionState, eventSessionActions] = useEventSession();
+  const [eventSessionState, eventSessionActions] = useEventSession();  // ← MISSING
+  // NEW — add dbSessionId and startNewSession:
   const { 
     config, 
     currentSession, 
@@ -42,13 +41,16 @@ export default function Page() {
     roundState, 
     currentRoundNumber,
     setRoundState,
+    dbSessionId,          // ← ADD
   } = eventSessionState;
+
   const { 
     updateConfig, 
     addRoundToHistory, 
     updateRoundInHistory, 
     deleteRoundFromHistory, 
     restartEvent,
+    startNewSession,       // ← ADD
   } = eventSessionActions;
 
 
@@ -88,6 +90,8 @@ export default function Page() {
   } = standingsActions;
 
   // ====== MATCH GENERATION HOOK ======
+
+
   const [, matchGenActions] = useMatchGeneration(
     eventPool, 
     standings, 
@@ -188,12 +192,17 @@ export default function Page() {
   // ============================================================
   // OTHER HANDLERS
   // ============================================================
-  const startStandardRound = useCallback((format: MatchFormat) => {
-    if (currentRoundNumber === 1) {
-      regenerateByes(config.byeTopProtection, config.byeBonusTop);
-    }
-    matchGenActions.generateStandardMatches(format);
-  }, [currentRoundNumber, config, regenerateByes, matchGenActions]);
+
+  
+  const startStandardRound = useCallback(async (format: MatchFormat) => {
+      if (currentRoundNumber === 1) {
+        regenerateByes(config.byeTopProtection, config.byeBonusTop);
+        if (!dbSessionId && userId) {
+          await startNewSession(userId, eventPool.map(p => p.id));
+        }
+      }
+      matchGenActions.generateStandardMatches(format);
+  }, [currentRoundNumber, config, regenerateByes, matchGenActions, dbSessionId, userId, eventPool, startNewSession]);
 
   const startNextRound = useCallback(() => {
     if (config.format === "POOL_PLAY") {
@@ -260,6 +269,14 @@ export default function Page() {
     }
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
+  const handleLoadSession = useCallback(async (sessionId: string) => {
+    const result = await loadSession(sessionId);
+    if (result.success && result.session) {
+      // TODO: repopulate config, pool, roundHistory from result.session
+      console.log("Session loaded:", result.session.name);
+    }
+  }, []);
+  
   // Initial load
     useEffect(() => {
     loadPlayersFromDatabase(session?.user?.id);
@@ -349,6 +366,11 @@ export default function Page() {
           config={config}
           onEditRound={handleEditRound}
           onDeleteRound={handleDeleteRound}
+          userId={session?.user?.id}           // ← ADD
+          currentDbSessionId={dbSessionId}    // ← ADD
+          onLoadSession={(id) => loadSession(id)}    // ← ADD (wired later)
+          onEndSession={(id) => endSession(id)}      // ← ADD (wired later)
+          onDeleteSession={(id) => deleteSession(id)} // ← ADD (wired later)
         />
       </div>
     </div>

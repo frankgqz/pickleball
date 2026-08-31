@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";  // ← ADD useEffect
 import { CompletedRound, Player, TournamentConfig } from "./Types";
+import { getSessionList, loadSession, endSession, deleteSession } from "@/app/actions";
 
 interface Props {
   roundHistory: CompletedRound[];
@@ -10,6 +11,11 @@ interface Props {
   config?: TournamentConfig;
   onEditRound?: (roundNumber: number, updatedMatches: CompletedRound["matches"]) => void;
   onDeleteRound?: (roundNumber: number, sessionId: string) => void;
+  currentDbSessionId?: string;         // ← ADD — to know which session is "active"
+  onLoadSession?: (sessionId: string) => void;  // ← ADD
+  onEndSession?: (sessionId: string) => void;    // ← ADD
+  onDeleteSession?: (sessionId: string) => void; // ← ADD
+  userId?: string;       // ← ADD — needed for getSessionList
 }
 
 export default function RoundHistoryPanel({
@@ -19,6 +25,11 @@ export default function RoundHistoryPanel({
   config,
   onEditRound,
   onDeleteRound,
+  currentDbSessionId,     // ← ADD
+  onLoadSession,          // ← ADD
+  onEndSession,          // ← ADD
+  onDeleteSession,       // ← ADD
+  userId,       // ← ADD
 }: Props) {
   const sessionRounds = useMemo(
     () => roundHistory
@@ -44,8 +55,27 @@ export default function RoundHistoryPanel({
     }
   };
 
+  const [pastSessions, setPastSessions] = useState<any[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
+  const [pastSessionsOpen, setPastSessionsOpen] = useState(false);  // ← ADD for collapsible
+
+
+    // --- FETCH PAST SESSIONS ---
+  // This populates the session list panel
+  const loadPastSessions = async () => {
+    // NOTE: you need the userId somehow — prop it in if available
+    const result = await getSessionList(userId || ""); // temp — needs userId prop
+    if (result.success) {
+      setPastSessions(result.sessions || []);
+    }
+  };
+
+  useEffect(() => {
+    if (pastSessionsOpen && userId) {
+      loadPastSessions();
+    }
+  }, [pastSessionsOpen, userId]);
 
   // --- CSV Export ---------------------- //
   const exportToCSV = () => {
@@ -117,8 +147,8 @@ export default function RoundHistoryPanel({
         const game1B = match.team2Score !== undefined ? String(match.team2Score) : "";
 
         rows.push([
-          "D",
-          "SIDEOUT",
+          config?.matchType || "D",
+          config?.scoreType || "SIDEOUT",
           eventWithRound,
           dateStr,
           pA1.name,
