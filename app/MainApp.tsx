@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { loadSession, removeClubPlayer, getSessionList, loadSession, endSession, deleteSession} from "@/app/actions";
+import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession} from "@/app/actions";
 
 
 // Hooks
@@ -276,7 +276,7 @@ export default function Page() {
       console.log("Session loaded:", result.session.name);
     }
   }, []);
-  
+
   // Initial load
     useEffect(() => {
     loadPlayersFromDatabase(session?.user?.id);
