@@ -56,21 +56,16 @@ export interface EventSessionActions {
 export function useEventSession(initialConfig?: TournamentConfig): [EventSessionState, EventSessionActions] {
   // Load saved config or use default
   const savedConfig = localStorageDb.loadConfig();
-
   // Load saved session or create new
   const savedSession = localStorageDb.loadSession();
   const initialSession: GameSession = savedSession || {
     sessionId: Date.now().toString(),
     startDate: new Date().toISOString(),
   };
-
-  // Load saved rounds
-  const savedRounds = localStorageDb.loadRounds();
-
   // State
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
-  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(savedRounds);
+  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>([]);
   const [roundState, setRoundState] = useState<RoundState>(() => ({
     active: false,
     format: PICK_PARTNER_FORMAT,
