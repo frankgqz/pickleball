@@ -304,6 +304,7 @@ export default function Page() {
           if (session.rounds) {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
             loadedRounds.forEach(round => addRoundToHistory(round));
+            setStandings([]);                        // ← ADD: clear stale before recalculating
             recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
           }
         }

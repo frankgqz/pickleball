@@ -47,3 +47,15 @@
     Planned session persistence architecture — Designed 2-table DB schema (EventSession, SessionRound) for saving/loading complete tournaments with matches, standings, and config (pending implementation).
 
 260831
+
+    Added database for Session and SessionRound for persistence
+    New Chat in Merlin due to overmemory
+    Restart clears event name — restartEvent now wipes the event name from settings when restarting
+    Restart creates fresh session — restartEvent skips createNewSession(), resets all state directly to avoid stale session data
+    Exported session state setters — setRoundHistory, setCurrentSession, setDbSessionId now accessible from useEventSession for direct use in MainApp.tsx
+    Event dropdown wired to load handler — onLoadSession now points to handleLoadSession instead of the raw server action so the full load flow executes
+    Load session clears state before loading — setCurrentSession, setRoundHistory, and setRoundState reset first to eliminate stale round data persisting from the previous session
+    Player lookup uses fresh array — recalculateStandingsFromHistory now receives the loadedPlayers array directly from the DB query instead of the stale eventPool closure
+    Login resets player pool — loadPlayersFromDatabase clears allPlayers and eventPool before fetching fresh, removing stale isSitting flags from previous sessions
+    Saved session name stripped of timestamp — startNewSession now saves only the event name to the DB; timestamp moved to startDate for display only
+    
