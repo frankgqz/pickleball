@@ -295,6 +295,12 @@ export default function Page() {
         });
 
         // Load players into pool
+        // Restore event name first so config is fresh before standings recalculation
+        if (session.config) {
+          updateConfig("eventName", String((session.config as any).eventName ?? ""));
+        }
+
+        // Load players into pool
         const rawPlayerIds = session.playerIds as unknown as string;
         if (rawPlayerIds && rawPlayerIds.length > 0) {
           try {
@@ -303,22 +309,29 @@ export default function Page() {
             if (playersResult.success && playersResult.players) {
               setAllPlayers(playersResult.players);
               setEventPool(playersResult.players);
+
+              // Populate rounds only AFTER event pool is set
+              if (session.rounds) {
+                const loadedRounds = session.rounds as unknown as CompletedRound[];
+                loadedRounds.forEach(round => addRoundToHistory(round));
+                recalculateStandingsFromHistory(
+                  loadedRounds,
+                  sessionId,
+                  config,
+                  playersResult.players  // use loaded players, not stale eventPool
+                );
+              }
             }
           } catch (e) {
             console.warn("Failed to parse playerIds:", e);
           }
-        }
-
-        // Restore event name
-        if (session.config) {
-          updateConfig("eventName", String((session.config as any).eventName ?? ""));
-        }
-
-        // Populate rounds
-        if (session.rounds) {
-          const loadedRounds = session.rounds as unknown as CompletedRound[];
-          loadedRounds.forEach(round => addRoundToHistory(round));
-          recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
+        } else {
+          // No players in session — still repopulate rounds with empty pool
+          if (session.rounds) {
+            const loadedRounds = session.rounds as unknown as CompletedRound[];
+            loadedRounds.forEach(round => addRoundToHistory(round));
+            recalculateStandingsFromHistory(loadedRounds, sessionId, config, eventPool);
+          }
         }
       }
     }, [
