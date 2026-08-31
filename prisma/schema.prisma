@@ -42,8 +42,8 @@ model User {
   image        String?
   
   clubPlayers  ClubPlayer[]
-  events       Event[]
-  
+  sessions     Session[]
+
   createdAt    DateTime      @default(now())
 }
 
@@ -63,9 +63,7 @@ model ClubPlayer {
   eventCount    Int      @default(0)
   lastAttended  DateTime?
   note          String?
-  
-  eventPlayers  EventPlayer[]
-  
+   
   createdAt     DateTime @default(now())
 
   @@unique([userId, playerId])
