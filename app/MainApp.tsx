@@ -19,7 +19,7 @@ import { useEventSession } from "@/components/hooks/useEventSession";
 import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
-import { createStandingsEntry, buildEntriesFromPlayers } from "@/components/standingsUtils";
+import { createStandingsEntry, buildEntriesFromPlayers, calculateStandingsFromRounds } from "@/components/standingsUtils";
 
 
 // Format constants
@@ -285,15 +285,12 @@ export default function Page() {
       setDbSessionId(sessionId);
       setRoundHistory([]);
       setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
-
       if (session.config) {
         const savedName = (session.config as any).eventName ?? "";
         updateConfig("eventName", String(savedName));
       }
-
       const rawPlayerIds = session.playerIds as unknown as string[];
       const playerIdArray = Array.isArray(rawPlayerIds) ? rawPlayerIds : rawPlayerIds ? JSON.parse(rawPlayerIds as string) : [];
-
       if (playerIdArray.length > 0) {
         const playersResult = await getPlayersByIds(playerIdArray);
         if (playersResult.success && playersResult.players) {
@@ -303,17 +300,19 @@ export default function Page() {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
             const freshEntries = buildEntriesFromPlayers(loadedPlayers);
             setStandings(freshEntries);
-            recalculateStandingsFromHistory(loadedRounds, sessionId, config, loadedPlayers);
+            const computed = calculateStandingsFromRounds(freshEntries, loadedRounds);
+            setStandings(computed);
             loadedRounds.forEach(round => addRoundToHistory(round));
           }
         }
       } else if (session.rounds) {
         const loadedRounds = session.rounds as unknown as CompletedRound[];
         loadedRounds.forEach(round => addRoundToHistory(round));
-        recalculateStandingsFromHistory(loadedRounds, sessionId, config, []);
+        const computed = calculateStandingsFromRounds([], loadedRounds);
+        setStandings(computed);
       }
     }
-  }, [config, updateConfig, addRoundToHistory, recalculateStandingsFromHistory, setAllPlayers, setEventPool, setCurrentSession, setDbSessionId, setRoundHistory, setRoundState]);
+  }, [config, updateConfig, addRoundToHistory, setStandings, setEventPool, setCurrentSession, setDbSessionId, setRoundHistory, setRoundState]);
 
   // Initial load
     useEffect(() => {

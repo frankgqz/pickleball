@@ -114,6 +114,26 @@ export function getPointsPercentage(entry: StandingsEntry): number {
   return total > 0 ? entry.pointsFor / total : 0;
 }
 
+export function buildEntriesFromPlayers(players: Player[]): StandingsEntry[] {
+  return players.map(p => ({
+    id: p.id,
+    name: p.name,
+    duprId: p.duprId ?? null,
+    duprScore: p.duprScore ?? (p as any).manualDuprScore ?? null,
+    seed: 0,
+    seedAdjustment: 0,
+    orderHistory: [],
+    byeBase: -Math.random(),
+    byeMod: 0,
+    byeCount: 0,
+    sitOutCount: 0,
+    wins: 0,
+    losses: 0,
+    pointsFor: 0,
+    pointsAgainst: 0,
+  }));
+}
+
 export function formatByeBreakdown(entry: StandingsEntry): string {
   const parts: string[] = [];
   
