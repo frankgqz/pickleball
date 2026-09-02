@@ -54,8 +54,11 @@
     Restart creates fresh session — restartEvent skips createNewSession(), resets all state directly to avoid stale session data
     Exported session state setters — setRoundHistory, setCurrentSession, setDbSessionId now accessible from useEventSession for direct use in MainApp.tsx
     Event dropdown wired to load handler — onLoadSession now points to handleLoadSession instead of the raw server action so the full load flow executes
-    Load session clears state before loading — setCurrentSession, setRoundHistory, and setRoundState reset first to eliminate stale round data persisting from the previous session
-    Player lookup uses fresh array — recalculateStandingsFromHistory now receives the loadedPlayers array directly from the DB query instead of the stale eventPool closure
-    Login resets player pool — loadPlayersFromDatabase clears allPlayers and eventPool before fetching fresh, removing stale isSitting flags from previous sessions
-    Saved session name stripped of timestamp — startNewSession now saves only the event name to the DB; timestamp moved to startDate for display only
+    Load session clears state first — setCurrentSession, setRoundHistory, setRoundState reset before loading so stale rounds from a previous session don't mix with the loaded one
+    Login clears player pool — loadPlayersFromDatabase resets allPlayers and eventPool before fetching fresh club roster, removing stale isSitting flags from previous sessions
+    Login no longer loads stale rounds — roundHistory initialized as [] on mount; previous session data no longer persists across logins
+    Club roster stays independent on load — setAllPlayers removed from handleLoadSession; session loading restores the event pool but leaves the club roster untouched
+    Standings table populated on session load — buildEntriesFromPlayers creates entries for loaded players, then calculateStandingsFromRounds replays match results directly into them instead of going through the hook wrapper
+
+
     

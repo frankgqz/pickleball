@@ -7,7 +7,6 @@ Fixed partner, Singles, Pool play bracket system options
 Handle game Scores (best of 3) - UI ready, logic not wired
 
 ### Login System
-Event pool populating, but not Standings Table. 
 Session panel, UI - better layout, End session button. Delete session. Continue Session. 
 
 ### Player Persepctive
