@@ -29,3 +29,4 @@ searching dupr, should update their dupr in event pool
 
 ### Current - immmediate
 refactor some bigger MainApp.tsx, also RoundHistoryPanel can be split? or actions.ts?
+implement themes
