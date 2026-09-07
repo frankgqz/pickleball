@@ -1,5 +1,5 @@
 "use server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/prisma/client";
 
 // ===== DUPR API Configuration =====
 const DUPR_API_BASE = "https://api.dupr.gg";
