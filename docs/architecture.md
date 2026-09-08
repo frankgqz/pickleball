@@ -6,6 +6,8 @@
 
 └── layout.tsx
 
+├── scripts/
+│   └── sync-theme.js
 
 
 /components

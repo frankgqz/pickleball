@@ -11,6 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
+import ThemeToggle from "@/components/ThemeToggle";  // ← ADD
 import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds } from "@/app/actions";
 
 
@@ -340,13 +341,17 @@ export default function Page() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 p-4 md:p-8">
-      <header className="text-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">🏓 Pickleball Event Manager</h1>
-        <p className="text-green-100 text-sm">Tournament Management & Round Robin Scheduling</p>
+    <div className="min-h-screen p-4 md:p-8">
+      <header className="flex items-center justify-between mb-6 px-2">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">🏓 Pickleball Event Manager</h1>
+          <p className="text-sm">Tournament Management & Round Robin Scheduling</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <AuthHeader session={session} />
+        </div>
       </header>
-
-      <AuthHeader session={session} />
 
       <div className="max-w-6xl mx-auto space-y-6">
         <SettingsPanel config={config} updateConfig={updateConfig} onRestartEvent={handleRestartEvent} />

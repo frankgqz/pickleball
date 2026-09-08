@@ -15,7 +15,7 @@ export function AuthHeader({ session }: AuthHeaderProps) {
         {!session && (
           <span className="flex items-center gap-2">
             <span>🔒</span>
-            <span>Sign in to save your player database & session history</span>
+            <span>Sign in to save your players & history  </span>
           </span>
         )}
       </div>

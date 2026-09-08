@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Providers from "./Providers";  // ADD THIS
+//import '@gqz/theme/theme.css'
 import "./globals.css";
 
 const geistSans = Geist({
