@@ -61,4 +61,16 @@
     Standings table populated on session load — buildEntriesFromPlayers creates entries for loaded players, then calculateStandingsFromRounds replays match results directly into them instead of going through the hook wrapper
 
 
+260907
+
+    stuff related to theme button
+    issue with css file being processed, using different method to load css filr from different repo
+
+    Integrated shared theme system from github.com/frankgqz/theme. CSS variables (--theme-bg, --theme-text, --theme-accent, etc.) and [data-theme='xxx'] blocks are synced from the theme repo via postinstall script on every npm install. Theme data (themes, themeOrder, ThemeColors) also synced via postinstall and replaces all hardcoded theme values.
+    Added ThemeProvider (components/ThemeProvider.tsx) — reads active theme from localStorage, applies CSS variables and data-theme attribute to <html>, exports useTheme() hook.
+    Added ThemeToggle (components/ThemeToggle.tsx) — miniaturized pill button (wood/dark/sky/matcha) with emoji icons, cycles themeOrder on click.
+    Created app/scripts/sync-theme.js — postinstall script fetching theme.css and src/theme.ts from github.com/frankgqz/theme/main via curl.
+    Removed hardcoded green content (bg-gradient-to-br from-green-600 to-green-800) from outer page div — body now uses var(--theme-bg) from globals.css.
+    Refactored header layout — toggle button placed top-right, AuthHeader controls right-aligned alongside it.
+    Removed @gqz/theme npm package from package.json — Turbopack breaks CSS subpath imports from git-hosted packages. Postinstall curl bypasses module resolution entirely.
     
