@@ -2,7 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { ThemeProvider } from '@/app/useTheme'
+import { ThemeProvider } from '@/app/ThemeProvider'
 
 
 export default function Providers({ children }: { children: React.ReactNode }) {
