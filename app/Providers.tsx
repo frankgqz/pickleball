@@ -2,7 +2,8 @@
 
 import { SessionProvider } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from '@/app/useTheme'
+
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
