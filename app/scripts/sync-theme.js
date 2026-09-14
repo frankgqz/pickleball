@@ -14,6 +14,9 @@ try {
   const useTheme = execSync(`curl -sL "${BASE}/src/useTheme.tsx"`, { encoding: 'utf8' })
   fs.writeFileSync(path.join(__dirname, '../useTheme.tsx'), useTheme)
 
+  const provider = execSync(`curl -sL "${BASE}/src/ThemeProvider.tsx"`, { encoding: 'utf8' })
+  fs.writeFileSync(path.join(__dirname, '../ThemeProvider.tsx'), provider)
+
   const toggle = execSync(`curl -sL "${BASE}/src/ThemeToggle.tsx"`, { encoding: 'utf8' })
   fs.writeFileSync(path.join(__dirname, '../ThemeToggle.tsx'), toggle)
 
