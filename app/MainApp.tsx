@@ -21,7 +21,6 @@ import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
 import { createStandingsEntry, buildEntriesFromPlayers, calculateStandingsFromRounds } from "@/components/standingsUtils";
 
-
 // Format constants
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
 const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
