@@ -14,7 +14,6 @@ import { AuthHeader } from "@/components/AuthHeader";
 import ThemeToggle from "@/app/ThemeToggle"
 import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds } from "@/app/actions";
 
-
 // Hooks
 import { useEventSession } from "@/components/hooks/useEventSession";
 import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
