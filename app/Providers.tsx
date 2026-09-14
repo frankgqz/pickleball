@@ -21,3 +21,4 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     </SessionProvider>
   );
 }
+
