@@ -38,4 +38,6 @@ Actions.ts bulky
 
 ### Current - immmediate
 Implement themes
+moving files to theme repo
+
  
