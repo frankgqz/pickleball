@@ -2,7 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { ThemeProvider } from '@gqz/theme'
+import { ThemeProvider } from './ThemeProvider'
 //import { ThemeProvider } from '@/app/ThemeProvider'
 
 

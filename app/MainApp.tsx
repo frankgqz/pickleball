@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
-import { ThemeToggle } from '@gqz/theme'
+import { ThemeToggle } from './ThemeToggle'
 import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds } from "@/app/actions";
  
 // Hooks
