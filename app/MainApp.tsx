@@ -337,7 +337,6 @@ export default function Page() {
     );
   }
 
-
 // <p className="text-sm">Tournament Management & Round Robin Scheduling</p>
 
   return (
