@@ -30,13 +30,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <head>
         <Script id="theme-init" strategy="beforeInteractive">
-          (function(){
-            var m = document.cookie.match(/(?:^|;\s*)gqz-theme=([^;]+)/);
+          {`(function(){
+            var m = document.cookie.match(/(?:^|;\\s*)gqz-theme=([^;]+)/);
             var saved = m ? decodeURIComponent(m[1]) : null;
             var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             var theme = saved || (sysDark ? 'dark' : 'wood');
             document.documentElement.setAttribute('data-theme', theme);
-          })();
+          })();`}
         </Script>
       </head>
       <body className="min-h-full flex flex-col">
