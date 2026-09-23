@@ -1,7 +1,4 @@
 /* src/theme.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root {
   --theme-bg: #F5F0E8;
@@ -51,8 +48,17 @@
   --theme-btn-shadow-pressed: 0 2px 12px rgba(90,107,85,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
+
+@keyframes theme-icon-spin {
+  from { transform: rotate(0deg) scale(0.5); opacity: 0; }
+  60%  { transform: rotate(300deg) scale(1.15); opacity: 1; }
+  to   { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+
 body {
   background-color: var(--theme-bg);
   color: var(--theme-text);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+
