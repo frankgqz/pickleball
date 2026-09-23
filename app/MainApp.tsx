@@ -338,15 +338,23 @@ export default function Page() {
   }
 
 
+// <p className="text-sm">Tournament Management & Round Robin Scheduling</p>
+
   return (
     <div className="min-h-screen p-4 md:p-8">
-      <header className="flex items-center justify-between mb-6 px-2">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-1">🏓 Pickleball Event Manager</h1>
-          <p className="text-sm">Tournament Management & Round Robin Scheduling</p>
+      <header className="mb-6 px-2">
+        <div className="flex items-center justify-center mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickleball Sessions</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-end gap-4">
           <ThemeToggle />
+          <a
+            href="https://gqz.app"
+            className="text-sm px-3 py-1 rounded hover:opacity-80 transition-opacity"
+            aria-label="Home"
+          >
+            Home
+          </a>
           <AuthHeader session={session} />
         </div>
       </header>

@@ -1,2 +1,24 @@
 @import "tailwindcss";
 @import "./theme.css";
+
+@theme inline {
+  --color-bg: var(--theme-bg);
+  --color-text: var(--theme-text);
+  --color-subtext: var(--theme-subtext);
+  --color-accent: var(--theme-accent);
+  --color-btn-start: var(--theme-btn-start);
+  --color-btn-end: var(--theme-btn-end);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background-color: var(--theme-bg);
+  color: var(--theme-text);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+code, kbd, pre, .font-mono {
+  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
