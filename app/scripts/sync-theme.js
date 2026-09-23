@@ -20,6 +20,9 @@ try {
   const toggle = execSync(`curl -sL "${BASE}/themeToggle.tsx"`, { encoding: 'utf8' })
   fs.writeFileSync(path.join(__dirname, '../ThemeToggle.tsx'), toggle)
 
+  const storage = execSync(`curl -sL "${BASE}/storage.ts"`, { encoding: 'utf8' })
+  fs.writeFileSync(path.join(__dirname, '../storage.ts'), storage)
+
   console.log('Theme synced from gqz/theme')
 } catch {
   console.warn('Theme sync failed, using existing files')
