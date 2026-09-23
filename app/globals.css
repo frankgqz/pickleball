@@ -6,6 +6,7 @@
   --color-text: var(--theme-text);
   --color-subtext: var(--theme-subtext);
   --color-accent: var(--theme-accent);
+  --color-panel: var(--theme-panel);
   --color-btn-start: var(--theme-btn-start);
   --color-btn-end: var(--theme-btn-end);
   --font-sans: var(--font-geist-sans);
