@@ -240,12 +240,12 @@ export default function RoundHistoryPanel({
   };
 
   return (
-    <section className="bg-slate-800/50 backdrop-blur rounded-2xl border border-slate-700/50 p-4">
+    <section className="bg-panel rounded-2xl border border-line p-4">
       {/* Header - Mobile-friendly layout */}
       <div className="mb-4">
         {/* Row 1: Title + Export */}
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-white">📋 Session</h2>
+          <h2 className="text-lg font-bold text-text">📋 Session</h2>
           <div className="flex gap-2">
             <button
               onClick={() => setPastSessionsOpen(o => !o)}
@@ -275,7 +275,7 @@ export default function RoundHistoryPanel({
                   onLoadSession(id);
                 }
               }}
-              className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+              className="w-full px-3 py-2 bg-muted-bg border border-line rounded-lg text-text"
             >
               <option value="">— Select a session to load —</option>
               {pastSessions.map(s => (
@@ -292,7 +292,7 @@ export default function RoundHistoryPanel({
         <select
           value={selectedRoundNumber === "" ? "" : selectedRoundNumber}
           onChange={(e) => setSelectedRoundNumber(e.target.value ? parseInt(e.target.value) : "")}
-          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-3"
+          className="w-full px-3 py-2 bg-muted-bg border border-line rounded-lg text-text mb-3"
         >
           <option value="">Select a round...</option>
           {sessionRounds.map(r => (
@@ -302,7 +302,7 @@ export default function RoundHistoryPanel({
           ))}
         </select>
         ) : (
-          <p className="text-slate-400 text-sm mb-3">No rounds yet — start a round to see history.</p>
+          <p className="text-subtext text-sm mb-3">No rounds yet — start a round to see history.</p>
         )}
 
         {/* Row 3: Action buttons - Edit/Delete or Save/Cancel */}
@@ -327,7 +327,7 @@ export default function RoundHistoryPanel({
               <>
                 <button
                   onClick={cancelEditing}
-                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium"
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-muted-bg hover:bg-hover-bg text-text text-sm font-medium"
                 >
                   ✕ Cancel
                 </button>
@@ -360,7 +360,7 @@ export default function RoundHistoryPanel({
 
       {/* Content */}
       {!selectedRound ? (
-        <p className="text-slate-400 text-sm">Select a round to view its matches.</p>
+        <p className="text-subtext text-sm">Select a round to view its matches.</p>
       ) : (
         <div className="space-y-4">
           {selectedRound.sittingOut && selectedRound.sittingOut.length > 0 && (
@@ -382,14 +382,14 @@ export default function RoundHistoryPanel({
               return (
                 <div
                   key={m.id}
-                  className={`rounded-lg border p-3 ${m.bye ? "bg-orange-900/30 border-orange-500/50" : "bg-slate-900/50 border-slate-600"}`}
+                  className={`rounded-lg border p-3 ${m.bye ? "bg-orange-500/10 border-orange-500/50" : "bg-muted-bg border-line"}`}
                 >
                   <div className="flex justify-between items-center mb-2">
-                    <div className="font-semibold text-white">
+                    <div className="font-semibold text-text">
                       {m.bye ? "BYE" : `Court ${m.court ?? "-"}`}
                     </div>
                     {!editMode && m.team1Score !== undefined && m.team2Score !== undefined && (
-                      <div className="text-xs text-green-400">
+                      <div className="text-xs text-text">
                         {m.team1Score} – {m.team2Score}
                       </div>
                     )}
@@ -397,7 +397,7 @@ export default function RoundHistoryPanel({
 
                   {!m.bye && (
                     <>
-                      <div className="text-sm text-slate-300 mb-2">
+                      <div className="text-sm text-text mb-2">
                         <div className="font-medium flex items-center gap-2">
                           {m.team1.map(id => (
                             <span key={id} className="flex items-center gap-1">
@@ -414,7 +414,7 @@ export default function RoundHistoryPanel({
                             </span>
                           ))}
                         </div>
-                        <div className="text-slate-500 text-center my-1">vs</div>
+                        <div className="text-subtext text-center my-1">vs</div>
                         <div className="font-medium flex items-center gap-2">
                           {m.team2.map(id => (
                             <span key={id} className="flex items-center gap-1">
@@ -441,29 +441,29 @@ export default function RoundHistoryPanel({
                               type="number"
                               value={m.team1Score ?? ""}
                               onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
-                              className="w-14 px-2 py-1 border-2 border-purple-500 rounded text-center bg-purple-900/50 text-white"
+                              className="w-14 px-2 py-1 border-2 border-purple-500 rounded text-center bg-muted-bg text-text"
                               placeholder="0"
                             />
                           </div>
-                          <span className="text-slate-400 self-end mb-1">vs</span>
+                          <span className="text-subtext self-end mb-1">vs</span>
                           <div className="text-center">
-                            <div className="text-xs text-green-400 mb-1">T2</div>
+                            <div className="text-xs text-text mb-1">T2</div>
                             <input
                               type="number"
                               value={m.team2Score ?? ""}
                               onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
-                              className="w-14 px-2 py-1 border-2 border-green-500 rounded text-center bg-green-900/50 text-white"
+                              className="w-14 px-2 py-1 border-2 border-green-500 rounded text-center bg-muted-bg text-text"
                               placeholder="0"
                             />
                           </div>
                         </div>
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
                         <div className="flex items-center justify-center gap-2 mt-2">
-                          <div className={`px-3 py-1 rounded ${m.team1Score > m.team2Score ? "bg-purple-600 text-white" : "bg-purple-900/50 text-purple-300"}`}>
+                          <div className={`px-3 py-1 rounded ${m.team1Score > m.team2Score ? "bg-purple-600 text-white" : "bg-purple-500/10 text-subtext"}`}>
                             {m.team1Score}
                           </div>
-                          <span className="text-slate-400">-</span>
-                          <div className={`px-3 py-1 rounded ${m.team2Score > m.team1Score ? "bg-green-600 text-white" : "bg-green-900/50 text-green-300"}`}>
+                          <span className="text-subtext">-</span>
+                          <div className={`px-3 py-1 rounded ${m.team2Score > m.team1Score ? "bg-green-600 text-white" : "bg-green-500/10 text-subtext"}`}>
                             {m.team2Score}
                           </div>
                         </div>

@@ -37,18 +37,18 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow p-4">
+    <section className="bg-panel rounded-2xl shadow p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-3 pt-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-gray-800">🎯 Event Pool</h2>
-          <span className="text-xs text-gray-500">{activeCount}/{eventPool.length}</span>
+          <h2 className="text-lg font-bold text-text">🎯 Event Pool</h2>
+          <span className="text-xs text-subtext">{activeCount}/{eventPool.length}</span>
         </div>
         <div className="flex items-center gap-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="py-1.5 px-2 border border-gray-300 rounded text-xs"
+            className="py-1.5 px-2 border border-line rounded text-xs"
           >
             <option value="dupr">By DUPR</option>
             <option value="recent">Added</option>
@@ -70,7 +70,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
 
       {/* Player list */}
       {eventPool.length === 0 ? (
-        <div className="text-gray-400 text-center py-6 text-sm">Add players from database</div>
+        <div className="text-subtext text-center py-6 text-sm">Add players from database</div>
       ) : (
         <div style={{ maxHeight: '30vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1">
           {sorted.map((player) => {
@@ -91,7 +91,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                     <img
                       src={player.imageUrl}
                       alt={player.name}
-                      className={`w-full h-full rounded-full object-cover border border-gray-300 ${player.isSitting ? "opacity-50" : ""}`}
+                      className={`w-full h-full rounded-full object-cover border border-line ${player.isSitting ? "opacity-50" : ""}`}
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                         const next = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
@@ -100,7 +100,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                     />
                   ) : (
                     <div
-                      className={`w-full h-full rounded-full flex items-center justify-center font-bold text-xs border border-gray-300 ${
+                      className={`w-full h-full rounded-full flex items-center justify-center font-bold text-xs border border-line ${
                         player.isSitting 
                           ? "bg-orange-200 text-orange-700" 
                           : hasDupr 
@@ -115,7 +115,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 </div>
 
                 {/* Name + DUPR in one line */}
-                <div className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-gray-400" : "text-gray-800"}`}>
+                <div className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-subtext" : "text-text"}`}>
                   <span className="text-xs font-medium truncate">{player.name}</span>
                   {player.duprScore != null ? (
                     <span className="flex-none px-1.5 py-0.5 rounded bg-green-600 text-white text-[10px] font-bold">
@@ -137,7 +137,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       onChange={() => onToggleSitting && onToggleSitting(player.id)}
                       className="w-3.5 h-3.5 rounded"
                     />
-                    <span className={`text-xs ${player.isSitting ? "text-orange-500" : "text-gray-400"}`}>sit</span>
+                    <span className={`text-xs ${player.isSitting ? "text-orange-500" : "text-subtext"}`}>sit</span>
                   </label>
                   <button
                     onClick={() => onRemoveFromPool && onRemoveFromPool(player.id)}

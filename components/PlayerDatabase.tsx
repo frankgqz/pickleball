@@ -222,24 +222,24 @@ export default function PlayerDatabase({
   };
 
   return (
-    <section className="bg-white rounded-2xl shadow p-4">
+    <section className="bg-panel rounded-2xl shadow p-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2 pt-1">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">🎾 Player Database</h2>
-          <div className="text-xs text-gray-500">({players.length})</div>
+          <div className="text-xs text-subtext">({players.length})</div>
         </div>
         <div className="flex items-center gap-2">
           <input 
             value={search} 
             onChange={e => setSearch(e.target.value)} 
             placeholder="Search name or ID" 
-            className="px-2 py-1.5 border border-gray-300 rounded text-sm w-40 md:w-48" 
+            className="px-2 py-1.5 border border-line rounded text-sm w-40 md:w-48" 
           />
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value as any)} 
-            className="py-1.5 px-2 border border-gray-300 rounded text-xs"
+            className="py-1.5 px-2 border border-line rounded text-xs"
           >
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
@@ -250,25 +250,25 @@ export default function PlayerDatabase({
       {/* Add form - single row */}
       <div className="flex flex-wrap gap-2 mb-1.5 items-end">
         <input 
-          className="px-2 py-1.5 border border-gray-300 rounded text-sm flex-1 min-w-[140px]" 
+          className="px-2 py-1.5 border border-line rounded text-sm flex-1 min-w-[140px]" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded text-xs w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+          className={`px-2 py-1.5 border rounded text-xs w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line'}`}
           placeholder="DUPR ID" 
           value={duprId} 
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded text-xs w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
+          className={`px-2 py-1.5 border rounded text-xs w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line'}`}
           placeholder="webNumericID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
         <input 
-          className="px-2 py-1.5 border border-gray-300 rounded text-xs w-16" 
+          className="px-2 py-1.5 border border-line rounded text-xs w-16" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
@@ -285,7 +285,7 @@ export default function PlayerDatabase({
       {/* Player list */}
       <div style={{ maxHeight: '25vh', overflowY: 'auto', paddingRight: 4 }} className="space-y-1 mt-2">
         {filtered.length === 0 ? (
-          <div className="text-center text-gray-400 py-4 text-sm">No players</div>
+          <div className="text-center text-subtext py-4 text-sm">No players</div>
         ) : filtered.map(player => {
           const hasDuprId = !!player.duprId;
           const hasNumericId = !!player.duprNumericId;
@@ -295,47 +295,47 @@ export default function PlayerDatabase({
           const isEditing = editingId === player.id;
 
           return (
-            <div key={player.id} className={`px-2 py-1 rounded-lg border border-gray-300 ${hasId ? 'bg-white' : 'bg-yellow-50'}`}>
+            <div key={player.id} className={`px-2 py-1 rounded-lg border border-line ${hasId ? 'bg-muted-bg text-text' : 'bg-yellow-50 text-yellow-900'}`}>
               {isEditing ? (
                 <div className="space-y-1.5 py-1">
                   <div className="flex flex-wrap gap-1.5 items-end">
                     <input 
                       value={editName} 
                       onChange={e => setEditName(e.target.value)} 
-                      className="px-2 py-1 border border-gray-300 rounded text-xs flex-1 min-w-[100px]" 
+                      className="px-2 py-1 border border-line rounded text-xs flex-1 min-w-[100px]" 
                       placeholder="Name" 
                     />
                     <input 
                       value={editDuprId} 
                       onChange={e => setEditDuprId(e.target.value)} 
                       placeholder="DUPR ID" 
-                      className="px-2 py-1 border border-gray-300 rounded text-xs w-18" 
+                      className="px-2 py-1 border border-line rounded text-xs w-18" 
                     />
                     <input 
                       value={editDuprNumericId} 
                       onChange={e => setEditDuprNumericId(e.target.value)} 
                       placeholder="webID" 
-                      className="px-2 py-1 border border-gray-300 rounded text-xs w-18" 
+                      className="px-2 py-1 border border-line rounded text-xs w-18" 
                     />
                     <input 
                       value={editDuprScore} 
                       onChange={e => setEditDuprScore(e.target.value)} 
                       placeholder="Rating" 
-                      className="px-2 py-1 border border-gray-300 rounded text-xs w-14" 
+                      className="px-2 py-1 border border-line rounded text-xs w-14" 
                     />
                   </div>
                   <div className="flex gap-1.5">
                     <button onClick={saveEdit} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-medium">Save</button>
-                    <button onClick={cancelEdit} className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300">Cancel</button>
+                    <button onClick={cancelEdit} className="px-3 py-1 bg-muted-bg text-text text-xs rounded hover:bg-hover-bg">Cancel</button>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">
                   <div className="flex-none">
                     {player.imageUrl ? (
-                      <img src={player.imageUrl} alt={player.name} className="w-7 h-7 rounded-full object-cover border border-gray-300" />
+                      <img src={player.imageUrl} alt={player.name} className="w-7 h-7 rounded-full object-cover border border-line" />
                     ) : (
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-gray-300 ${hasId ? 'bg-white text-gray-800' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-line ${hasId ? 'bg-muted-bg text-text' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>
                         {initials}
                       </div>
                     )}
@@ -344,7 +344,7 @@ export default function PlayerDatabase({
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="font-medium text-xs truncate">{player.name}</div>
-                        <div className="text-[10px] text-gray-500 truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleDateString()}` : undefined}>
+                        <div className="text-[10px] text-subtext truncate" title={player.lastRefreshed ? `Last refreshed: ${new Date(player.lastRefreshed).toLocaleDateString()}` : undefined}>
                           {player.duprId || player.duprNumericId || ''}
                           {(player.duprScore != null || player.manualDuprScore != null) && (
                             <span className={`ml-1 font-semibold ${player.duprScore != null ? 'text-green-600' : 'text-purple-600'}`}>
@@ -360,13 +360,13 @@ export default function PlayerDatabase({
                       </div>
                       <div className="flex items-center gap-1.5">
                         {inPool ? (
-                          <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded bg-white text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold">−</button>
+                          <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded bg-muted-bg text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold">−</button>
                         ) : (
                           <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10">+</button>
                         )}
-                        <button onClick={() => startEditing(player)} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors">✏️</button>
-                        <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"} className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-white border border-gray-300 text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>
-                        <button onClick={() => handleDelete(player)} className="px-1.5 py-0.5 bg-white border border-gray-300 rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors">🗑️</button>
+                        <button onClick={() => startEditing(player)} className="px-1.5 py-0.5 bg-muted-bg border border-line rounded text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors">✏️</button>
+                        <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"} className={`px-1.5 py-0.5 rounded text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-muted-bg border border-line text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>
+                        <button onClick={() => handleDelete(player)} className="px-1.5 py-0.5 bg-muted-bg border border-line rounded text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors">🗑️</button>
                       </div>
                     </div>
                   </div>

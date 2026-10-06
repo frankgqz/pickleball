@@ -9,6 +9,9 @@
   --color-panel: var(--theme-panel);
   --color-btn-start: var(--theme-btn-start);
   --color-btn-end: var(--theme-btn-end);
+  --color-line: var(--theme-border);
+  --color-muted-bg: var(--theme-muted-bg);
+  --color-hover-bg: var(--theme-hover-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-jetbrains-mono);
 }
@@ -16,10 +19,14 @@
 body {
   background-color: var(--theme-bg);
   color: var(--theme-text);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--theme-font-family, var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--theme-font-family-heading, var(--font-geist-sans), system-ui);
+}
+
 code, kbd, pre, .font-mono {
-  font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--theme-font-family-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, monospace));
 }

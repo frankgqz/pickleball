@@ -130,9 +130,9 @@ export default function StandingsTable({
   }, [computed, sortColumn, sortDirection]);
 
   return (
-    <section className="bg-white rounded-2xl shadow-xl p-4">
+    <section className="bg-panel rounded-2xl shadow-xl p-4">
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-bold text-gray-800">📊 Standings</h2>
+        <h2 className="text-lg font-bold text-text">📊 Standings</h2>
         <div className="flex items-center gap-3">
           <button
             onClick={onRegenerateByes}
@@ -141,67 +141,67 @@ export default function StandingsTable({
           >
             🎲 Regenerate Bye Base
           </button>
-          <span className="text-sm text-gray-500">{sorted.length} players</span>
+          <span className="text-sm text-subtext">{sorted.length} players</span>
         </div>
       </div>
 
       {sorted.length === 0 ? (
-        <p className="text-gray-400 text-center py-8">Add players to the event pool to see standings</p>
+        <p className="text-subtext text-center py-8">Add players to the event pool to see standings</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-fixed">
             <thead>
-              <tr className="bg-gray-100">
+              <tr className="bg-muted-bg">
                 <th
-                  className="p-2 text-left cursor-pointer hover:bg-gray-200 w-1/3"
+                  className="p-2 text-left cursor-pointer hover:bg-hover-bg w-1/3"
                   onClick={() => headerClick("name")}
                 >
                   Name{getSortIcon("name")}
                 </th>
 
                 <th
-                  className="p-2 text-center cursor-pointer hover:bg-gray-200 w-12"
+                  className="p-2 text-center cursor-pointer hover:bg-hover-bg w-12"
                   onClick={() => headerClick("wins")}
                 >
                   W{getSortIcon("wins")}
                 </th>
 
                 <th
-                  className="p-2 text-center cursor-pointer hover:bg-gray-200 w-12"
+                  className="p-2 text-center cursor-pointer hover:bg-hover-bg w-12"
                   onClick={() => headerClick("losses")}
                 >
                   L{getSortIcon("losses")}
                 </th>
 
-                <th className="p-2 text-center text-xs text-gray-500 hidden sm:table-cell" onClick={() => headerClick("winPct")}>
+                <th className="p-2 text-center text-xs text-subtext hidden sm:table-cell" onClick={() => headerClick("winPct")}>
                   Win%{getSortIcon("winPct")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden sm:table-cell" onClick={() => headerClick("pointsFor")}>
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg hidden sm:table-cell" onClick={() => headerClick("pointsFor")}>
                   PF{getSortIcon("pointsFor")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden sm:table-cell" onClick={() => headerClick("pointsAgainst")}>
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg hidden sm:table-cell" onClick={() => headerClick("pointsAgainst")}>
                   PA{getSortIcon("pointsAgainst")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden md:table-cell" onClick={() => headerClick("pointDiff")}>
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg hidden md:table-cell" onClick={() => headerClick("pointDiff")}>
                   +/-{getSortIcon("pointDiff")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("ptsPct")}>
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("ptsPct")}>
                   Pts%{getSortIcon("ptsPct")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200" onClick={() => headerClick("byeCount")}>
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeCount")}>
                   Byes{getSortIcon("byeCount")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden md:table-cell" onClick={() => headerClick("byeTotal")} title="Total bye score">
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg hidden md:table-cell" onClick={() => headerClick("byeTotal")} title="Total bye score">
                   Bye{getSortIcon("byeTotal")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-gray-200 hidden lg:table-cell" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
+                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg hidden lg:table-cell" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
                   Order#{getSortIcon("seedTotal")}
                 </th>
               </tr>
@@ -215,19 +215,19 @@ export default function StandingsTable({
                 const ptsPctVal = entry.ptsPct;
                 const winPct = (entry as any).winPct ?? 0;
                 return (
-                  <tr key={entry.id} className="border-t hover:bg-gray-50">
+                  <tr key={entry.id} className="border-t hover:bg-hover-bg">
                     <td className="p-2"><div className="font-medium">{entry.name}</div></td>
 
                     <td className="p-2 text-center font-bold text-green-600">{entry.wins || 0}</td>
                     <td className="p-2 text-center font-bold text-red-500">{entry.losses || 0}</td>
-                    <td className="p-2 text-center text-xs text-gray-700 hidden sm:table-cell">{String(Math.round(winPct))}%</td>
+                    <td className="p-2 text-center text-xs text-text hidden sm:table-cell">{String(Math.round(winPct))}%</td>
 
                     <td className="p-2 text-center hidden sm:table-cell">{entry.pointsFor || 0}</td>
                     <td className="p-2 text-center hidden sm:table-cell">{entry.pointsAgainst || 0}</td>
 
                     <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"} hidden md:table-cell`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
 
-                    <td className="p-2 text-center"><span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-gray-600"}>{ptsPctVal.toFixed(0)}%</span></td>
+                    <td className="p-2 text-center"><span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
                     <td className="p-2 text-center"><span className="text-purple-600 font-bold">{entry.byeCount || 0}</span></td>
 

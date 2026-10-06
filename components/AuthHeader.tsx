@@ -23,12 +23,12 @@ export function AuthHeader({ session }: AuthHeaderProps) {
       <div className="flex items-center gap-4">
         {session ? (
           <>
-            <span className="text-white text-sm">
+            <span className="text-text text-sm">
               Signed in as {session.user?.name}
             </span>
             <button 
               onClick={() => signOut()}
-              className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors"
+              className="bg-muted-bg text-text px-4 py-2 rounded-lg text-sm font-medium hover:bg-hover-bg transition-colors"
             >
               Sign Out
             </button>
@@ -36,7 +36,7 @@ export function AuthHeader({ session }: AuthHeaderProps) {
         ) : (
           <button 
             onClick={() => signIn("google")}
-            className="bg-white text-green-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors"
+            className="bg-muted-bg text-text px-4 py-2 rounded-lg text-sm font-medium hover:bg-hover-bg transition-colors"
           >
             Sign In with Google
           </button>
