@@ -34,7 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             var m = document.cookie.match(/(?:^|;\\s*)gqz-theme=([^;]+)/);
             var saved = m ? decodeURIComponent(m[1]) : null;
             var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            var theme = saved || (sysDark ? 'dark' : 'wood');
+            if (saved === 'dark') saved = 'night';
+            if (saved === 'sky') saved = 'bubble';
+            var theme = saved || (sysDark ? 'night' : 'wood');
             document.documentElement.setAttribute('data-theme', theme);
           })();`}
         </Script>

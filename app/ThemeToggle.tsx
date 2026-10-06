@@ -4,15 +4,15 @@ import { Theme, themes, themeOrder } from './theme'
 
 const themeIcons: Record<Theme, string> = {
   wood: '🍂',
-  dark: '🤘',
-  sky: '🫧',
+  night: '🌙',
+  bubble: '🫧',
   matcha: '🍵',
 }
 
 const toggleBg: Record<Theme, string> = {
   wood: '#E8E0D5',
-  dark: '#22262C',
-  sky: '#DCEEFF',
+  night: '#22262C',
+  bubble: '#DCEEFF',
   matcha: '#E0DDD5',
 }
 

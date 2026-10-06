@@ -9,6 +9,12 @@
   --color-panel: var(--theme-panel);
   --color-btn-start: var(--theme-btn-start);
   --color-btn-end: var(--theme-btn-end);
+  --radius-sm: var(--theme-radius-input);
+  --radius-md: var(--theme-radius-input);
+  --radius-lg: var(--theme-radius-button);
+  --radius-xl: var(--theme-radius-button);
+  --radius-2xl: var(--theme-radius-card);
+  --radius-3xl: var(--theme-radius-card);
   --color-line: var(--theme-border);
   --color-muted-bg: var(--theme-muted-bg);
   --color-hover-bg: var(--theme-hover-bg);
