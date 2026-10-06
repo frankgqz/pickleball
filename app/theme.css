@@ -22,28 +22,28 @@
 }
 
 [data-theme='dark'] {
-  --theme-bg: #0a0a0a;
+  --theme-bg: #131316;
   --theme-text: #f5f5f5;
-  --theme-subtext: #a0a0a0;
-  --theme-accent: #8b8b8b;
-  --theme-glow: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
-  --theme-btn-start: #3a3a3a;
-  --theme-btn-end: #1a1a1a;
-  --theme-btn-shadow: 0 8px 40px rgba(99,102,241,0.5), 0 2px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
-  --theme-btn-shadow-pressed: 0 2px 16px rgba(99,102,241,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
-  --theme-panel: #1a1a1a;   /* ← add this line */    
+  --theme-subtext: #959AA3;
+  --theme-accent: #FF6A1F;
+  --theme-glow: radial-gradient(circle, rgba(46,230,107,0.12) 0%, transparent 70%);
+  --theme-btn-start: #FF6A1F;
+  --theme-btn-end: #2EE66B;
+  --theme-btn-shadow: 0 8px 40px rgba(255,106,31,0.45), 0 2px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  --theme-btn-shadow-pressed: 0 2px 16px rgba(46,230,107,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+  --theme-panel: #1C1F24;   /* ← add this line */    
 }
 
 [data-theme='sky'] {
-  --theme-bg: #e0f2ff;
-  --theme-text: #0a2540;
-  --theme-subtext: #4a6b8a;
-  --theme-accent: #3b82f6;
-  --theme-glow: radial-gradient(circle, rgba(180,190,220,0.08) 0%, transparent 70%);
-  --theme-btn-start: #3b82f6;
-  --theme-btn-end: #1d4ed8;
-  --theme-btn-shadow: 0 8px 32px rgba(96,128,168,0.3), 0 2px 8px rgba(96,128,168,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
-  --theme-btn-shadow-pressed: 0 2px 12px rgba(96,128,168,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  --theme-bg: #EAF6FF;
+  --theme-text: #2E4A6B;
+  --theme-subtext: #7FA8D6;
+  --theme-accent: #FF8FC5;
+  --theme-glow: radial-gradient(circle, rgba(255,143,197,0.14) 0%, transparent 70%);
+  --theme-btn-start: #FF9BC7;
+  --theme-btn-end: #8ED0FF;
+  --theme-btn-shadow: 0 8px 32px rgba(140,180,230,0.35), 0 2px 8px rgba(140,180,230,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+  --theme-btn-shadow-pressed: 0 2px 12px rgba(140,180,230,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
   --theme-panel: #ffffff;   /* ← add this line */
 }
 
