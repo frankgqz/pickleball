@@ -269,7 +269,7 @@ export default function CourtsPanel({
     <section className="bg-panel rounded-2xl shadow-xl p-6">
       {!roundState.active ? (
         <div className="text-center py-8">
-          <div className={`rounded-xl p-8 ${submitted ? "bg-purple-50 border-2 border-purple-300" : "bg-green-50 border-2 border-green-300"}`}>
+          <div className={`rounded-xl p-8 ${submitted ? "bg-muted-bg border-2 border-purple-500/40" : "bg-muted-bg border-2 border-green-500/40"}`}>
             <div className={`text-4xl mb-4 ${submitted ? "text-purple-500" : "text-green-500"}`}>
               {submitted ? "✓" : "🎾"}
             </div>
