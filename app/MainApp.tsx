@@ -354,7 +354,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
-      <header className="mb-6 px-2">
+      <header className="mb-6 px-2 max-w-6xl mx-auto">
         <div className="flex items-center justify-center gap-4 mb-4">
           <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickleball</h1>
           <ThemeToggle />

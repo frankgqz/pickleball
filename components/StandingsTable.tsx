@@ -136,10 +136,10 @@ export default function StandingsTable({
         <div className="flex items-center gap-3">
           <button
             onClick={onRegenerateByes}
-            className="px-3 py-1.5 bg-orange-100 text-orange-600 rounded-lg text-sm hover:bg-orange-200 border border-orange-300"
-            title="Regenerate bye base scores"
+            className="px-3 py-1.5 bg-muted-bg text-orange-600 rounded-lg text-sm hover:bg-hover-bg border border-orange-400/70"
+            title="Regen bye base scores"
           >
-            🎲 Regenerate Bye Base
+            🎲 Regen Bye
           </button>
           <span className="text-sm text-subtext">{sorted.length} players</span>
         </div>

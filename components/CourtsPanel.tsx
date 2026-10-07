@@ -152,7 +152,7 @@ export default function CourtsPanel({
     return (
       <div
         key={match.id}
-        className={`rounded-xl border p-4 ${match.bye ? "border-orange-500/40 bg-orange-500/10" : "border-green-500/40 bg-green-500/10"}`}
+        className={`rounded-xl border p-4 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
       >
         <div className="flex justify-between items-center mb-4">
           <span className="font-bold text-base text-text">{match.bye ? "BYE" : `Court ${match.court}`}</span>
@@ -165,7 +165,7 @@ export default function CourtsPanel({
           <div className="text-center py-4">
             <div className="text-2xl mb-2">😴</div>
             <div className="font-semibold text-text">{findPlayer(match.byePlayerId || "")?.name}</div>
-            <div className="text-sm font-mono text-blue-600 mt-1" title={formatByeBreakdown(match.byePlayerId || "")}>
+            <div className="text-xs text-subtext mt-1" title={formatByeBreakdown(match.byePlayerId || "")}>
               bye: {getPlayerByeTotal(match.byePlayerId || "").toFixed(2)}
             </div>
           </div>
@@ -181,12 +181,9 @@ export default function CourtsPanel({
                     <button
                       key={p.id}
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                      className="w-full text-left rounded-lg px-3 py-2 bg-purple-100 border border-purple-200 hover:bg-purple-200 text-text transition-colors"
+                      className="w-full text-left rounded-lg px-3 py-2 bg-muted-bg border border-purple-400/70 hover:bg-hover-bg text-text transition-colors"
                     >
                       <div className="font-medium text-sm">{p.name}</div>
-                      {p.duprScore != null && (
-                        <div className="text-xs text-subtext">{p.duprScore.toFixed(1)}</div>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -200,12 +197,9 @@ export default function CourtsPanel({
                     <button
                       key={p.id}
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                      className="w-full text-left rounded-lg px-3 py-2 bg-green-100 border border-green-200 hover:bg-green-200 text-text transition-colors"
+                      className="w-full text-left rounded-lg px-3 py-2 bg-muted-bg border border-green-400/70 hover:bg-hover-bg text-text transition-colors"
                     >
                       <div className="font-medium text-sm">{p.name}</div>
-                      {p.duprScore != null && (
-                        <div className="text-xs text-subtext">{p.duprScore.toFixed(1)}</div>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -223,7 +217,7 @@ export default function CourtsPanel({
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
                       className="px-2 py-1 bg-muted-bg text-subtext rounded text-xs hover:bg-hover-bg transition-colors border border-line"
                     >
-                      {p.name} {p.duprScore != null ? `(${p.duprScore.toFixed(1)})` : ""}
+                      {p.name}
                     </button>
                   ))}
                   {unselectedPlayers.length > 6 && (
@@ -332,7 +326,7 @@ export default function CourtsPanel({
                           </button>
                         )}
                       </div>
-                      <span className="text-xs font-mono text-blue-600" title={formatByeBreakdown(m.byePlayerId || "")}>
+                      <span className="text-xs text-subtext" title={formatByeBreakdown(m.byePlayerId || "")}>
                         bye: {getPlayerByeTotal(m.byePlayerId || "").toFixed(2)}
                       </span>
                     </div>

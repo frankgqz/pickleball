@@ -78,10 +78,10 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
             
             // Consistent row height, background based on state
             const containerClass = player.isSitting
-              ? "flex items-center gap-2 px-2 rounded-lg border border-orange-200 bg-orange-50 h-10"
+              ? "flex items-center gap-2 px-2 rounded-lg border border-orange-400/70 bg-muted-bg h-10"
               : hasDupr
-              ? "flex items-center gap-2 px-2 rounded-lg border border-green-300 bg-green-50 h-10"
-              : "flex items-center gap-2 px-2 rounded-lg border border-yellow-300 bg-yellow-50 h-10";
+              ? "flex items-center gap-2 px-2 rounded-lg border border-green-400/70 bg-muted-bg h-10"
+              : "flex items-center gap-2 px-2 rounded-lg border border-yellow-400/70 bg-muted-bg h-10";
 
             return (
               <div key={player.id} className={containerClass} title={player.duprId || player.duprNumericId || "No DUPR - may affect export"}>
