@@ -160,13 +160,34 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
       {/* Standard / Teams Settings */}
       {config.format !== "POOL_PLAY" && (
         <>
-          <div className="grid grid-cols-4 gap-1.5 mb-2 text-xs">
+          {/* Courts - always visible */}
+          <div className="grid grid-cols-5 gap-1.5 mb-2 text-xs">
+            <div>
+              <label className="block text-subtext mb-0.5">Courts</label>
+              <input
+                type="number"
+                min="1"
+                max="16"
+                value={config.courts}
+                onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
+              />
+            </div>
+          </div>
+
+          {/* ADV settings - standard specifics */}
+          <details className="group mb-2">
+            <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-subtext hover:text-text select-none list-none [&::-webkit-details-marker]:hidden">
+              <span className="transition-transform duration-150 group-open:rotate-90">▸</span>
+              ADV settings
+            </summary>
+            <div className="grid grid-cols-4 gap-1.5 mt-1.5 text-xs">
             <div>
               <label className="block text-subtext mb-0.5">W/L Mag</label>
               <input
                 type="number"
                 step="0.25"
-                min={0.25}
+                min="0.25"
                 value={config.winLossMagnitude}
                 onChange={(e) => handleChange("winLossMagnitude", parseFloat(e.target.value) || 1)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
@@ -177,7 +198,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <input
                 type="number"
                 step="0.25"
-                min={0.25}
+                min="0.25"
                 value={config.orderGap}
                 onChange={(e) => handleChange("orderGap", parseFloat(e.target.value) || 0.25)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
@@ -188,7 +209,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <input
                 type="number"
                 step="0.25"
-                min={0}
+                min="0"
                 value={config.courtBonus}
                 onChange={(e) => handleChange("courtBonus", parseFloat(e.target.value) || 1)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
@@ -199,32 +220,28 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <input
                 type="number"
                 step="0.25"
-                min={0}
+                min="0"
                 value={config.band}
                 onChange={(e) => handleChange("band", parseFloat(e.target.value) || 0)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-5 gap-1.5 mb-1 text-xs">
-            <div>
-              <label className="block text-subtext mb-0.5">Courts</label>
-              <input
-                type="number"
-                min={1}
-                max={16}
-                value={config.courts}
-                onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
-                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
-              />
             </div>
+          </details>
+
+          {/* Bye settings */}
+          <details className="group mb-1">
+            <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-subtext hover:text-text select-none list-none [&::-webkit-details-marker]:hidden">
+              <span className="transition-transform duration-150 group-open:rotate-90">▸</span>
+              Bye settings
+            </summary>
+            <div className="grid grid-cols-4 gap-1.5 mt-1.5 text-xs">
             <div>
               <label className="block text-subtext mb-0.5">Top Bye</label>
               <input
                 type="number"
-                min={0}
-                max={20}
+                min="0"
+                max="20"
                 value={config.byeTopProtection}
                 onChange={(e) => handleChange("byeTopProtection", parseInt(e.target.value) || 8)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
@@ -235,8 +252,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <input
                 type="number"
                 step="0.25"
-                min={0}
-                max={2}
+                min="0"
+                max="2"
                 value={config.byeBonusTop}
                 onChange={(e) => handleChange("byeBonusTop", parseFloat(e.target.value) || 0.5)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
@@ -247,7 +264,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <input
                 type="number"
                 step="0.25"
-                min={0}
+                min="0"
                 value={config.sitProtection}
                 onChange={(e) => handleChange("sitProtection", parseFloat(e.target.value) || 0.5)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
@@ -258,13 +275,14 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <input
                 type="number"
                 step="0.25"
-                min={0}
+                min="0"
                 value={config.lateJoinBonus}
                 onChange={(e) => handleChange("lateJoinBonus", parseFloat(e.target.value) || 1)}
                 className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
-          </div>
+            </div>
+          </details>
         </>
       )}
 

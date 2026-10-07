@@ -355,11 +355,11 @@ export default function Page() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <header className="mb-6 px-2">
-        <div className="flex items-center justify-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickle Sessions</h1>
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickleball</h1>
+          <ThemeToggle />
         </div>
         <div className="flex items-center justify-end gap-4">
-          <ThemeToggle />
           <a
             href="https://gqz.app"
             className="text-sm px-3 py-1 rounded hover:opacity-80 transition-opacity"
