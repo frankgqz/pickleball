@@ -386,72 +386,71 @@ export default function RoundHistoryPanel({
                   key={m.id}
                   className={`rounded-lg border px-3 py-2 ${m.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
                 >
-                  <div className="grid grid-cols-[60px_1fr_auto_1fr] items-center gap-2">
-                    <div className="text-xs text-subtext font-medium">{m.bye ? "BYE" : `Court ${m.court ?? "\u2014"}`}</div>
-                    <div className="space-y-0.5 min-w-0">
+                  <div className="text-xs text-subtext font-medium mb-1">{m.bye ? "BYE" : `Court ${m.court ?? "\u2014"}`}</div>
+
+                  {/* Team 1 row */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       {m.bye ? (
-                        <div className="text-sm font-medium text-text">{m.byePlayerId ? getPlayerName(m.byePlayerId) : "Unknown"}</div>
+                        <span className="text-sm font-medium text-text truncate">{m.byePlayerId ? getPlayerName(m.byePlayerId) : "Unknown"}</span>
                       ) : m.team1.map(id => (
-                        <div key={id} className="flex items-center gap-1.5 min-w-0">
-                          {editMode && (
-                            <button
-                              onClick={() => swapTeamPlayer(m.id, "team1", id)}
-                              className="text-xs bg-muted-bg border border-purple-400/70 text-purple-600 hover:bg-hover-bg px-1 rounded shrink-0"
-                              title="Move to Team 2"
-                            >
-                              &larr;
-                            </button>
-                          )}
-                          <span className="text-sm font-medium text-text break-words">{getPlayerName(id)}</span>
-                        </div>
+                        <span
+                          key={id}
+                          onClick={editMode ? () => swapTeamPlayer(m.id, "team1", id) : undefined}
+                          title={editMode ? "Click to move to Team 2" : undefined}
+                          className={`text-sm font-medium text-text truncate flex-1 min-w-0 ${editMode ? "cursor-pointer hover:text-accent" : ""}`}
+                        >
+                          {getPlayerName(id)}
+                        </span>
                       ))}
                     </div>
-                    <div className="flex items-center justify-center gap-1.5 px-1">
-                      {editMode && !m.bye ? (
-                        <>
-                          <input
-                            type="number"
-                            value={m.team1Score ?? ""}
-                            onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
-                            className="w-12 px-1 py-0.5 border border-purple-400/70 rounded text-center bg-muted-bg text-text text-xs"
-                            placeholder="0"
-                          />
-                          <span className="text-subtext text-xs">&ndash;</span>
-                          <input
-                            type="number"
-                            value={m.team2Score ?? ""}
-                            onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
-                            className="w-12 px-1 py-0.5 border border-green-400/70 rounded text-center bg-muted-bg text-text text-xs"
-                            placeholder="0"
-                          />
-                        </>
+                    {!m.bye && (
+                      editMode ? (
+                        <input
+                          type="number"
+                          value={m.team1Score ?? ""}
+                          onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
+                          className="w-14 shrink-0 px-1.5 py-0.5 border border-purple-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                          placeholder="0"
+                        />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <>
-                          <span className={`text-sm px-1.5 py-0.5 rounded border ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600 font-bold" : "border-transparent text-subtext"}`}>{m.team1Score}</span>
-                          <span className="text-subtext text-xs">&ndash;</span>
-                          <span className={`text-sm px-1.5 py-0.5 rounded border ${m.team2Score > m.team1Score ? "border-green-500 text-green-600 font-bold" : "border-transparent text-subtext"}`}>{m.team2Score}</span>
-                        </>
+                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded border ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600 font-bold" : "border-transparent text-subtext"}`}>{m.team1Score}</span>
                       ) : (
-                        <span className="text-xs text-subtext">&ndash;</span>
+                        <span className="w-14 shrink-0" />
+                      )
+                    )}
+                  </div>
+
+                  {/* Team 2 row */}
+                  {!m.bye && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {m.team2.map(id => (
+                          <span
+                            key={id}
+                            onClick={editMode ? () => swapTeamPlayer(m.id, "team2", id) : undefined}
+                            title={editMode ? "Click to move to Team 1" : undefined}
+                            className={`text-sm font-medium text-text truncate flex-1 min-w-0 ${editMode ? "cursor-pointer hover:text-accent" : ""}`}
+                          >
+                            {getPlayerName(id)}
+                          </span>
+                        ))}
+                      </div>
+                      {editMode ? (
+                        <input
+                          type="number"
+                          value={m.team2Score ?? ""}
+                          onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
+                          className="w-14 shrink-0 px-1.5 py-0.5 border border-green-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                          placeholder="0"
+                        />
+                      ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
+                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded border ${m.team2Score > m.team1Score ? "border-green-500 text-green-600 font-bold" : "border-transparent text-subtext"}`}>{m.team2Score}</span>
+                      ) : (
+                        <span className="w-14 shrink-0" />
                       )}
                     </div>
-                    <div className="space-y-0.5 min-w-0">
-                      {!m.bye && m.team2.map(id => (
-                        <div key={id} className="flex items-center gap-1.5 min-w-0 justify-end">
-                          <span className="text-sm font-medium text-text break-words">{getPlayerName(id)}</span>
-                          {editMode && (
-                            <button
-                              onClick={() => swapTeamPlayer(m.id, "team2", id)}
-                              className="text-xs bg-muted-bg border border-green-400/70 text-green-600 hover:bg-hover-bg px-1 rounded shrink-0"
-                              title="Move to Team 1"
-                            >
-                              &rarr;
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
 
               );
