@@ -152,7 +152,7 @@ export default function CourtsPanel({
     return (
       <div
         key={match.id}
-        className={`rounded-lg border px-3 py-2 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
+        className={`rounded-lg border-2 px-3 py-2 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
       >
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs text-subtext font-medium">{match.bye ? "BYE" : `Court ${match.court}`}</span>
@@ -176,7 +176,7 @@ export default function CourtsPanel({
                     key={p.id}
                     onClick={i === 0 ? undefined : () => onSwapPlayerTeam(match.id, p.id)}
                     title={i === 0 ? "Picker (fixed)" : "Click to swap"}
-                    className={`flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border border-purple-400/70 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
+                    className={`flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border-2 border-purple-400/70 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
                   >
                     {p.name}
                   </button>
@@ -184,7 +184,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 px-1.5 py-1 border border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
+                className="w-14 shrink-0 px-1.5 py-1 border-2 border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                 value={match.team1Score ?? ""}
                 onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team1")}
                 placeholder="0"
@@ -199,7 +199,7 @@ export default function CourtsPanel({
                     key={p.id}
                     onClick={() => onSwapPlayerTeam(match.id, p.id)}
                     title="Click to swap into Team 1"
-                    className="flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border border-green-400/70 text-text text-sm font-medium hover:bg-hover-bg"
+                    className="flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border-2 border-green-400/70 text-text text-sm font-medium hover:bg-hover-bg"
                   >
                     {p.name}
                   </button>
@@ -207,7 +207,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 px-1.5 py-1 border border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
+                className="w-14 shrink-0 px-1.5 py-1 border-2 border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                 value={match.team2Score ?? ""}
                 onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team2")}
                 placeholder="0"
@@ -224,7 +224,7 @@ export default function CourtsPanel({
                       key={p.id}
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
                       title="Click to take the partner slot"
-                      className="px-2 py-0.5 bg-muted-bg text-subtext rounded-md text-xs hover:bg-hover-bg transition-colors border border-line"
+                      className="px-2 py-0.5 bg-muted-bg text-subtext rounded-md text-xs hover:bg-hover-bg transition-colors border-2 border-line"
                     >
                       {p.name}
                     </button>
@@ -292,13 +292,13 @@ export default function CourtsPanel({
           </div>
 
           {byeMatches.length > 0 && (
-            <div className="mt-4 bg-muted-bg rounded-xl p-4 border border-orange-400/70">
+            <div className="mt-4 bg-muted-bg rounded-xl p-4 border-2 border-orange-400/70">
               <h4 className="font-semibold text-orange-600 mb-3 text-sm">😴 Players Having a Bye</h4>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                 {byeMatches.map(m => {
                   const player = findPlayer(m.byePlayerId);
                   return (
-                    <div key={m.id} className="flex items-center gap-1.5 bg-muted-bg rounded-lg px-2 py-1 border border-orange-400/70 h-8">
+                    <div key={m.id} className="flex items-center gap-1.5 bg-muted-bg rounded-lg px-2 py-1 border-2 border-orange-400/70 h-8">
                       <span className="font-medium text-sm text-text truncate flex-1 min-w-0">{player?.name}</span>
                       {onVetoBye && m.byePlayerId && (
                         <button
