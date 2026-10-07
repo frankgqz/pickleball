@@ -12,7 +12,7 @@ import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/component
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
 import { ThemeToggle } from './ThemeToggle'
-import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds } from "@/app/actions";
+import { loadSession, removeClubPlayer, getSessionList, endSession, deleteSession, getPlayersByIds, updateSession } from "@/app/actions";
  
 // Hooks
 import { useEventSession } from "@/components/hooks/useEventSession";
@@ -27,6 +27,7 @@ const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true
 
 export default function Page() {
   const [loading, setLoading] = useState(true);
+  const [sessionRefreshKey, setSessionRefreshKey] = useState(0);
   const { data: session } = useSession();
   // @ts-ignore
   const userId = session?.user?.id;
@@ -272,6 +273,16 @@ export default function Page() {
     }
   }, [deleteRoundFromHistory, roundHistory, currentSession, config, eventPool, recalculateStandingsFromHistory]);
 
+  const handleRenameSession = async (newName: string) => {
+    if (!dbSessionId) return { success: false };
+    const r = await updateSession(dbSessionId, { name: newName });
+    if (r.success) {
+      setCurrentSession((prev: any) => ({ ...prev, name: newName }));
+      setSessionRefreshKey((k: number) => k + 1);
+    }
+    return r;
+  };
+
   const handleLoadSession = useCallback(async (sessionId: string) => {
     console.log("[handleLoadSession] firing for:", sessionId);
     const result = await loadSession(sessionId);
@@ -280,6 +291,7 @@ export default function Page() {
       setCurrentSession({
         sessionId: session.id,
         startDate: new Date(session.createdAt).toISOString(),
+        name: session.name || undefined,
       });
       setDbSessionId(sessionId);
       setRoundHistory([]);
@@ -344,7 +356,7 @@ export default function Page() {
     <div className="min-h-screen p-4 md:p-8">
       <header className="mb-6 px-2">
         <div className="flex items-center justify-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickleball Sessions</h1>
+          <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickle Sessions</h1>
         </div>
         <div className="flex items-center justify-end gap-4">
           <ThemeToggle />
@@ -360,7 +372,7 @@ export default function Page() {
       </header>
 
       <div className="max-w-6xl mx-auto space-y-6">
-        <SettingsPanel config={config} updateConfig={updateConfig} onRestartEvent={handleRestartEvent} />
+        <SettingsPanel config={config} updateConfig={updateConfig} onRestartEvent={handleRestartEvent} sessionId={dbSessionId} sessionName={currentSession.name} onRenameSession={handleRenameSession} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PlayerDatabase
@@ -415,6 +427,7 @@ export default function Page() {
           onEditRound={handleEditRound}
           onDeleteRound={handleDeleteRound}
           userId={session?.user?.id}           // ← ADD
+          sessionRefreshKey={sessionRefreshKey}
           currentDbSessionId={dbSessionId}    // ← ADD
           onLoadSession={handleLoadSession}
           onEndSession={async (id) => {

@@ -1,4 +1,4 @@
-## Pickleball Event Organiser
+## Pickle Sessions
 
 ### Matching settings
 Options to sort matches by seed, by partner repeat avoidance
@@ -18,7 +18,8 @@ Feature to look up player and see their past games
 ### Design
 Mobile responsive design
 Mobile standings table visibility
-View of matches in viewport able to be cast onto bigscreen. fit nicely 
+View of matches in viewport able to be cast onto bigscreen. fit nicely
+Some fields are not using theme improts, so light grey on white happening.
 
 ### Misc 
 For user, it should say duprURL# by default in the box instead of duprNumericID

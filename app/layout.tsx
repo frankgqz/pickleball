@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pickleball Manager",
+  title: "Pickle Sessions",
   description: "Tournament management app",
 };
 

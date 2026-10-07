@@ -234,12 +234,12 @@ export default function PlayerDatabase({
             value={search} 
             onChange={e => setSearch(e.target.value)} 
             placeholder="Search name or ID" 
-            className="px-2 py-1.5 border border-line rounded text-sm w-40 md:w-48" 
+            className="px-2 py-1.5 bg-muted-bg border border-line rounded text-sm text-text placeholder-text/50 w-40 md:w-48" 
           />
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value as any)} 
-            className="py-1.5 px-2 border border-line rounded text-xs"
+            className="py-1.5 px-2 bg-muted-bg border border-line rounded text-xs text-text"
           >
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
@@ -250,25 +250,25 @@ export default function PlayerDatabase({
       {/* Add form - single row */}
       <div className="flex flex-wrap gap-2 mb-1.5 items-end">
         <input 
-          className="px-2 py-1.5 border border-line rounded text-sm flex-1 min-w-[140px]" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded text-sm text-text placeholder-text/50 flex-1 min-w-[140px]" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded text-xs w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line'}`}
+          className={`px-2 py-1.5 border rounded text-xs text-text placeholder-text/50 w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="DUPR ID" 
           value={duprId} 
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded text-xs w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line'}`}
+          className={`px-2 py-1.5 border rounded text-xs text-text placeholder-text/50 w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="webNumericID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
         <input 
-          className="px-2 py-1.5 border border-line rounded text-xs w-16" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50 w-16" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
@@ -302,26 +302,26 @@ export default function PlayerDatabase({
                     <input 
                       value={editName} 
                       onChange={e => setEditName(e.target.value)} 
-                      className="px-2 py-1 border border-line rounded text-xs flex-1 min-w-[100px]" 
+                      className="px-2 py-1 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50 flex-1 min-w-[100px]" 
                       placeholder="Name" 
                     />
                     <input 
                       value={editDuprId} 
                       onChange={e => setEditDuprId(e.target.value)} 
                       placeholder="DUPR ID" 
-                      className="px-2 py-1 border border-line rounded text-xs w-18" 
+                      className="px-2 py-1 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50 w-18" 
                     />
                     <input 
                       value={editDuprNumericId} 
                       onChange={e => setEditDuprNumericId(e.target.value)} 
                       placeholder="webID" 
-                      className="px-2 py-1 border border-line rounded text-xs w-18" 
+                      className="px-2 py-1 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50 w-18" 
                     />
                     <input 
                       value={editDuprScore} 
                       onChange={e => setEditDuprScore(e.target.value)} 
                       placeholder="Rating" 
-                      className="px-2 py-1 border border-line rounded text-xs w-14" 
+                      className="px-2 py-1 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50 w-14" 
                     />
                   </div>
                   <div className="flex gap-1.5">

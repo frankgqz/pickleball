@@ -48,7 +48,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="py-1.5 px-2 border border-line rounded text-xs"
+            className="py-1.5 px-2 bg-muted-bg border border-line rounded text-xs text-text"
           >
             <option value="dupr">By DUPR</option>
             <option value="recent">Added</option>

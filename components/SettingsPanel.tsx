@@ -7,12 +7,18 @@ interface Props {
   config: TournamentConfig;
   updateConfig: <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => void;
   onRestartEvent?: () => void;
+  sessionId?: string | null;
+  sessionName?: string;
+  onRenameSession?: (name: string) => Promise<{ success: boolean }>;
 }
 
-export default function SettingsPanel({ config, updateConfig, onRestartEvent }: Props) {
+export default function SettingsPanel({ config, updateConfig, onRestartEvent, sessionId, sessionName, onRenameSession }: Props) {
   const handleChange = <K extends keyof TournamentConfig>(key: K, value: TournamentConfig[K]) => {
     updateConfig(key, value);
   };
+  const [renameValue, setRenameValue] = React.useState("");
+  const [renameStatus, setRenameStatus] = React.useState<"idle" | "ok" | "err">("idle");
+  const [renaming, setRenaming] = React.useState(false);
 
   return (
     <section className="bg-panel rounded-2xl shadow-xl p-3">
@@ -42,7 +48,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
             value={config.eventName || ""}
             onChange={(e) => handleChange("eventName" as any, e.target.value)}
             placeholder="e.g. Fun Pickleball Tournament"
-            className="w-full px-2 py-1 border border-line rounded text-xs"
+            className="w-full px-2 py-1 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50"
           />
         </div>
 
@@ -119,6 +125,38 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
         )}
       </div>
 
+      {/* Saved session rename */}
+      {sessionId && (
+        <div className="flex flex-wrap items-end gap-2 mb-2">
+          <div className="flex-1 min-w-[180px]">
+            <label className="text-xs font-medium text-subtext mb-0.5 block">Saved Session Name</label>
+            <input
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              placeholder={sessionName || "Rename this session…"}
+              className="w-full px-2 py-1 bg-muted-bg border border-line rounded text-xs text-text placeholder-text/50"
+            />
+          </div>
+          <button
+            onClick={async () => {
+              if (!renameValue.trim() || !onRenameSession) return;
+              setRenaming(true);
+              const r = await onRenameSession(renameValue.trim());
+              setRenaming(false);
+              if (r && r.success) { setRenameStatus("ok"); setRenameValue(""); setTimeout(() => setRenameStatus("idle"), 2500); }
+              else setRenameStatus("err");
+            }}
+            disabled={renaming || !renameValue.trim()}
+            className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            {renaming ? "…" : "Rename"}
+          </button>
+          {renameStatus === "ok" && <span className="text-xs text-green-600">✓ Renamed</span>}
+          {renameStatus === "err" && <span className="text-xs text-red-600">✗ Failed</span>}
+        </div>
+      )}
+
       {/* Standard / Teams Settings */}
       {config.format !== "POOL_PLAY" && (
         <>
@@ -131,7 +169,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0.25}
                 value={config.winLossMagnitude}
                 onChange={(e) => handleChange("winLossMagnitude", parseFloat(e.target.value) || 1)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -142,7 +180,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0.25}
                 value={config.orderGap}
                 onChange={(e) => handleChange("orderGap", parseFloat(e.target.value) || 0.25)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -153,7 +191,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.courtBonus}
                 onChange={(e) => handleChange("courtBonus", parseFloat(e.target.value) || 1)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -164,7 +202,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.band}
                 onChange={(e) => handleChange("band", parseFloat(e.target.value) || 0)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
           </div>
@@ -178,7 +216,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={16}
                 value={config.courts}
                 onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -189,7 +227,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={20}
                 value={config.byeTopProtection}
                 onChange={(e) => handleChange("byeTopProtection", parseInt(e.target.value) || 8)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -201,7 +239,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 max={2}
                 value={config.byeBonusTop}
                 onChange={(e) => handleChange("byeBonusTop", parseFloat(e.target.value) || 0.5)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -212,7 +250,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.sitProtection}
                 onChange={(e) => handleChange("sitProtection", parseFloat(e.target.value) || 0.5)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -223,7 +261,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                 min={0}
                 value={config.lateJoinBonus}
                 onChange={(e) => handleChange("lateJoinBonus", parseFloat(e.target.value) || 1)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
           </div>
@@ -245,7 +283,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                   ...config.poolFinals, 
                   poolsCount: parseInt(e.target.value) || 2 
                 } as any)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -259,7 +297,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                   ...config.poolFinals, 
                   finalistsPerPool: parseInt(e.target.value) || 2 
                 } as any)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -273,7 +311,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                   ...config.poolFinals, 
                   groupStageWinsFor: parseInt(e.target.value) || 1 
                 } as any)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
             <div>
@@ -287,7 +325,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent }: 
                   ...config.poolFinals, 
                   finalsWinsFor: parseInt(e.target.value) || 1 
                 } as any)}
-                className="w-full px-1.5 py-0.5 border border-line rounded text-xs"
+                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded text-xs text-text"
               />
             </div>
           </div>

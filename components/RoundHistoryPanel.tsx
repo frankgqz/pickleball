@@ -16,6 +16,7 @@ interface Props {
   onEndSession?: (sessionId: string) => void;    // ← ADD
   onDeleteSession?: (sessionId: string) => void; // ← ADD
   userId?: string;       // ← ADD — needed for getSessionList
+  sessionRefreshKey?: number;
 }
 
 const formatSessionDate = (date: string | Date) => {
@@ -37,6 +38,7 @@ export default function RoundHistoryPanel({
   onEndSession,          // ← ADD
   onDeleteSession,       // ← ADD
   userId,       // ← ADD
+  sessionRefreshKey = 0,
 }: Props) {
   const sessionRounds = useMemo(
     () => roundHistory
@@ -82,7 +84,7 @@ export default function RoundHistoryPanel({
     if (pastSessionsOpen && userId) {
       loadPastSessions();
     }
-  }, [pastSessionsOpen, userId]);
+  }, [pastSessionsOpen, userId, sessionRefreshKey]);
 
   // --- CSV Export ---------------------- //
   const exportToCSV = () => {

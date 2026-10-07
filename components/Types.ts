@@ -140,6 +140,7 @@ export interface CompletedRound {
 // ============================================================
 export interface GameSession {
   sessionId: string;
+  name?: string;
   startDate: string;
   endDate?: string;
 }
