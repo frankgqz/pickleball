@@ -516,7 +516,7 @@ export default function RoundHistoryPanel({
                           placeholder="0"
                         />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600" : "border-purple-400/70 text-subtext"}`}>{m.team1Score}</span>
+                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${"border-purple-400/70 text-text"}`}>{m.team1Score}</span>
                       ) : (
                         <span className="w-14 shrink-0" />
                       )
@@ -547,7 +547,7 @@ export default function RoundHistoryPanel({
                           placeholder="0"
                         />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${m.team2Score > m.team1Score ? "border-green-500 text-green-600" : "border-green-400/70 text-subtext"}`}>{m.team2Score}</span>
+                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${"border-green-400/70 text-text"}`}>{m.team2Score}</span>
                       ) : (
                         <span className="w-14 shrink-0" />
                       )}
