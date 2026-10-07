@@ -21,9 +21,11 @@ interface Props {
 
 const formatSessionDate = (date: string | Date) => {
   const d = new Date(date);
-  const dateStr = [d.getFullYear(), d.toLocaleString("default", { month: "short" }), d.getDate()].join("/");
-  const timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  return `${dateStr} ${timeStr}`;
+  const yy = String(d.getFullYear()).slice(2);
+  const mon = d.toLocaleString("default", { month: "short" });
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${yy}-${mon}-${d.getDate()} ${hh}:${mm}`;
 };
 
 export default function RoundHistoryPanel({
@@ -68,6 +70,7 @@ export default function RoundHistoryPanel({
   const [editMode, setEditMode] = useState(false);
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
   const [pastSessionsOpen, setPastSessionsOpen] = useState(false);  // ← ADD for collapsible
+  const [pickerOpen, setPickerOpen] = useState(false);
 
 
     // --- FETCH PAST SESSIONS ---
@@ -268,24 +271,43 @@ export default function RoundHistoryPanel({
         </div>
 
         {pastSessionsOpen && pastSessions.length > 0 && (
-          <div className="mb-3">
-            <select
-              value=""
-              onChange={(e) => {
-                const id = e.target.value;
-                if (id && onLoadSession && confirm("Load this session?")) {
-                  onLoadSession(id);
-                }
-              }}
-              className="w-full px-3 py-2 bg-muted-bg border border-line rounded-lg text-text"
+          <div className="mb-3 relative">
+            <button
+              type="button"
+              onClick={() => setPickerOpen(o => !o)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-muted-bg border border-line rounded-md text-sm text-left text-text hover:bg-hover-bg transition-colors"
             >
-              <option value="">— Select a session to load —</option>
-              {pastSessions.map(s => (
-                <option key={s.id} value={s.id}>
-                  {s.isEnded ? "✅ " : "🔄 "}{s.name}{" "}({formatSessionDate(s.createdAt)}) — {s._count?.rounds ?? 0} rounds
-                </option>
-              ))}
-            </select>
+              <span className="truncate">— Select a session to load —</span>
+              <span className={`text-subtext text-xs transition-transform ${pickerOpen ? "rotate-180" : ""}`}>{"▾"}</span>
+            </button>
+            {pickerOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
+                <div className="absolute z-20 mt-1 w-full bg-panel border border-line rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                  {pastSessions.map(s => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setPickerOpen(false);
+                        if (onLoadSession && confirm("Load this session?")) {
+                          onLoadSession(s.id);
+                        }
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-hover-bg transition-colors border-b border-line last:border-b-0"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-medium text-text">
+                        <span>{s.isEnded ? "✅" : "🔄"}</span>
+                        <span className="truncate">{s.name}</span>
+                      </div>
+                      <div className="text-xs text-subtext mt-0.5">
+                        {formatSessionDate(s.createdAt)} - {s._count?.rounds ?? 0}R
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 

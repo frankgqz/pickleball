@@ -361,14 +361,14 @@ export default function CourtsPanel({
             <button
               onClick={handleSubmitRound}
               disabled={roundState.submitted}
-              className="bg-green-500 hover:bg-green-600 text-white font-bold px-8 py-3 rounded-xl text-base disabled:bg-muted-bg disabled:cursor-not-allowed transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
               ✓ Submit Scores
             </button>
             <button
               onClick={onStartNextRound}
               disabled={!roundState.submitted}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-3 rounded-xl text-base disabled:bg-muted-bg disabled:cursor-not-allowed transition-colors"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-5 py-2 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
               🚀 Start Next Round
             </button>

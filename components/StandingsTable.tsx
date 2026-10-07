@@ -225,15 +225,15 @@ export default function StandingsTable({
                     <td className="px-1.5 py-1 text-center">{entry.pointsFor || 0}</td>
                     <td className="px-1.5 py-1 text-center">{entry.pointsAgainst || 0}</td>
 
-                    <td className={`px-1.5 py-1 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
+                    <td className={`px-1.5 py-1 text-center ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
 
                     <td className="px-1.5 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
                     <td className="px-1.5 py-1 text-center"><span className="text-purple-600 font-bold">{entry.byeCount || 0}</span></td>
 
-                    <td className={`px-1.5 py-1 text-center font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
+                    <td className={`px-1.5 py-1 text-center ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
-                    <td className="px-1.5 py-1 text-center font-mono text-blue-600 cursor-help" title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
+                    <td className="px-1.5 py-1 text-center text-blue-600 cursor-help" title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
                   </tr>
                 );
               })}
