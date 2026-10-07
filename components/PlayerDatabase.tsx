@@ -226,7 +226,7 @@ export default function PlayerDatabase({
       {/* Header */}
       <div className="flex flex-col gap-2 mb-2 pt-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold">🎾 Database</h2>
+          <h2 className="text-base font-semibold">🎾 Player Database</h2>
           <div className="text-xs text-subtext">{players.length}</div>
           <select 
             value={sortBy} 

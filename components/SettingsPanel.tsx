@@ -42,7 +42,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
       {/* Event Name (full row) + session rename */}
       <div className="flex items-end gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <label className="text-xs font-medium text-subtext mb-0.5 block">Event Name (Session History and CSV)</label>
+          <label className="text-xs font-medium text-subtext mb-0.5 block">Event Name (History and CSV)</label>
           <input
             type="text"
             value={config.eventName || ""}
