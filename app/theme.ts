@@ -55,6 +55,9 @@ export interface ThemeColors {
 
 const SANS = '"Inter", var(--font-geist-sans, system-ui), sans-serif'
 const MONO = '"JetBrains Mono", var(--font-geist-mono, ui-monospace), monospace'
+const FREDERICKA = '"Fredericka the Great", Georgia, serif'
+const CAUSE = '"Cause", ui-rounded, "Segoe Sans", system-ui, sans-serif'
+const SQUARE_PEG = '"Square Peg", "Segoe Script", cursive'
 const SERIF = '"Fraunces", Georgia, "Times New Roman", serif'
 
 function hexA(hex: string, alpha: number): string {
@@ -137,6 +140,8 @@ export const themes: Record<Theme, ThemeColors> = {
     radiusButton: '10px',
     radiusCard: '14px',
     radiusInput: '6px',
+    fontFamily: FREDERICKA,
+    fontFamilyHeading: FREDERICKA,
     shadowStrength: 0.4,
   }),
 
@@ -183,6 +188,8 @@ export const themes: Record<Theme, ThemeColors> = {
       { hue: [260, 290], sat: [50, 80] },
       { hue: [200, 235], sat: [55, 85] },
     ],
+    fontFamily: CAUSE,
+    fontFamilyHeading: CAUSE,
     radiusButton: '20px',
     radiusCard: '24px',
     radiusInput: '12px',
@@ -205,8 +212,8 @@ export const themes: Record<Theme, ThemeColors> = {
       { hue: [90, 130], sat: [20, 50] },
       { hue: [140, 180], sat: [15, 45] },
     ],
-    fontFamily: SERIF,
-    fontFamilyHeading: SERIF,
+    fontFamily: SQUARE_PEG,
+    fontFamilyHeading: SQUARE_PEG,
     radiusButton: '12px',
     radiusCard: '16px',
     radiusInput: '6px',
