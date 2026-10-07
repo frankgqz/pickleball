@@ -48,7 +48,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="py-1.5 px-2 bg-muted-bg border border-line rounded text-xs text-text"
+            className="py-1.5 px-2 bg-muted-bg border border-line rounded-md text-xs text-text"
           >
             <option value="dupr">By DUPR</option>
             <option value="recent">Added</option>
@@ -56,7 +56,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           {eventPool.length > 0 && (
             <button
               onClick={handleClearAll}
-              className={`py-1.5 px-3 rounded text-xs transition-all border ${
+              className={`py-1.5 px-3 rounded-md text-xs transition-all border ${
                 showClearConfirm 
                   ? "bg-red-600 text-white border-red-700" 
                   : "bg-red-100 text-red-600 border-red-300 hover:bg-red-200 hover:border-red-400"
@@ -118,11 +118,11 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 <div className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-subtext" : "text-text"}`}>
                   <span className="text-xs font-medium truncate">{player.name}</span>
                   {player.duprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded bg-green-600 text-white text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-green-600 text-white text-[10px] font-bold">
                       {player.duprScore.toFixed(3)}
                     </span>
                   ) : player.manualDuprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-900 text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-yellow-50 text-yellow-900 text-[10px] font-bold">
                       {player.manualDuprScore.toFixed(1)}
                     </span>
                   ) : null}
@@ -135,13 +135,13 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       type="checkbox"
                       checked={!!player.isSitting}
                       onChange={() => onToggleSitting && onToggleSitting(player.id)}
-                      className="w-3.5 h-3.5 rounded"
+                      className="w-3.5 h-3.5 rounded-md"
                     />
                     <span className={`text-xs ${player.isSitting ? "text-orange-500" : "text-subtext"}`}>sit</span>
                   </label>
                   <button
                     onClick={() => onRemoveFromPool && onRemoveFromPool(player.id)}
-                    className="w-6 h-6 text-[10px] text-red-400 hover:bg-red-100 rounded transition-colors flex items-center justify-center"
+                    className="w-6 h-6 text-[10px] text-red-400 hover:bg-red-100 rounded-md transition-colors flex items-center justify-center"
                     title="Remove"
                   >
                     ✕

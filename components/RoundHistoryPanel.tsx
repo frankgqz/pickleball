@@ -410,11 +410,11 @@ export default function RoundHistoryPanel({
                           type="number"
                           value={m.team1Score ?? ""}
                           onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
-                          className="w-14 shrink-0 px-1.5 py-0.5 border border-purple-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                          className="w-14 shrink-0 px-1.5 py-0.5 border border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                           placeholder="0"
                         />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded border ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600 font-bold" : "border-transparent text-subtext"}`}>{m.team1Score}</span>
+                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded-md border ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600 font-bold" : "border-transparent text-subtext"}`}>{m.team1Score}</span>
                       ) : (
                         <span className="w-14 shrink-0" />
                       )
@@ -441,11 +441,11 @@ export default function RoundHistoryPanel({
                           type="number"
                           value={m.team2Score ?? ""}
                           onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
-                          className="w-14 shrink-0 px-1.5 py-0.5 border border-green-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                          className="w-14 shrink-0 px-1.5 py-0.5 border border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                           placeholder="0"
                         />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded border ${m.team2Score > m.team1Score ? "border-green-500 text-green-600 font-bold" : "border-transparent text-subtext"}`}>{m.team2Score}</span>
+                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded-md border ${m.team2Score > m.team1Score ? "border-green-500 text-green-600 font-bold" : "border-transparent text-subtext"}`}>{m.team2Score}</span>
                       ) : (
                         <span className="w-14 shrink-0" />
                       )}

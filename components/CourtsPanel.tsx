@@ -184,7 +184,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 px-1.5 py-1 border border-purple-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                className="w-14 shrink-0 px-1.5 py-1 border border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                 value={match.team1Score ?? ""}
                 onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team1")}
                 placeholder="0"
@@ -207,7 +207,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 px-1.5 py-1 border border-green-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                className="w-14 shrink-0 px-1.5 py-1 border border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                 value={match.team2Score ?? ""}
                 onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team2")}
                 placeholder="0"
@@ -224,7 +224,7 @@ export default function CourtsPanel({
                       key={p.id}
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
                       title="Click to take the partner slot"
-                      className="px-2 py-0.5 bg-muted-bg text-subtext rounded text-xs hover:bg-hover-bg transition-colors border border-line"
+                      className="px-2 py-0.5 bg-muted-bg text-subtext rounded-md text-xs hover:bg-hover-bg transition-colors border border-line"
                     >
                       {p.name}
                     </button>
@@ -294,27 +294,25 @@ export default function CourtsPanel({
           </div>
 
           {byeMatches.length > 0 && (
-            <div className="mt-4 bg-orange-50/50 rounded-xl p-4 border border-orange-200">
-              <h4 className="font-semibold text-orange-700 mb-3 text-sm">😴 Players Having a Bye</h4>
-              <div className="flex flex-wrap gap-3">
+            <div className="mt-4 bg-muted-bg rounded-xl p-4 border border-orange-400/70">
+              <h4 className="font-semibold text-orange-600 mb-3 text-sm">😴 Players Having a Bye</h4>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                 {byeMatches.map(m => {
                   const player = findPlayer(m.byePlayerId);
                   return (
-                    <div key={m.id} className="bg-muted-bg rounded-lg px-4 py-2 border border-orange-200 flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-text">{player?.name}</span>
-                        {onVetoBye && m.byePlayerId && (
-                          <button
-                            onClick={() => onVetoBye(m.byePlayerId!)}
-                            className="text-orange-500 hover:text-orange-700 text-sm"
-                            title="No bye this round - add 0.25 to bye score"
-                          >
-                            ⏳
-                          </button>
-                        )}
-                      </div>
-                      <span className="text-xs text-subtext" title={formatByeBreakdown(m.byePlayerId || "")}>
-                        bye: {getPlayerByeTotal(m.byePlayerId || "").toFixed(2)}
+                    <div key={m.id} className="flex items-center gap-1.5 bg-muted-bg rounded-lg px-2 py-1 border border-orange-400/70 h-8">
+                      <span className="font-medium text-sm text-text truncate flex-1 min-w-0">{player?.name}</span>
+                      {onVetoBye && m.byePlayerId && (
+                        <button
+                          onClick={() => onVetoBye(m.byePlayerId!)}
+                          className="text-orange-500 hover:text-orange-700 text-sm shrink-0"
+                          title="No bye this round - add 0.25 to bye score"
+                        >
+                          ⏳
+                        </button>
+                      )}
+                      <span className="text-xs text-subtext shrink-0" title={formatByeBreakdown(m.byePlayerId || "")}>
+                        {getPlayerByeTotal(m.byePlayerId || "").toFixed(2)}
                       </span>
                     </div>
                   );
@@ -328,7 +326,7 @@ export default function CourtsPanel({
               <h4 className="font-semibold text-subtext mb-3 text-sm">💤 Sitting Out</h4>
               <div className="flex flex-wrap gap-2">
                 {sittingOutPlayers.map(p => (
-                  <span key={p.id} className="px-3 py-1 bg-muted-bg text-subtext rounded-full text-sm">
+                  <span key={p.id} className="px-3 py-1 bg-muted-bg text-subtext rounded-lg text-sm">
                     {p.name}
                   </span>
                 ))}
@@ -338,7 +336,7 @@ export default function CourtsPanel({
 
           {/* Confirmation dialog for invalid scores */}
           {confirmOverride && (
-            <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-xl text-center">
+            <div className="mt-4 p-4 bg-muted-bg border-2 border-yellow-400 rounded-xl text-center">
               <p className="text-red-600 font-medium mb-4">
                 ⚠️ On Court {roundState.matches.find(m => m.id === confirmOverride.matchId)?.court}: score "{confirmOverride.value}" is {confirmOverride.value > 99 ? "over 99" : "less than 0"}. Are you sure?
               </p>
