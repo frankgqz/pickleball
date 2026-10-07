@@ -382,7 +382,7 @@ export default function RoundHistoryPanel({
           ))}
         </select>
         ) : (
-          <p className="text-subtext text-sm mb-3">No rounds yet — start a round to see history.</p>
+          <p className="text-subtext text-sm mb-3">No rounds yet</p>
         )}
 
         {/* Row 3: Action buttons - Edit/Delete or Save/Cancel */}
@@ -440,7 +440,6 @@ export default function RoundHistoryPanel({
 
       {/* Content */}
       {!selectedRound ? (
-        <p className="text-subtext text-sm">Select a round to view its matches.</p>
       ) : (
         <div className="space-y-4">
           {selectedRound.sittingOut && selectedRound.sittingOut.length > 0 && (
@@ -487,7 +486,7 @@ export default function RoundHistoryPanel({
                         <input
                           type="number"
                           value={m.team1Score ?? ""}
-                          onChange={(e) => updateMatchScore(m.id, "team1Score", parseInt(e.target.value) || 0)}
+                          onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team1Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
                           className="w-14 shrink-0 px-1.5 py-0.5 border-2 border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                           placeholder="0"
                         />
@@ -518,7 +517,7 @@ export default function RoundHistoryPanel({
                         <input
                           type="number"
                           value={m.team2Score ?? ""}
-                          onChange={(e) => updateMatchScore(m.id, "team2Score", parseInt(e.target.value) || 0)}
+                          onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team2Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
                           className="w-14 shrink-0 px-1.5 py-0.5 border-2 border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
                           placeholder="0"
                         />

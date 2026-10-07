@@ -184,9 +184,9 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 px-1.5 py-1 border-2 border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
+                className="w-14 shrink-0 px-1.5 py-1 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-sm"
                 value={match.team1Score ?? ""}
-                onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team1")}
+                onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team1"); }}
                 placeholder="0"
               />
             </div>
@@ -207,9 +207,9 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 px-1.5 py-1 border-2 border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
+                className="w-14 shrink-0 px-1.5 py-1 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-sm"
                 value={match.team2Score ?? ""}
-                onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team2")}
+                onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team2"); }}
                 placeholder="0"
               />
             </div>
@@ -355,24 +355,24 @@ export default function CourtsPanel({
             </div>
           )}
 
-          <div className="mt-6 flex justify-center gap-4">
+          <div className="mt-5 flex justify-center gap-5">
             <button
               onClick={handleSubmitRound}
               disabled={roundState.submitted}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
-              ✓ Submit Scores
+              ✓ Submit
             </button>
             <button
               onClick={onStartNextRound}
               disabled={!roundState.submitted}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-5 py-2 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
-              🚀 Start Next Round
+              🚀 Next Round
             </button>
           </div>
           {roundState.submitted && (
-            <p className="text-center text-green-600 text-sm mt-2">Round submitted! Click "Start Next Round" to continue.</p>
+            <p className="text-center text-green-600 text-sm mt-2">Round Submitted! Click "Next Round"</p>
           )}
         </>
       )}
