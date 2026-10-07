@@ -420,6 +420,7 @@ export default function Page() {
           onUpdateMatchScore={matchGenActions.updateMatchScore}
           onSwapPlayerTeam={matchGenActions.swapPlayerTeam}
           onSubmitRound={submitRoundResults}
+          onContinueSession={() => dbSessionId && handleContinueSession(dbSessionId)}
           onCancelRound={matchGenActions.cancelRound}
           onVetoBye={vetoPlayerBye}
           onStartNextRound={startNextRound}
@@ -443,14 +444,9 @@ export default function Page() {
           currentDbSessionId={dbSessionId}    // ← ADD
           onLoadSession={handleLoadSession}
           onEndSession={async (id) => {
+            // End = DB flag only; keep the session loaded so standings/rounds stay viewable
             await endSession(id);
             setSessionEnded(true);
-            setCurrentSession({ sessionId: Date.now().toString(), startDate: new Date().toISOString() });
-            setDbSessionId(undefined);
-            setRoundHistory([]);
-            setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
-            setEventPool([]);
-            setStandings([]);
           }}
           onContinueSession={async (id) => {
             const r = await updateSession(id, { isEnded: false });

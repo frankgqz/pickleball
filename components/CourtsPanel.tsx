@@ -16,6 +16,7 @@ interface Props {
   onSwapPlayerTeam: (matchId: string, playerId: string) => void;
   onSubmitRound: () => void;
   sessionEnded?: boolean;
+  onContinueSession?: () => void;
   onCancelRound?: () => void;
   onStartNextRound?: () => void;
   onVetoBye?: (playerId: string) => void;
@@ -35,6 +36,7 @@ export default function CourtsPanel({
   onSwapPlayerTeam,
   onSubmitRound,
   sessionEnded,
+  onContinueSession,
   onCancelRound,
   onStartNextRound,
   onVetoBye,
@@ -259,22 +261,29 @@ export default function CourtsPanel({
             </h3>
             <p className="text-subtext text-xs mb-2">{eventPool.filter(p => !p.isSitting).length} active players</p>
 
-            <button
-              onClick={() => {
-                if (currentRoundNumber === 1) onRegenerateByes();
-                // Use defaultRoundFormat from settings
-                if (defaultRoundFormat === "PICK_PARTNER") {
-                  onStartPickPartner();
-                } else {
-                  onStartFixed14v23();
-                }
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!!sessionEnded}
-              title={sessionEnded ? "Session ended \u2014 Continue Session first" : undefined}
-            >
-              🚀 Start Round {currentRoundNumber}
-            </button>
+            {sessionEnded ? (
+              <button
+                onClick={() => onContinueSession?.()}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
+              >
+                {"\u25b6"} Continue Session
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  if (currentRoundNumber === 1) onRegenerateByes();
+                  // Use defaultRoundFormat from settings
+                  if (defaultRoundFormat === "PICK_PARTNER") {
+                    onStartPickPartner();
+                  } else {
+                    onStartFixed14v23();
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
+              >
+                🚀 Start Round {currentRoundNumber}
+              </button>
+            )}
           </div>
         </div>
       ) : (

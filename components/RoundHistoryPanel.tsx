@@ -286,7 +286,7 @@ export default function RoundHistoryPanel({
       {/* Header - Mobile-friendly layout */}
       <div className="mb-3">
         {/* Row 1: Title + Export */}
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-text">📋 Session</h2>
           <div className="flex gap-2">
             <button
