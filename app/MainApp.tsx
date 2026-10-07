@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import SettingsPanel from "@/components/SettingsPanel";
 import PlayerDatabase from "@/components/PlayerDatabase";
@@ -27,9 +27,10 @@ const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true
 
 export default function Page() {
   const [loading, setLoading] = useState(true);
+  const wasAuthed = useRef(false);
   const [sessionRefreshKey, setSessionRefreshKey] = useState(0);
   const [sessionEnded, setSessionEnded] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
   // @ts-ignore
   const userId = session?.user?.id;
 
@@ -353,10 +354,18 @@ export default function Page() {
 
 
     useEffect(() => {
-    if (!session) {
+    // Wipe ONLY on a real logout transition — not on mount (session is
+    // briefly undefined while auth loads; that used to clear the hydrated
+    // pool on every refresh)
+    if (authStatus === "authenticated") {
+        wasAuthed.current = true;
+        return;
+    }
+    if (authStatus === "unauthenticated" && wasAuthed.current) {
+        wasAuthed.current = false;
         resetPlayers();
     }
-    }, [session, resetPlayers]);
+    }, [authStatus, resetPlayers]);
 
   // ============================================================
   // RENDER
