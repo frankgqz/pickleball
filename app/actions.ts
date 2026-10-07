@@ -487,6 +487,19 @@ export async function updateRound(
   }
 }
 
+// Delete a single round row (idempotent — the round may never have saved)
+export async function deleteRound(sessionId: string, roundNumber: number) {
+  try {
+    const result = await prisma.sessionRound.deleteMany({
+      where: { sessionId, roundNumber },
+    });
+    return { success: true, deleted: result.count };
+  } catch (error) {
+    console.error("Error deleting round:", error);
+    return { success: false, error: "Failed to delete round" };
+  }
+}
+
 // Mark session as ended (prevents further edits)
 export async function endSession(sessionId: string) {
   try {

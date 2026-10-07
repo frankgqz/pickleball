@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { TournamentConfig, CompletedRound, GameSession, MatchFormat, RoundState } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
-import { createSession, saveRound, updateRound } from "@/app/actions";
+import { createSession, saveRound, updateRound, deleteRound } from "@/app/actions";
 
 export const DEFAULT_CONFIG: TournamentConfig = {
   format: "STANDARD",
@@ -80,7 +80,8 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
       .sort((a, b) => a.roundNumber - b.roundNumber),
     [roundHistory, currentSession]
   );
-  const currentRoundNumber = currentSessionRounds.length + 1;
+  // max+1 (not length+1) so deleted rounds leave gaps without save collisions
+  const currentRoundNumber = currentSessionRounds.reduce((max, r) => Math.max(max, r.roundNumber), 0) + 1;
 
   // ============ ACTIONS ============
 
@@ -210,8 +211,12 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
       localStorageDb.saveRounds(updated);
       return updated;
     });
-    // TODO: also delete round row from DB
-  }, []);
+    // Delete the round row from DB (deleteMany is idempotent if it never saved)
+    if (dbSessionId && sessionId === currentSession.sessionId) {
+      deleteRound(dbSessionId, roundNumber)
+        .catch(err => console.error("Failed to delete round from DB:", err));
+    }
+  }, [dbSessionId, currentSession.sessionId]);
 
   // ============ COMBINE STATE & ACTIONS ============
 
