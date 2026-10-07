@@ -248,7 +248,7 @@ export default function PlayerDatabase({
       {/* Add form - single row */}
       <div className="flex flex-nowrap gap-1.5 md:gap-2 mb-1.5 items-end">
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 max-w-[45%]" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 max-w-[60%]" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
@@ -260,8 +260,8 @@ export default function PlayerDatabase({
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-24 md:w-28 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
-          placeholder="webNumID" 
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-16 md:w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          placeholder="dNumID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />

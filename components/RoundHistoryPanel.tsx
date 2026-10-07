@@ -474,7 +474,7 @@ export default function RoundHistoryPanel({
                           key={id}
                           onClick={editMode ? () => handleNameClick(m, "team1", id) : undefined}
                           title={editMode ? "Click to move to Team 2" : undefined}
-                          className={`text-sm font-medium text-text truncate flex-1 min-w-0 ${editMode ? "cursor-pointer rounded-lg px-2 py-1 border-2 border-purple-400/70 bg-muted-bg hover:bg-hover-bg" : ""}`}
+                          className={`text-sm font-medium text-text truncate flex-1 min-w-0 h-8 flex items-center px-2 rounded-lg border-2 border-purple-400/70 bg-muted-bg ${editMode ? "cursor-pointer hover:bg-hover-bg" : ""}`}
                         >
                           {getPlayerName(id)}
                         </span>
@@ -486,11 +486,11 @@ export default function RoundHistoryPanel({
                           type="number"
                           value={m.team1Score ?? ""}
                           onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team1Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
-                          className="w-14 shrink-0 px-1.5 py-0.5 border-2 border-purple-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
+                          className="w-14 h-8 shrink-0 px-1.5 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-sm"
                           placeholder="0"
                         />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded-md border ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600 font-bold" : "border-transparent text-subtext"}`}>{m.team1Score}</span>
+                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${m.team1Score > m.team2Score ? "border-purple-500 text-purple-600 font-bold" : "border-purple-400/70 text-subtext"}`}>{m.team1Score}</span>
                       ) : (
                         <span className="w-14 shrink-0" />
                       )
@@ -506,7 +506,7 @@ export default function RoundHistoryPanel({
                             key={id}
                             onClick={editMode ? () => handleNameClick(m, "team2", id) : undefined}
                             title={editMode ? "Click to move to Team 1" : undefined}
-                            className={`text-sm font-medium text-text truncate flex-1 min-w-0 ${editMode ? "cursor-pointer rounded-lg px-2 py-1 border-2 border-green-400/70 bg-muted-bg hover:bg-hover-bg" : ""}`}
+                            className={`text-sm font-medium text-text truncate flex-1 min-w-0 h-8 flex items-center px-2 rounded-lg border-2 border-green-400/70 bg-muted-bg ${editMode ? "cursor-pointer hover:bg-hover-bg" : ""}`}
                           >
                             {getPlayerName(id)}
                           </span>
@@ -517,11 +517,11 @@ export default function RoundHistoryPanel({
                           type="number"
                           value={m.team2Score ?? ""}
                           onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team2Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
-                          className="w-14 shrink-0 px-1.5 py-0.5 border-2 border-green-400/70 rounded-md text-center bg-muted-bg text-text text-xs"
+                          className="w-14 h-8 shrink-0 px-1.5 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-sm"
                           placeholder="0"
                         />
                       ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 text-sm px-2 py-0.5 rounded-md border ${m.team2Score > m.team1Score ? "border-green-500 text-green-600 font-bold" : "border-transparent text-subtext"}`}>{m.team2Score}</span>
+                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${m.team2Score > m.team1Score ? "border-green-500 text-green-600 font-bold" : "border-green-400/70 text-subtext"}`}>{m.team2Score}</span>
                       ) : (
                         <span className="w-14 shrink-0" />
                       )}
