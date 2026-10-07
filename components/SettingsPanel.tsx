@@ -39,9 +39,9 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
 
       {/* Event Name - for CSV export */}
       {/* CSV Export Settings Row */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-2">
-        {/* Event Name - 50% */}
-        <div className="col-span-1 md:col-span-3">
+      {/* Event Name (full row) + session rename */}
+      <div className="flex items-end gap-2 mb-2">
+        <div className="flex-1 min-w-0">
           <label className="text-xs font-medium text-subtext mb-0.5 block">Event Name (for CSV)</label>
           <input
             type="text"
@@ -51,58 +51,72 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             className="w-full px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50"
           />
         </div>
+        {sessionId && (
+          <button
+            onClick={async () => {
+              const name = (config.eventName || "").trim();
+              if (!name || !onRenameSession) return;
+              setRenaming(true);
+              const r = await onRenameSession(name);
+              setRenaming(false);
+              if (r && r.success) { setRenameStatus("ok"); setTimeout(() => setRenameStatus("idle"), 2500); }
+              else setRenameStatus("err");
+            }}
+            disabled={renaming || !(config.eventName || "").trim()}
+            className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            {renaming ? "…" : "Rename"}
+          </button>
+        )}
+        {sessionId && renameStatus === "ok" && <span className="text-xs text-green-600">✓</span>}
+        {sessionId && renameStatus === "err" && <span className="text-xs text-red-600">✗</span>}
+      </div>
 
-        {/* Match Type - ~16.6% */}
+      {/* Options: 3 per row on mobile, up to 4 on desktop */}
+      <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-2">
         <div className="col-span-1">
           <label className="text-xs font-medium text-subtext mb-0.5 block">Match Type</label>
           <select
             value={config.matchType || "D"}
             onChange={(e) => handleChange("matchType" as any, e.target.value as "D" | "S")}
-            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg"
+            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="D">Doubles (D)</option>
             <option value="S">Singles (S)</option>
           </select>
         </div>
 
-        {/* Score Type - ~16.6% */}
         <div className="col-span-1">
           <label className="text-xs font-medium text-subtext mb-0.5 block">Score Type</label>
           <select
             value={config.scoreType || "SIDEOUT"}
             onChange={(e) => handleChange("scoreType" as any, e.target.value as "SIDEOUT" | "RALLY")}
-            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg"
+            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="SIDEOUT">Sideout</option>
             <option value="RALLY">Rally</option>
           </select>
         </div>
 
-        {/* Best Of - ~16.6% */}
         <div className="col-span-1">
           <label className="text-xs font-medium text-subtext mb-0.5 block">Best Of</label>
           <select
             value={config.bestOf || 1}
             onChange={(e) => handleChange("bestOf" as any, parseInt(e.target.value) as 1 | 3 | 5)}
-            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg"
+            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="1">1</option>
             <option value="3">3</option>
             <option value="5">5</option>
           </select>
         </div>
-      </div>
 
-      
-
-      {/* Format Row */}
-      <div className="flex flex-wrap gap-2 mb-2">
-        <div className="flex items-center gap-1">
-          <label className="text-xs font-medium text-subtext">Event:</label>
+        <div className="col-span-1">
+          <label className="text-xs font-medium text-subtext mb-0.5 block">Event</label>
           <select
             value={config.format}
             onChange={(e) => handleChange("format", e.target.value as TournamentConfig["format"])}
-            className="px-2 py-0.5 border border-line rounded-md text-xs bg-muted-bg"
+            className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="STANDARD">Standard</option>
             <option value="FIXED_PARTNER">Teams</option>
@@ -111,12 +125,12 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
         </div>
 
         {config.format !== "POOL_PLAY" && (
-          <div className="flex items-center gap-1">
-            <label className="text-xs font-medium text-subtext">Round:</label>
+          <div className="col-span-1">
+            <label className="text-xs font-medium text-subtext mb-0.5 block">Round</label>
             <select
               value={config.roundFormat || "FIXED_14V23"}
               onChange={(e) => handleChange("roundFormat" as any, e.target.value as any)}
-              className="px-2 py-0.5 border border-line rounded-md text-xs bg-muted-bg"
+              className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
             >
               <option value="FIXED_14V23">Standard (by seed)</option>
               <option value="PICK_PARTNER">New Partners</option>
@@ -124,38 +138,6 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
           </div>
         )}
       </div>
-
-      {/* Saved session rename */}
-      {sessionId && (
-        <div className="flex flex-wrap items-end gap-2 mb-2">
-          <div className="flex-1 min-w-[180px]">
-            <label className="text-xs font-medium text-subtext mb-0.5 block">Saved Session Name</label>
-            <input
-              type="text"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              placeholder={sessionName || "Rename this session…"}
-              className="w-full px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50"
-            />
-          </div>
-          <button
-            onClick={async () => {
-              if (!renameValue.trim() || !onRenameSession) return;
-              setRenaming(true);
-              const r = await onRenameSession(renameValue.trim());
-              setRenaming(false);
-              if (r && r.success) { setRenameStatus("ok"); setRenameValue(""); setTimeout(() => setRenameStatus("idle"), 2500); }
-              else setRenameStatus("err");
-            }}
-            disabled={renaming || !renameValue.trim()}
-            className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-          >
-            {renaming ? "…" : "Rename"}
-          </button>
-          {renameStatus === "ok" && <span className="text-xs text-green-600">✓ Renamed</span>}
-          {renameStatus === "err" && <span className="text-xs text-red-600">✗ Failed</span>}
-        </div>
-      )}
 
       {/* Standard / Teams Settings */}
       {config.format !== "POOL_PLAY" && (
