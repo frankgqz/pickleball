@@ -402,7 +402,6 @@ export default function RoundHistoryPanel({
                 onClick={async () => {
                   if (!onEndSession || !currentDbSessionId) return;
                   if (!confirm("End this session? You can still view and edit its rounds.")) return;
-                  setPastSessionsOpen(false);
                   await onEndSession(currentDbSessionId);
                   loadPastSessions();
                   setSelectedSessionLabel(l => (l ? l.replace("🎾 ", "🏁 ") : l));
