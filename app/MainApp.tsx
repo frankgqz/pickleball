@@ -19,7 +19,7 @@ import { useEventSession } from "@/components/hooks/useEventSession";
 import { usePlayerDatabase } from "@/components/hooks/usePlayerDatabase";
 import { useStandingsState } from "@/components/hooks/useStandingsState";
 import { useMatchGeneration } from "@/components/hooks/useMatchGeneration";
-import { createStandingsEntry, buildEntriesFromPlayers, calculateStandingsFromRounds } from "@/components/standingsUtils";
+import { createStandingsEntry, buildEntriesFromPlayers, calculateStandingsFromRounds, initializeSeeds } from "@/components/standingsUtils";
 
 // Format constants
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
@@ -137,8 +137,9 @@ export default function Page() {
   // ADD PLAYER TO POOL
   // ============================================================
   const addToPoolWithStandings = useCallback((player: Player, userId?: string) => {
-    // Don't add duplicates
-    if (standings.find(s => s.id === player.id)) return;
+    // Guard on POOL state (what the + button shows) — a standings-only
+    // match must not dead-end the click (2026-10-07); stale entries heal below
+    if (eventPool.find(p => p.id === player.id)) return;
 
     // Add player to pool
     // Late joiners (after round 1) get the lateJoinBonus in their byeMod
@@ -168,7 +169,7 @@ export default function Page() {
 
     // Add to standings and recalculate all seeds by DUPR position
     setStandings(prev => {
-      const updated = [...prev, newEntry];
+      const updated = [...prev.filter(s => s.id !== player.id), newEntry];
       
       // Sort by DUPR score (highest first) - use duplexScore if available, otherwise manualDuprScore
       const sorted = updated.sort((a, b) => {
@@ -183,7 +184,7 @@ export default function Page() {
         seed: 1 + index * config.orderGap,
       }));
     });
-  }, [addPlayerToEventPool, standings, config.orderGap, setStandings]);
+  }, [addPlayerToEventPool, eventPool, config.orderGap, setStandings]);
 
   // ============================================================
   // REMOVE PLAYER FROM POOL
@@ -312,19 +313,22 @@ export default function Page() {
           const loadedPlayers = playersResult.players;
           setEventPool(loadedPlayers);
           const freshEntries = buildEntriesFromPlayers(loadedPlayers);
-          setStandings(freshEntries);
+          setStandings(initializeSeeds(freshEntries, config.orderGap));
           if (session.rounds) {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
-            const computed = calculateStandingsFromRounds(freshEntries, loadedRounds);
+            const computed = initializeSeeds(calculateStandingsFromRounds(freshEntries, loadedRounds), config.orderGap);
             setStandings(computed);
             loadedRounds.forEach(round => addRoundToHistory(round));
           }
         }
       } else if (session.rounds) {
+        // Rounds-only session: derive pool + standings from ONE source so
+        // they cannot diverge (the + button keys off pool state)
         const loadedRounds = session.rounds as unknown as CompletedRound[];
         loadedRounds.forEach(round => addRoundToHistory(round));
-        const computed = calculateStandingsFromRounds([], loadedRounds);
+        const computed = initializeSeeds(calculateStandingsFromRounds([], loadedRounds), config.orderGap);
         setStandings(computed);
+        setEventPool(computed.map(e => ({ id: e.id, name: e.name, duprId: e.duprId, duprScore: e.duprScore })) as unknown as Player[]);
       }
     }
   }, [config, updateConfig, addRoundToHistory, setStandings, setEventPool, setCurrentSession, setDbSessionId, setRoundHistory, setRoundState]);

@@ -282,7 +282,7 @@ export default function RoundHistoryPanel({
               <option value="">— Select a session to load —</option>
               {pastSessions.map(s => (
                 <option key={s.id} value={s.id}>
-                  {s.isEnded ? "✅ " : "🔄 "}{s.name}{" "}({formatSessionDate(s.createdAt)})
+                  {s.isEnded ? "✅ " : "🔄 "}{s.name}{" "}({formatSessionDate(s.createdAt)}) — {s._count?.rounds ?? 0} rounds
                 </option>
               ))}
             </select>
