@@ -34,7 +34,9 @@ next-auth Google OAuth · server actions `app/actions.ts` · state hooks
   api.dupr.gg); CSV export D / SIDEOUT / YYYY-MM-DD, all 4 players named.
 - Yellow nameplate = missing DUPR ID / webNumericID (blocks export matching)
   — deliberate, keep.
-- Backlog `docs/roadmap.md` · history `docs/changelog.md`.
+- Backlog `roadmap.md` at the repo root (Frank's async task queue — he edits
+  it directly from his phone; re-read it at session start, patch never
+  rewrite) · history: `git log`.
 - ? `updateSession` / `getSession` actions added 2026-10-07 — UI wiring
   (session rename) still pending.
 - -> Next on roadmap: best-of-3 score logic, pool-play formats, mobile
