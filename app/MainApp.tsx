@@ -205,6 +205,7 @@ export default function Page() {
         regenerateByes(config.byeTopProtection, config.byeBonusTop);
         if (!dbSessionId && userId) {
           await startNewSession(userId, eventPool.map(p => p.id));
+          setSessionEnded(false);
         }
       }
       matchGenActions.generateStandardMatches(format);
@@ -249,6 +250,7 @@ export default function Page() {
   const handleRestartEvent = useCallback(() => {
     restartEvent();
     setStandings([]);
+    setSessionEnded(false);
   }, [restartEvent, setStandings]);
 
   const handleClearPool = useCallback(() => {
