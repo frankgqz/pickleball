@@ -153,55 +153,55 @@ export default function StandingsTable({
             <thead>
               <tr className="bg-muted-bg">
                 <th
-                  className="px-1 py-1 text-left cursor-pointer hover:bg-hover-bg"
+                  className="px-1 py-1 text-left cursor-pointer hover:bg-hover-bg w-full"
                   onClick={() => headerClick("name")}
                 >
                   Name{getSortIcon("name")}
                 </th>
 
                 <th
-                  className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-12"
+                  className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap"
                   onClick={() => headerClick("wins")}
                 >
                   W{getSortIcon("wins")}
                 </th>
 
                 <th
-                  className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-12"
+                  className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap"
                   onClick={() => headerClick("losses")}
                 >
                   L{getSortIcon("losses")}
                 </th>
 
-                <th className="px-1 py-1 text-center text-xs text-subtext" onClick={() => headerClick("winPct")}>
+                <th className="px-1 py-1 text-center text-xs text-subtext w-[1%] whitespace-nowrap" onClick={() => headerClick("winPct")}>
                   Win%{getSortIcon("winPct")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointsFor")}>
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("pointsFor")}>
                   PF{getSortIcon("pointsFor")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointsAgainst")}>
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("pointsAgainst")}>
                   PA{getSortIcon("pointsAgainst")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointDiff")}>
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("pointDiff")}>
                   +/-{getSortIcon("pointDiff")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("ptsPct")}>
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("ptsPct")}>
                   Pts%{getSortIcon("ptsPct")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeCount")}>
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("byeCount")}>
                   Byes{getSortIcon("byeCount")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeTotal")} title="Total bye score">
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("byeTotal")} title="Total bye score">
                   Bye{getSortIcon("byeTotal")}
                 </th>
 
-                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
+                <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
                   Order{getSortIcon("seedTotal")}
                 </th>
               </tr>
