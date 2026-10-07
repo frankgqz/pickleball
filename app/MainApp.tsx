@@ -286,6 +286,14 @@ export default function Page() {
     return r;
   };
 
+  const handleContinueSession = useCallback(async (id: string) => {
+    const r = await updateSession(id, { isEnded: false });
+    if (r.success) {
+      setSessionEnded(false);
+      setSessionRefreshKey((k: number) => k + 1);
+    }
+  }, []);
+
   const handleLoadSession = useCallback(async (sessionId: string) => {
     console.log("[handleLoadSession] firing for:", sessionId);
     const result = await loadSession(sessionId);
@@ -448,13 +456,7 @@ export default function Page() {
             await endSession(id);
             setSessionEnded(true);
           }}
-          onContinueSession={async (id) => {
-            const r = await updateSession(id, { isEnded: false });
-            if (r.success) {
-              setSessionEnded(false);
-              setSessionRefreshKey((k: number) => k + 1);
-            }
-          }}
+          onContinueSession={handleContinueSession}
           onDeleteSession={async (id) => {
             await deleteSession(id);
             setCurrentSession({ sessionId: Date.now().toString(), startDate: new Date().toISOString() });
