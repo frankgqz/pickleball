@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";  // ← ADD useEffect
+import React, { useMemo, useState, useEffect, useRef } from "react";  // ← ADD useEffect
 import { CompletedRound, Player, TournamentConfig } from "./Types";
 import { getSessionList, loadSession, endSession, deleteSession } from "@/app/actions";
 
@@ -71,6 +71,20 @@ export default function RoundHistoryPanel({
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
   const [pastSessionsOpen, setPastSessionsOpen] = useState(false);  // ← ADD for collapsible
   const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerListRef = useRef<HTMLDivElement>(null);
+
+  const sessionPlayerCount = (s: any): number => {
+    const ids = s.playerIds;
+    if (Array.isArray(ids)) return ids.length;
+    try { const p = JSON.parse(ids); return Array.isArray(p) ? p.length : 0; } catch { return 0; }
+  };
+
+  // Newest sits at the bottom (the panel lives at the bottom of the page)
+  useEffect(() => {
+    if (pickerOpen && pickerListRef.current) {
+      pickerListRef.current.scrollTop = pickerListRef.current.scrollHeight;
+    }
+  }, [pickerOpen]);
 
 
     // --- FETCH PAST SESSIONS ---
@@ -283,7 +297,7 @@ export default function RoundHistoryPanel({
             {pickerOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
-                <div className="absolute z-20 mt-1 w-full bg-panel border border-line rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                <div ref={pickerListRef} className="absolute z-20 mt-1 w-full bg-panel border border-line rounded-lg shadow-xl max-h-64 overflow-y-auto">
                   {pastSessions.map(s => (
                     <button
                       key={s.id}
@@ -296,12 +310,32 @@ export default function RoundHistoryPanel({
                       }}
                       className="w-full text-left px-3 py-2 hover:bg-hover-bg transition-colors border-b border-line last:border-b-0"
                     >
-                      <div className="flex items-center gap-2 text-sm font-medium text-text">
-                        <span>{s.isEnded ? "✅" : "🔄"}</span>
-                        <span className="truncate">{s.name}</span>
-                      </div>
-                      <div className="text-xs text-subtext mt-0.5">
-                        {formatSessionDate(s.createdAt)} - {s._count?.rounds ?? 0}R
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 text-sm font-medium text-text">
+                            <span>{s.isEnded ? "✅" : "🔄"}</span>
+                            <span className="truncate">{s.name}</span>
+                          </div>
+                          <div className="text-xs text-subtext mt-0.5">
+                            {formatSessionDate(s.createdAt)} - {s._count?.rounds ?? 0} Rounds - {sessionPlayerCount(s)} Players
+                          </div>
+                        </div>
+                        {s.isEnded && onDeleteSession && (
+                          <button
+                            aria-label="Delete session"
+                            title="Delete this session"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (confirm("Delete this session and all its rounds? This cannot be undone.")) {
+                                await onDeleteSession(s.id);
+                                loadPastSessions();
+                              }
+                            }}
+                            className="shrink-0 self-center px-1.5 py-0.5 rounded-md border border-line bg-muted-bg text-red-500 hover:bg-hover-bg transition-colors text-xs"
+                          >
+                            🗑
+                          </button>
+                        )}
                       </div>
                     </button>
                   ))}

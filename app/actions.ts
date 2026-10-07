@@ -418,7 +418,7 @@ export async function getSessionList(userId: string) {
   try {
     const sessions = await prisma.session.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
       // Light payload — metadata + round count, no round bodies
       include: { _count: { select: { rounds: true } } },
     });
