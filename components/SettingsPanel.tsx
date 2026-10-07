@@ -106,8 +106,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="1">1</option>
-            <option value="3">3</option>
-            <option value="5">5</option>
+            <option value="3" disabled>3</option>
+            <option value="5" disabled>5</option>
           </select>
         </div>
 
@@ -119,8 +119,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="STANDARD">Standard</option>
-            <option value="FIXED_PARTNER">Teams</option>
-            <option value="POOL_PLAY">Pool / Finals</option>
+            <option value="FIXED_PARTNER" disabled>Teams (coming soon)</option>
+            <option value="POOL_PLAY" disabled>Pool / Finals (coming soon)</option>
           </select>
         </div>
 
@@ -134,7 +134,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
             >
               <option value="FIXED_14V23">Standard (by seed)</option>
-              <option value="PICK_PARTNER">New Partners</option>
+              <option value="PICK_PARTNER" disabled>New Partners (coming soon)</option>
             </select>
           </div>
           <div className="col-span-1">

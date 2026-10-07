@@ -65,8 +65,8 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   // State
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
-  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>([]);
-  const [roundState, setRoundState] = useState<RoundState>(() => localStorageDb.loadRoundState() ?? ({
+  const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(() => localStorageDb.loadRounds());
+  const [roundState, setRoundState] = useState<RoundState>(() => localStorageDb.loadRoundState(initialSession.sessionId) ?? ({
     active: false,
     format: PICK_PARTNER_FORMAT,
     matches: [],
@@ -75,8 +75,8 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
 
   // Persist the in-progress round (typed scores survive refresh/leave)
   useEffect(() => {
-    localStorageDb.saveRoundState(roundState);
-  }, [roundState]);
+    localStorageDb.saveRoundState(currentSession.sessionId, roundState);
+  }, [roundState, currentSession.sessionId]);
   const [dbSessionId, setDbSessionId] = useState<string | undefined>(undefined);
 
   // Derived: rounds in current session

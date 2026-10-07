@@ -37,9 +37,13 @@ function safeJsonStringify(key: string, data: unknown): void {
 }
 
 export const localStorageDb = {
-  // In-progress round (typed scores survive refresh)
-  saveRoundState: (state: RoundState) => safeJsonStringify(STORAGE_KEYS.ROUND_STATE, state),
-  loadRoundState: (): RoundState | null => safeJsonParse<RoundState | null>(STORAGE_KEYS.ROUND_STATE, null),
+  // In-progress round (typed scores survive refresh) — scoped to a session id
+  // so a round from one session can never ghost into another
+  saveRoundState: (sid: string, state: RoundState) => safeJsonStringify(STORAGE_KEYS.ROUND_STATE, { sid, state }),
+  loadRoundState: (sid: string): RoundState | null => {
+    const saved = safeJsonParse<{ sid: string; state: RoundState } | null>(STORAGE_KEYS.ROUND_STATE, null);
+    return saved && saved.sid === sid ? saved.state : null;
+  },
 
   // Rounds
   saveRounds: (rounds: CompletedRound[]) => safeJsonStringify(STORAGE_KEYS.ROUNDS, rounds),
