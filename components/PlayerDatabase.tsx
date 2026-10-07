@@ -224,60 +224,59 @@ export default function PlayerDatabase({
   return (
     <section className="bg-panel rounded-2xl shadow p-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2 pt-1">
+      <div className="flex flex-col gap-2 mb-2 pt-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold">🎾 Player Database</h2>
-          <div className="text-xs text-subtext">({players.length})</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <input 
-            value={search} 
-            onChange={e => setSearch(e.target.value)} 
-            placeholder="Search name or ID" 
-            className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
-          />
+          <h2 className="text-base font-semibold">🎾 Database</h2>
+          <div className="text-xs text-subtext">{players.length}</div>
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value as any)} 
-            className="py-1.5 px-2 bg-muted-bg border border-line rounded-md text-sm text-text"
+            className="ml-auto py-1.5 px-2 bg-muted-bg border border-line rounded-md text-sm text-text"
           >
-            <option value="recent">Recent First</option>
+            <option value="recent">Recent</option>
             <option value="alpha">A - Z</option>
           </select>
         </div>
+        <input 
+          value={search} 
+          onChange={e => setSearch(e.target.value)} 
+          placeholder="Search name or ID" 
+          className="w-full px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50" 
+        />
       </div>
 
       {/* Add form - single row */}
-      <div className="flex flex-wrap gap-2 mb-1.5 items-end">
+      <div className="flex flex-nowrap gap-1.5 md:gap-2 mb-1.5 items-end">
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-[140px]" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-16 md:w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="duprID" 
           value={duprId} 
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-16 md:w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="webNumID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 w-16" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 w-12 md:w-14" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
         />
         <button 
-          className="px-4 py-1.5 text-sm text-white bg-green-600 rounded-md hover:bg-green-700 font-bold" 
+          className="px-2.5 md:px-4 py-1.5 text-sm text-white bg-green-600 rounded-md hover:bg-green-700 font-bold" 
           onClick={handleAdd}
+          title="Add to database"
         >
-          + Add
+          +
         </button>
       </div>
       {validationError && <div className="text-red-500 text-xs mb-1.5">{validationError}</div>}
