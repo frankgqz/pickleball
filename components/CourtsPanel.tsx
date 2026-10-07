@@ -152,108 +152,95 @@ export default function CourtsPanel({
     return (
       <div
         key={match.id}
-        className={`rounded-xl border p-4 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
+        className={`rounded-lg border px-3 py-2 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
       >
-        <div className="flex justify-between items-center mb-4">
-          <span className="font-bold text-base text-text">{match.bye ? "BYE" : `Court ${match.court}`}</span>
-          {!match.bye && (
-            <div className="text-xs text-subtext">Round {currentRoundNumber}</div>
-          )}
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-xs text-subtext font-medium">{match.bye ? "BYE" : `Court ${match.court}`}</span>
+          {!match.bye && <span className="text-xs text-subtext">Round {currentRoundNumber}</span>}
         </div>
 
         {match.bye ? (
-          <div className="text-center py-4">
-            <div className="text-2xl mb-2">😴</div>
-            <div className="font-semibold text-text">{findPlayer(match.byePlayerId || "")?.name}</div>
-            <div className="text-xs text-subtext mt-1" title={formatByeBreakdown(match.byePlayerId || "")}>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-text truncate">😴 {findPlayer(match.byePlayerId || "")?.name}</span>
+            <span className="text-xs text-subtext shrink-0 ml-auto" title={formatByeBreakdown(match.byePlayerId || "")}>
               bye: {getPlayerByeTotal(match.byePlayerId || "").toFixed(2)}
-            </div>
+            </span>
           </div>
         ) : (
           <>
-            {/* Teams */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Team 1 */}
-              <div>
-                <div className="text-xs text-purple-600 mb-2 font-medium">Team 1</div>
-                <div className="space-y-1">
-                  {team1Players.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                      className="w-full text-left rounded-lg px-3 py-2 bg-muted-bg border border-purple-400/70 hover:bg-hover-bg text-text transition-colors"
-                    >
-                      <div className="font-medium text-sm">{p.name}</div>
-                    </button>
-                  ))}
-                </div>
+            {/* Team 1 row — picker fixed */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {team1Players.map((p, i) => (
+                  <button
+                    key={p.id}
+                    onClick={i === 0 ? undefined : () => onSwapPlayerTeam(match.id, p.id)}
+                    title={i === 0 ? "Picker (fixed)" : "Click to swap"}
+                    className={`flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border border-purple-400/70 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
               </div>
+              <input
+                type="number"
+                className="w-14 shrink-0 px-1.5 py-1 border border-purple-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                value={match.team1Score ?? ""}
+                onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team1")}
+                placeholder="0"
+              />
+            </div>
 
-              {/* Team 2 */}
-              <div>
-                <div className="text-xs text-green-600 mb-2 font-medium">Team 2</div>
-                <div className="space-y-1">
-                  {team2Players.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                      className="w-full text-left rounded-lg px-3 py-2 bg-muted-bg border border-green-400/70 hover:bg-hover-bg text-text transition-colors"
-                    >
-                      <div className="font-medium text-sm">{p.name}</div>
-                    </button>
-                  ))}
-                </div>
+            {/* Team 2 row */}
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {team2Players.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => onSwapPlayerTeam(match.id, p.id)}
+                    title="Click to swap into Team 1"
+                    className="flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border border-green-400/70 text-text text-sm font-medium hover:bg-hover-bg"
+                  >
+                    {p.name}
+                  </button>
+                ))}
               </div>
+              <input
+                type="number"
+                className="w-14 shrink-0 px-1.5 py-1 border border-green-400/70 rounded text-center bg-muted-bg text-text text-xs"
+                value={match.team2Score ?? ""}
+                onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team2")}
+                placeholder="0"
+              />
             </div>
 
             {/* Unselected players available to pick */}
             {unselectedPlayers.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-line">
-                <div className="text-xs text-subtext mb-2">Available:</div>
-                <div className="flex flex-wrap gap-1">
+              <div className="mt-2 pt-2 border-t border-line">
+                <div className="flex flex-wrap gap-1 items-center">
+                  <span className="text-xs text-subtext">Available:</span>
                   {unselectedPlayers.slice(0, 6).map(p => (
                     <button
                       key={p.id}
                       onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                      className="px-2 py-1 bg-muted-bg text-subtext rounded text-xs hover:bg-hover-bg transition-colors border border-line"
+                      title="Click to take the partner slot"
+                      className="px-2 py-0.5 bg-muted-bg text-subtext rounded text-xs hover:bg-hover-bg transition-colors border border-line"
                     >
                       {p.name}
                     </button>
                   ))}
                   {unselectedPlayers.length > 6 && (
-                    <span className="text-xs text-subtext px-2 py-1">
+                    <span className="text-xs text-subtext px-1">
                       +{unselectedPlayers.length - 6} more
                     </span>
                   )}
                 </div>
               </div>
             )}
-
-            {/* Score inputs */}
-            <div className="flex items-center justify-center gap-4 mt-4">
-              <div className="text-center">
-                <div className="text-xs text-purple-500 mb-1">Team 1</div>
-                <input
-                  type="number"
-                  className="w-16 px-2 py-1.5 border border-purple-300 rounded-lg text-center bg-muted-bg"
-                  value={match.team1Score ?? ""}
-                  onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team1")}
-                />
-              </div>
-              <div className="text-subtext">vs</div>
-              <div className="text-center">
-                <div className="text-xs text-green-500 mb-1">Team 2</div>
-                <input
-                  type="number"
-                  className="w-16 px-2 py-1.5 border border-green-300 rounded-lg text-center bg-muted-bg"
-                  value={match.team2Score ?? ""}
-                  onChange={(e) => onUpdateMatchScore(match.id, parseInt(e.target.value) || 0, "team2")}
-                />
-              </div>
-            </div>
           </>
         )}
       </div>
+
     );
   };
 

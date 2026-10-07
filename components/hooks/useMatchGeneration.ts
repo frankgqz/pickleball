@@ -117,24 +117,31 @@ export function useMatchGeneration(
       ...prev,
       matches: prev.matches.map(m => {
         if (m.id !== matchId) return m;
-        
+
         const picker = m.team1[0];
         const partner = m.team1[1];
-        
-        // Can't swap the picker
-        if (playerId === picker) return m;
-        
-        // If player is on team2, swap them with the partner
         const team2Arr = Array.isArray(m.team2) ? m.team2 : [m.team2].filter(Boolean);
+
+        // The picker (t1/p1) is fixed; every click trades into the partner slot (t1/p2)
+        if (playerId === picker || playerId === partner) return m;
+
+        // t2 player -> partner slot; partner lands in the clicked player's position
         if (team2Arr.includes(playerId)) {
-          return { 
-            ...m, 
-            team1: [picker, playerId] as [string, string], 
-            team2: [...team2Arr.filter(id => id !== playerId), partner] as [string, string] 
+          const idx = team2Arr.indexOf(playerId);
+          const newTeam2 = [...team2Arr];
+          newTeam2[idx] = partner;
+          return {
+            ...m,
+            team1: [picker, playerId] as [string, string],
+            team2: newTeam2 as [string, string]
           };
         }
-        
-        return m;
+
+        // Available (unselected) player -> takes the partner slot
+        return {
+          ...m,
+          team1: [picker, playerId] as [string, string],
+        };
       })
     }));
   }, [setRoundState]);
