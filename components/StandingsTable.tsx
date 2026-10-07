@@ -134,7 +134,6 @@ export default function StandingsTable({
       <div className="flex justify-between items-center mb-3">
         <h2 className="text-base font-bold text-text">📊 Standings</h2>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-subtext">{sorted.length}</span>
           <button
             onClick={onRegenerateByes}
             className="px-3 py-1.5 bg-muted-bg text-orange-600 rounded-lg text-sm hover:bg-hover-bg border border-orange-400/70"

@@ -247,17 +247,15 @@ export default function CourtsPanel({
   const byeMatches = roundState.matches.filter(m => m.bye && m.byePlayerId);
 
   return (
-    <section className="bg-panel rounded-2xl shadow-xl p-6">
+    <section className="bg-panel rounded-2xl shadow-xl p-4">
       {!roundState.active ? (
-        <div className="text-center py-8">
-          <div className={`rounded-xl p-5 ${submitted ? "bg-muted-bg border-2 border-purple-500/40" : "bg-muted-bg border-2 border-green-500/40"}`}>
-            <div className={`text-2xl mb-1 ${submitted ? "text-purple-500" : "text-green-500"}`}>
-              {submitted ? "✓" : "🎾"}
-            </div>
-            <h3 className="text-base font-semibold mb-1 text-text whitespace-nowrap">
+        <div className="text-center py-3">
+          <div className={`rounded-xl p-4 ${submitted ? "bg-muted-bg border-2 border-purple-500/40" : "bg-muted-bg border-2 border-green-500/40"}`}>
+            <h3 className="text-base font-semibold mb-1 text-text whitespace-nowrap flex items-center justify-center gap-2">
+              <span className={submitted ? "text-purple-500" : "text-green-500"}>{submitted ? "✓" : "🎾"}</span>
               {submitted ? `Round ${currentRoundNumber - 1} Complete!` : `Ready to start Round ${currentRoundNumber}?`}
             </h3>
-            <p className="text-subtext text-sm mb-3">{eventPool.filter(p => !p.isSitting).length} active players</p>
+            <p className="text-subtext text-xs mb-2">{eventPool.filter(p => !p.isSitting).length} active players</p>
 
             <button
               onClick={() => {
