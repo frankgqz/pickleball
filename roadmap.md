@@ -22,6 +22,8 @@ View of matches in viewport able to be cast onto bigscreen. fit nicely
 Some fields are not using theme improts, so light grey on white happening.
 
 ### Misc 
+Use a spare DUPR account + its own env var for API player queries (stop
+using Frank's main account token) — noted 2026-10-07, Frank does later.
 For user, it should say duprURL# by default in the box instead of duprNumericID
 Feature to sort player in user’s playerdatabase, to the more frequent joiners
 Searching dupr, should update their dupr in event pool also

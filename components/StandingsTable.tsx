@@ -172,7 +172,7 @@ export default function StandingsTable({
                   L{getSortIcon("losses")}
                 </th>
 
-                <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center text-subtext w-[1%] whitespace-nowrap" onClick={() => headerClick("winPct")}>
+                <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center w-[1%] whitespace-nowrap" onClick={() => headerClick("winPct")}>
                   Win%{getSortIcon("winPct")}
                 </th>
 
