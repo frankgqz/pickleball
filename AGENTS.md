@@ -37,7 +37,7 @@ next-auth Google OAuth · server actions `app/actions.ts` · state hooks
 - Backlog `roadmap.md` at the repo root (Frank's async task queue — he edits
   it directly from his phone; re-read it at session start, patch never
   rewrite) · history: `git log`.
-- ? `updateSession` / `getSession` actions added 2026-10-07 — UI wiring
-  (session rename) still pending.
+- ✓ Session rename UI wired in SettingsPanel (updateSession + refreshKey);
+  app named "Pickle Sessions"; all form fields themed — 2026-10-07.
 - -> Next on roadmap: best-of-3 score logic, pool-play formats, mobile
   standings; gqz rename sync (see theme/AGENTS.md).

@@ -34,10 +34,11 @@ MatcheEngine logic, The bye logic (getByeTotal, getSeedTotal, generateMatches) i
 Actions.ts bulky
 
 ### Current - immmediate
-Session rename UI (updateSession action ready)
 gqz rename ritual (dark/sky -> night/bubble at its npm update)
 
 ### Done (2026-10)
+- ✓ Session rename UI in settings panel + app renamed to Pickle Sessions +
+  all form fields themed (light-grey-on-white fix) — 2026-10-07
 - ✓ SessionRound DB: deleting a round now deletes the DB row, gap-safe
   numbering (was: stale rows + save collisions) — 2026-10-07
 - ✓ Theme button, 4 themes from the gqz.app cookie (wood/night/bubble/matcha,
