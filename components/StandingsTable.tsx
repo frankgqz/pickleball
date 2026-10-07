@@ -136,7 +136,7 @@ export default function StandingsTable({
         <div className="flex items-center gap-3">
           <button
             onClick={onRegenerateByes}
-            className="px-3 py-1.5 bg-muted-bg text-orange-600 rounded-lg text-sm hover:bg-hover-bg border border-orange-400/70"
+            className="px-2.5 py-1 bg-muted-bg text-orange-600 rounded-lg text-sm hover:bg-hover-bg border border-orange-400/70"
             title="Regen bye base scores"
           >
             🎲 Regen Bye

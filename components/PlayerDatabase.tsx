@@ -231,7 +231,7 @@ export default function PlayerDatabase({
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value as any)} 
-            className="ml-auto py-1.5 px-2 bg-muted-bg border border-line rounded-lg text-sm text-text"
+            className="ml-auto py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
           >
             <option value="recent">Recent</option>
             <option value="alpha">A - Z</option>

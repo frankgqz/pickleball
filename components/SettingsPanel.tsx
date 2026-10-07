@@ -31,7 +31,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               onRestartEvent && onRestartEvent();
             }
           }}
-          className="px-3 py-1.5 text-sm bg-muted-bg text-red-600 rounded-lg hover:bg-hover-bg border border-red-400/70 transition-colors"
+          className="px-2.5 py-1 text-sm bg-muted-bg text-red-600 rounded-lg hover:bg-hover-bg border border-red-400/70 transition-colors"
         >
           🔄 Restart
         </button>

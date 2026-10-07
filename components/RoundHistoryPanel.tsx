@@ -289,14 +289,14 @@ export default function RoundHistoryPanel({
           <div className="flex gap-2">
             <button
               onClick={() => setPastSessionsOpen(o => !o)}
-              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
             >
               {pastSessionsOpen ? "▲ Hide" : "📂 Load"}
             </button>
             {sessionRounds.length > 0 && (
               <button
                 onClick={exportToCSV}
-                className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                className="px-2.5 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
                 title="Export to CSV"
               >
                 📥 CSV

@@ -280,7 +280,7 @@ export default function CourtsPanel({
             {onCancelRound && (
               <button
                 onClick={onCancelRound}
-                className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors"
+                className="px-2.5 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors"
               >
                 ✕ Cancel Round
               </button>

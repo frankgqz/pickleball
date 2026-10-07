@@ -48,7 +48,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="py-1.5 px-2 bg-muted-bg border border-line rounded-lg text-sm text-text"
+            className="py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
           >
             <option value="dupr">Dupr</option>
             <option value="recent">Added</option>
@@ -56,7 +56,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
           {eventPool.length > 0 && (
             <button
               onClick={handleClearAll}
-              className={`py-1.5 px-3 rounded-lg text-sm transition-all border ${
+              className={`py-1 px-2.5 rounded-lg text-sm transition-all border ${
                 showClearConfirm 
                   ? "bg-red-600 text-white border-red-700" 
                   : "bg-red-100 text-red-600 border-red-300 hover:bg-red-200 hover:border-red-400"
