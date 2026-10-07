@@ -250,14 +250,14 @@ export default function CourtsPanel({
     <section className="bg-panel rounded-2xl shadow-xl p-6">
       {!roundState.active ? (
         <div className="text-center py-8">
-          <div className={`rounded-xl p-8 ${submitted ? "bg-muted-bg border-2 border-purple-500/40" : "bg-muted-bg border-2 border-green-500/40"}`}>
-            <div className={`text-4xl mb-4 ${submitted ? "text-purple-500" : "text-green-500"}`}>
+          <div className={`rounded-xl p-5 ${submitted ? "bg-muted-bg border-2 border-purple-500/40" : "bg-muted-bg border-2 border-green-500/40"}`}>
+            <div className={`text-2xl mb-1 ${submitted ? "text-purple-500" : "text-green-500"}`}>
               {submitted ? "✓" : "🎾"}
             </div>
-            <h3 className="text-xl font-bold mb-2 text-text">
+            <h3 className="text-base font-semibold mb-1 text-text whitespace-nowrap">
               {submitted ? `Round ${currentRoundNumber - 1} Complete!` : `Ready to start Round ${currentRoundNumber}?`}
             </h3>
-            <p className="text-subtext text-sm mb-6">{eventPool.filter(p => !p.isSitting).length} active players</p>
+            <p className="text-subtext text-sm mb-3">{eventPool.filter(p => !p.isSitting).length} active players</p>
 
             <button
               onClick={() => {
@@ -269,7 +269,7 @@ export default function CourtsPanel({
                   onStartFixed14v23();
                 }
               }}
-              className="bg-green-500 hover:bg-green-600 text-white font-bold px-10 py-4 rounded-xl text-xl shadow-md hover:shadow-lg transition-all"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
             >
               🚀 Start Round {currentRoundNumber}
             </button>
@@ -278,7 +278,7 @@ export default function CourtsPanel({
       ) : (
         <>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-text">Round {currentRoundNumber} Matches</h3>
+            <h3 className="text-base font-semibold text-text">Round {currentRoundNumber} Matches</h3>
             {onCancelRound && (
               <button
                 onClick={onCancelRound}

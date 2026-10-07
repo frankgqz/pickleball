@@ -132,7 +132,7 @@ export default function StandingsTable({
   return (
     <section className="bg-panel rounded-2xl shadow-xl p-4">
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-lg font-bold text-text">📊 Standings</h2>
+        <h2 className="text-base font-bold text-text">📊 Standings</h2>
         <div className="flex items-center gap-3">
           <button
             onClick={onRegenerateByes}
@@ -149,59 +149,59 @@ export default function StandingsTable({
         <p className="text-subtext text-center py-8">Add players to the event pool to see standings</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[720px]">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-muted-bg">
                 <th
-                  className="p-2 text-left cursor-pointer hover:bg-hover-bg w-1/3"
+                  className="px-1.5 py-1 text-left cursor-pointer hover:bg-hover-bg"
                   onClick={() => headerClick("name")}
                 >
                   Name{getSortIcon("name")}
                 </th>
 
                 <th
-                  className="p-2 text-center cursor-pointer hover:bg-hover-bg w-12"
+                  className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-12"
                   onClick={() => headerClick("wins")}
                 >
                   W{getSortIcon("wins")}
                 </th>
 
                 <th
-                  className="p-2 text-center cursor-pointer hover:bg-hover-bg w-12"
+                  className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-12"
                   onClick={() => headerClick("losses")}
                 >
                   L{getSortIcon("losses")}
                 </th>
 
-                <th className="p-2 text-center text-xs text-subtext" onClick={() => headerClick("winPct")}>
+                <th className="px-1.5 py-1 text-center text-xs text-subtext" onClick={() => headerClick("winPct")}>
                   Win%{getSortIcon("winPct")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointsFor")}>
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointsFor")}>
                   PF{getSortIcon("pointsFor")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointsAgainst")}>
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointsAgainst")}>
                   PA{getSortIcon("pointsAgainst")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointDiff")}>
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("pointDiff")}>
                   +/-{getSortIcon("pointDiff")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("ptsPct")}>
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("ptsPct")}>
                   Pts%{getSortIcon("ptsPct")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeCount")}>
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeCount")}>
                   Byes{getSortIcon("byeCount")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeTotal")} title="Total bye score">
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("byeTotal")} title="Total bye score">
                   Bye{getSortIcon("byeTotal")}
                 </th>
 
-                <th className="p-2 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
+                <th className="px-1.5 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
                   Order#{getSortIcon("seedTotal")}
                 </th>
               </tr>
@@ -216,24 +216,24 @@ export default function StandingsTable({
                 const winPct = (entry as any).winPct ?? 0;
                 return (
                   <tr key={entry.id} className="border-t hover:bg-hover-bg">
-                    <td className="p-2"><div className="font-medium">{entry.name}</div></td>
+                    <td className="px-1.5 py-1"><div className="font-medium truncate max-w-[24ch]" title={entry.name}>{entry.name}</div></td>
 
-                    <td className="p-2 text-center font-bold text-green-600">{entry.wins || 0}</td>
-                    <td className="p-2 text-center font-bold text-red-500">{entry.losses || 0}</td>
-                    <td className="p-2 text-center text-xs text-text">{String(Math.round(winPct))}%</td>
+                    <td className="px-1.5 py-1 text-center font-bold text-green-600">{entry.wins || 0}</td>
+                    <td className="px-1.5 py-1 text-center font-bold text-red-500">{entry.losses || 0}</td>
+                    <td className="px-1.5 py-1 text-center text-xs text-text">{String(Math.round(winPct))}%</td>
 
-                    <td className="p-2 text-center">{entry.pointsFor || 0}</td>
-                    <td className="p-2 text-center">{entry.pointsAgainst || 0}</td>
+                    <td className="px-1.5 py-1 text-center">{entry.pointsFor || 0}</td>
+                    <td className="px-1.5 py-1 text-center">{entry.pointsAgainst || 0}</td>
 
-                    <td className={`p-2 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
+                    <td className={`px-1.5 py-1 text-center font-mono ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
 
-                    <td className="p-2 text-center"><span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
+                    <td className="px-1.5 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
-                    <td className="p-2 text-center"><span className="text-purple-600 font-bold">{entry.byeCount || 0}</span></td>
+                    <td className="px-1.5 py-1 text-center"><span className="text-purple-600 font-bold">{entry.byeCount || 0}</span></td>
 
-                    <td className={`p-2 text-center font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
+                    <td className={`px-1.5 py-1 text-center font-mono ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
-                    <td className="p-2 text-center font-mono text-blue-600 cursor-help" title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
+                    <td className="px-1.5 py-1 text-center font-mono text-blue-600 cursor-help" title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
                   </tr>
                 );
               })}

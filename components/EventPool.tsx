@@ -41,7 +41,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
       {/* Header */}
       <div className="flex justify-between items-center mb-3 pt-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-text">🎯 Event Pool</h2>
+          <h2 className="text-base font-bold text-text">🎯 Event Pool</h2>
           <span className="text-xs text-subtext">{activeCount}/{eventPool.length}</span>
         </div>
         <div className="flex items-center gap-2">

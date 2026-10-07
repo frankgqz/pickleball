@@ -300,6 +300,10 @@ export default function Page() {
         const savedName = (session.config as any).eventName ?? "";
         updateConfig("eventName", String(savedName));
       }
+      // Reset first: stale pool/standings from a previously loaded session
+      // must not survive into this one (empty-session bug 2026-10-07)
+      setEventPool([]);
+      setStandings([]);
       const rawPlayerIds = session.playerIds as unknown as string[];
       const playerIdArray = Array.isArray(rawPlayerIds) ? rawPlayerIds : rawPlayerIds ? JSON.parse(rawPlayerIds as string) : [];
       if (playerIdArray.length > 0) {
@@ -307,10 +311,10 @@ export default function Page() {
         if (playersResult.success && playersResult.players) {
           const loadedPlayers = playersResult.players;
           setEventPool(loadedPlayers);
+          const freshEntries = buildEntriesFromPlayers(loadedPlayers);
+          setStandings(freshEntries);
           if (session.rounds) {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
-            const freshEntries = buildEntriesFromPlayers(loadedPlayers);
-            setStandings(freshEntries);
             const computed = calculateStandingsFromRounds(freshEntries, loadedRounds);
             setStandings(computed);
             loadedRounds.forEach(round => addRoundToHistory(round));
@@ -356,7 +360,7 @@ export default function Page() {
     <div className="min-h-screen p-4 md:p-8">
       <header className="mb-6 px-2 max-w-6xl mx-auto">
         <div className="flex items-center justify-center gap-4 mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold">🏓 Pickleball</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">🏓 Pickleball</h1>
           <ThemeToggle />
         </div>
         <div className="flex items-center justify-end gap-4">
