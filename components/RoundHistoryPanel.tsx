@@ -297,7 +297,7 @@ export default function RoundHistoryPanel({
             {pickerOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
-                <div ref={pickerListRef} className="absolute z-20 mt-1 w-full bg-panel border border-line rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                <div ref={pickerListRef} className="absolute z-20 bottom-full mb-1 w-full bg-panel border border-line rounded-lg shadow-xl max-h-64 overflow-y-auto">
                   {pastSessions.map(s => (
                     <button
                       key={s.id}
@@ -317,10 +317,10 @@ export default function RoundHistoryPanel({
                             <span className="truncate">{s.name}</span>
                           </div>
                           <div className="text-xs text-subtext mt-0.5">
-                            {formatSessionDate(s.createdAt)} - {s._count?.rounds ?? 0} Rounds - {sessionPlayerCount(s)} Players
+                            {formatSessionDate(s.createdAt)} - {s._count?.rounds ?? 0}R {sessionPlayerCount(s)}P
                           </div>
                         </div>
-                        {s.isEnded && onDeleteSession && (
+                        {(s.isEnded || (s._count?.rounds ?? 0) === 0) && onDeleteSession && (
                           <button
                             aria-label="Delete session"
                             title="Delete this session"
