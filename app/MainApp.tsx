@@ -370,6 +370,7 @@ export default function Page() {
         <div className="flex items-center justify-between gap-4">
           <a
             href="https://gqz.app"
+            onClick={(e) => { if (!confirm("Are you sure you want to leave this page?")) e.preventDefault(); }}
             className="text-lg px-2 py-1 rounded-md hover:opacity-80 transition-opacity"
             aria-label="Home"
           >
