@@ -49,6 +49,8 @@ export default function RoundHistoryPanel({
     [roundHistory, currentSessionId]
   );
 
+  const [pendingBye, setPendingBye] = useState<{ matchId: string; playerId: string } | null>(null);
+  const playerLabel = (id: string) => eventPool.find(e => e.id === id)?.name || id;
   const [selectedRoundNumber, setSelectedRoundNumber] = useState<number | "">(
     sessionRounds.length > 0 ? sessionRounds[sessionRounds.length - 1].roundNumber : ""
   );
@@ -242,21 +244,39 @@ export default function RoundHistoryPanel({
     setEditMatches(prev => prev.map(m => m.id === matchId ? { ...m, [team]: value } : m));
   };
 
+  // Same semantics as the courts panel: the picker (t1[0]) is fixed and every
+  // click trades the player into the partner slot (t1[1]) — position-preserving
   const swapTeamPlayer = (matchId: string, fromTeam: "team1" | "team2", playerId: string) => {
     setEditMatches(prev => prev.map(m => {
       if (m.id !== matchId || m.bye) return m;
-      const fromArr = [...m[fromTeam]];
-      const otherTeam = fromTeam === "team1" ? "team2" : "team1";
-      const otherArr = [...m[otherTeam]];
-      const playerIdx = fromArr.indexOf(playerId);
-      if (playerIdx === -1) return m;
-
-      // Move player to other team
-      fromArr.splice(playerIdx, 1);
-      otherArr.push(playerId);
-
-      return { ...m, [fromTeam]: fromArr, [otherTeam]: otherArr };
+      const picker = m.team1[0];
+      const partner = m.team1[1];
+      if (playerId === picker || playerId === partner) return m;
+      const team2Arr = [...m.team2];
+      const idx = team2Arr.indexOf(playerId);
+      if (idx === -1) return m;
+      team2Arr[idx] = partner;
+      return { ...m, team1: [picker, playerId] as [string, string], team2: team2Arr as [string, string] };
     }));
+  };
+
+  // Armed bye chip + a court player click = trade places (bye joins the court,
+  // the court player joins the bye box)
+  const handleNameClick = (m: any, team: "team1" | "team2", playerId: string) => {
+    if (pendingBye) {
+      setEditMatches(prev => prev.map(x => {
+        if (x.id === m.id) {
+          const arr = [...x[team]];
+          arr[arr.indexOf(playerId)] = pendingBye!.playerId;
+          return { ...x, [team]: arr };
+        }
+        if (x.id === pendingBye!.matchId) return { ...x, byePlayerId: playerId };
+        return x;
+      }));
+      setPendingBye(null);
+      return;
+    }
+    swapTeamPlayer(m.id, team, playerId);
   };
 
   return (
@@ -433,7 +453,7 @@ export default function RoundHistoryPanel({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(editMode ? editMatches : selectedRound.matches).map((m) => {
+            {(editMode ? editMatches : selectedRound.matches).filter(m => !m.bye).map((m) => {
               const getPlayerName = (id: string) => {
                 const p = eventPool.find(e => e.id === id);
                 return p?.name || id;
@@ -454,7 +474,7 @@ export default function RoundHistoryPanel({
                       ) : m.team1.map(id => (
                         <span
                           key={id}
-                          onClick={editMode ? () => swapTeamPlayer(m.id, "team1", id) : undefined}
+                          onClick={editMode ? () => handleNameClick(m, "team1", id) : undefined}
                           title={editMode ? "Click to move to Team 2" : undefined}
                           className={`text-sm font-medium text-text truncate flex-1 min-w-0 ${editMode ? "cursor-pointer hover:text-accent" : ""}`}
                         >
@@ -486,7 +506,7 @@ export default function RoundHistoryPanel({
                         {m.team2.map(id => (
                           <span
                             key={id}
-                            onClick={editMode ? () => swapTeamPlayer(m.id, "team2", id) : undefined}
+                            onClick={editMode ? () => handleNameClick(m, "team2", id) : undefined}
                             title={editMode ? "Click to move to Team 1" : undefined}
                             className={`text-sm font-medium text-text truncate flex-1 min-w-0 ${editMode ? "cursor-pointer hover:text-accent" : ""}`}
                           >
@@ -514,6 +534,34 @@ export default function RoundHistoryPanel({
               );
             })}
           </div>
+
+          {(editMode ? editMatches : selectedRound.matches).some(m => m.bye) && (
+            <div className={`mt-4 rounded-lg border p-3 bg-muted-bg ${pendingBye ? "border-accent" : "border-orange-400/70"}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-subtext font-medium">BYE</span>
+                {pendingBye && <span className="text-xs text-accent">click a court player to swap</span>}
+              </div>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                {(editMode ? editMatches : selectedRound.matches).filter(m => m.bye).map(m => {
+                  const id = m.byePlayerId || "";
+                  const armed = pendingBye?.matchId === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      disabled={!editMode}
+                      onClick={() => setPendingBye(armed ? null : { matchId: m.id, playerId: id })}
+                      title={editMode ? "Click, then click a court player to swap" : undefined}
+                      className={`flex items-center gap-1.5 rounded-lg px-2 py-1 border h-8 ${armed ? "border-accent bg-hover-bg" : "border-orange-400/70 bg-muted-bg"} ${editMode ? "cursor-pointer hover:bg-hover-bg" : "cursor-default"}`}
+                    >
+                      <span className="text-sm shrink-0">⏳</span>
+                      <span className="text-sm font-medium text-text truncate flex-1 text-left">{playerLabel(id)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </section>
