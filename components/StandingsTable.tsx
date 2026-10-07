@@ -202,7 +202,7 @@ export default function StandingsTable({
                 </th>
 
                 <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
-                  Order#{getSortIcon("seedTotal")}
+                  Order{getSortIcon("seedTotal")}
                 </th>
               </tr>
             </thead>

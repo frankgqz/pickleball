@@ -234,12 +234,12 @@ export default function PlayerDatabase({
             value={search} 
             onChange={e => setSearch(e.target.value)} 
             placeholder="Search name or ID" 
-            className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 w-40 md:w-48" 
+            className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
           />
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value as any)} 
-            className="py-1.5 px-2 bg-muted-bg border border-line rounded-md text-xs text-text"
+            className="py-1.5 px-2 bg-muted-bg border border-line rounded-md text-sm text-text"
           >
             <option value="recent">Recent First</option>
             <option value="alpha">A - Z</option>
@@ -256,19 +256,19 @@ export default function PlayerDatabase({
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-xs text-text placeholder-text/50 w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
-          placeholder="DUPR ID" 
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          placeholder="duprID" 
           value={duprId} 
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-xs text-text placeholder-text/50 w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
-          placeholder="webNumericID" 
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          placeholder="webNumID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50 w-16" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 w-16" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
@@ -308,7 +308,7 @@ export default function PlayerDatabase({
                     <input 
                       value={editDuprId} 
                       onChange={e => setEditDuprId(e.target.value)} 
-                      placeholder="DUPR ID" 
+                      placeholder="duprID" 
                       className="px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50 w-18" 
                     />
                     <input 

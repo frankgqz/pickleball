@@ -9,40 +9,33 @@ interface AuthHeaderProps {
 
 export function AuthHeader({ session }: AuthHeaderProps) {
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-4">
-      <div className="text-green-100 text-sm">
-        {!session && (
-          <span className="flex items-center gap-2">
-            <span>🔒</span>
-            <span>Sign in to save your players & history  </span>
+    <div className="flex items-center gap-3">
+      {!session && (
+        <span className="flex items-center gap-1.5 text-xs text-subtext">
+          <span>{"🔒"}</span>
+          <span>Sign in to save your players & history</span>
+        </span>
+      )}
+      {session ? (
+        <>
+          <span className="text-xs text-text">
+            Signed in as {session.user?.name}
           </span>
-        )}
-      </div>
-      
-      <div className="flex items-center gap-4">
-        {session ? (
-          <>
-            <span className="text-text text-sm">
-              Signed in as {session.user?.name}
-            </span>
-            <button 
-              onClick={() => signOut()}
-              className="bg-muted-bg text-text px-4 py-2 rounded-lg text-sm font-medium hover:bg-hover-bg transition-colors"
-            >
-              Sign Out
-            </button>
-          </>
-        ) : (
-          <button 
-            onClick={() => signIn("google")}
-            className="bg-muted-bg text-text px-4 py-2 rounded-lg text-sm font-medium hover:bg-hover-bg transition-colors"
+          <button
+            onClick={() => signOut()}
+            className="bg-muted-bg text-text px-3 py-1 rounded-md text-xs font-medium hover:bg-hover-bg transition-colors"
           >
-            Sign In with Google
+            Sign Out
           </button>
-        )}
-      </div>
-      </div>
+        </>
+      ) : (
+        <button
+          onClick={() => signIn("google")}
+          className="bg-muted-bg text-text px-3 py-1 rounded-md text-xs font-medium hover:bg-hover-bg transition-colors"
+        >
+          Sign In with Google
+        </button>
+      )}
     </div>
   );
 }

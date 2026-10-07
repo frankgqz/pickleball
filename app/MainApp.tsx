@@ -370,7 +370,7 @@ export default function Page() {
         <div className="flex items-center justify-end gap-4">
           <a
             href="https://gqz.app"
-            className="text-sm px-3 py-1 rounded-md hover:opacity-80 transition-opacity"
+            className="text-xs px-3 py-1 rounded-md hover:opacity-80 transition-opacity"
             aria-label="Home"
           >
             Home
