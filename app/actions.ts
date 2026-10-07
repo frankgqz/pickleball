@@ -500,6 +500,35 @@ export async function deleteRound(sessionId: string, roundNumber: number) {
   }
 }
 
+// Lightweight fetch — session row only, no rounds
+export async function getSession(sessionId: string) {
+  try {
+    const session = await prisma.session.findUnique({ where: { id: sessionId } });
+    if (!session) return { success: false, error: "Session not found" };
+    return { success: true, session };
+  } catch (error) {
+    console.error("Error getting session:", error);
+    return { success: false, error: "Failed to get session" };
+  }
+}
+
+// Update session metadata (e.g. session rename from the settings panel)
+export async function updateSession(
+  sessionId: string,
+  data: { name?: string; config?: object }
+) {
+  try {
+    const session = await prisma.session.update({
+      where: { id: sessionId },
+      data,
+    });
+    return { success: true, session };
+  } catch (error) {
+    console.error("Error updating session:", error);
+    return { success: false, error: "Failed to update session" };
+  }
+}
+
 // Mark session as ended (prevents further edits)
 export async function endSession(sessionId: string) {
   try {
