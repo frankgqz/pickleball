@@ -173,7 +173,7 @@ export default function StandingsTable({
                   L{getSortIcon("losses")}
                 </th>
 
-                <th className="px-1 py-1 text-center text-xs text-subtext w-[1%] whitespace-nowrap" onClick={() => headerClick("winPct")}>
+                <th className="px-1 py-1 text-center text-subtext w-[1%] whitespace-nowrap" onClick={() => headerClick("winPct")}>
                   Win%{getSortIcon("winPct")}
                 </th>
 
@@ -218,18 +218,18 @@ export default function StandingsTable({
                   <tr key={entry.id} className="border-t hover:bg-hover-bg">
                     <td className="px-1 py-1"><div className="font-medium truncate max-w-[24ch]" title={entry.name}>{entry.name}</div></td>
 
-                    <td className="px-1 py-1 text-center font-bold text-green-600">{entry.wins || 0}</td>
-                    <td className="px-1 py-1 text-center font-bold text-red-500">{entry.losses || 0}</td>
-                    <td className="px-1 py-1 text-center text-xs text-text">{String(Math.round(winPct))}%</td>
+                    <td className="px-1 py-1 text-center text-green-600">{entry.wins || 0}</td>
+                    <td className="px-1 py-1 text-center text-red-500">{entry.losses || 0}</td>
+                    <td className="px-1 py-1 text-center text-text">{String(Math.round(winPct))}%</td>
 
                     <td className="px-1 py-1 text-center">{entry.pointsFor || 0}</td>
                     <td className="px-1 py-1 text-center">{entry.pointsAgainst || 0}</td>
 
                     <td className={`px-1 py-1 text-center ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
 
-                    <td className="px-1 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600 font-bold" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
+                    <td className="px-1 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
-                    <td className="px-1 py-1 text-center"><span className="text-purple-600 font-bold">{entry.byeCount || 0}</span></td>
+                    <td className="px-1 py-1 text-center"><span className="text-purple-600">{entry.byeCount || 0}</span></td>
 
                     <td className={`px-1 py-1 text-center ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
