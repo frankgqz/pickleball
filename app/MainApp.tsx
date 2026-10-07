@@ -367,13 +367,13 @@ export default function Page() {
           <h1 className="text-2xl md:text-3xl font-bold">🏓 Pickleball</h1>
           <ThemeToggle />
         </div>
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex items-center justify-between gap-4">
           <a
             href="https://gqz.app"
-            className="text-xs px-3 py-1 rounded-md hover:opacity-80 transition-opacity"
+            className="text-lg px-2 py-1 rounded-md hover:opacity-80 transition-opacity"
             aria-label="Home"
           >
-            Home
+            🏠
           </a>
           <AuthHeader session={session} />
         </div>

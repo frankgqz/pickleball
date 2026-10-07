@@ -71,6 +71,7 @@ export default function RoundHistoryPanel({
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
   const [pastSessionsOpen, setPastSessionsOpen] = useState(false);  // ← ADD for collapsible
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [selectedSessionLabel, setSelectedSessionLabel] = useState<string | null>(null);
   const pickerListRef = useRef<HTMLDivElement>(null);
 
   const sessionPlayerCount = (s: any): number => {
@@ -270,7 +271,7 @@ export default function RoundHistoryPanel({
               onClick={() => setPastSessionsOpen(o => !o)}
               className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
             >
-              {pastSessionsOpen ? "▲ Hide Sessions" : "📂 Load Sessions"}
+              {pastSessionsOpen ? "▲ Hide" : "📂 Load"}
             </button>
             {sessionRounds.length > 0 && (
               <button
@@ -278,7 +279,7 @@ export default function RoundHistoryPanel({
                 className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
                 title="Export to CSV"
               >
-                📥 Export CSV
+                📥 CSV
               </button>
             )}
           </div>
@@ -291,7 +292,7 @@ export default function RoundHistoryPanel({
               onClick={() => setPickerOpen(o => !o)}
               className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-muted-bg border border-line rounded-md text-sm text-left text-text hover:bg-hover-bg transition-colors"
             >
-              <span className="truncate">— Select a session to load —</span>
+              <span className="truncate">{selectedSessionLabel ?? "— Select a session to load —"}</span>
               <span className={`text-subtext text-xs transition-transform ${pickerOpen ? "rotate-180" : ""}`}>{"▾"}</span>
             </button>
             {pickerOpen && (
@@ -306,6 +307,7 @@ export default function RoundHistoryPanel({
                         setPickerOpen(false);
                         if (onLoadSession && confirm("Load this session?")) {
                           onLoadSession(s.id);
+                          setSelectedSessionLabel(`${s.isEnded ? "✅" : "🔄"} ${s.name}`);
                         }
                       }}
                       className="w-full text-left px-3 py-2 hover:bg-hover-bg transition-colors border-b border-line last:border-b-0"
@@ -350,7 +352,7 @@ export default function RoundHistoryPanel({
         <select
           value={selectedRoundNumber === "" ? "" : selectedRoundNumber}
           onChange={(e) => setSelectedRoundNumber(e.target.value ? parseInt(e.target.value) : "")}
-          className="w-full px-3 py-2 bg-muted-bg border border-line rounded-lg text-text mb-3"
+          className="w-full px-3 py-2 bg-muted-bg border border-line rounded-md text-sm text-text mb-3"
         >
           <option value="">Select a round...</option>
           {sessionRounds.map(r => (
