@@ -59,9 +59,9 @@ export function usePlayerDatabase(
   // ============ DATABASE OPERATIONS ============
 
   const loadPlayersFromDatabase = useCallback(async (userId?: string) => {
-    // Always reset at login — clears stale isSitting from previous sessions
-    setAllPlayers([]);
-    setEventPool([]);
+    // No blanket clears: the pool hydrates from localStorage and must survive
+    // refresh. The DB fetch only REPLACES allPlayers when it returns players
+    // (clearing here used to wipe localStorage and strand raw player IDs).
     try {
       if (userId) {
         const result = await getClubPlayers(userId);

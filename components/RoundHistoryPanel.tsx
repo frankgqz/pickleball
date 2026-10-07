@@ -75,6 +75,8 @@ export default function RoundHistoryPanel({
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
   const [pastSessionsOpen, setPastSessionsOpen] = useState(false);  // ← ADD for collapsible
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pastSessionsLoading, setPastSessionsLoading] = useState(false);
+  const [loginHint, setLoginHint] = useState(false);
   const [selectedSessionLabel, setSelectedSessionLabel] = useState<string | null>(null);
   const pickerListRef = useRef<HTMLDivElement>(null);
 
@@ -95,10 +97,15 @@ export default function RoundHistoryPanel({
     // --- FETCH PAST SESSIONS ---
   // This populates the session list panel
   const loadPastSessions = async () => {
-    // NOTE: you need the userId somehow — prop it in if available
-    const result = await getSessionList(userId || ""); // temp — needs userId prop
-    if (result.success) {
-      setPastSessions(result.sessions || []);
+    if (!userId) { setLoginHint(true); return; }
+    setPastSessionsLoading(true);
+    try {
+      const result = await getSessionList(userId);
+      if (result.success) {
+        setPastSessions(result.sessions || []);
+      }
+    } finally {
+      setPastSessionsLoading(false);
     }
   };
 
@@ -288,9 +295,12 @@ export default function RoundHistoryPanel({
         {/* Row 1: Title + Export */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-text">📋 Session</h2>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {pastSessionsLoading && (
+              <span className="inline-block w-3.5 h-3.5 border-2 border-line border-t-transparent rounded-full animate-spin" aria-label="Loading" />
+            )}
             <button
-              onClick={() => setPastSessionsOpen(o => !o)}
+              onClick={() => { if (!userId) { setLoginHint(true); return; } setPastSessionsOpen(o => !o); }}
               className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
             >
               {pastSessionsOpen ? "▲ Hide" : "📂 Load"}
@@ -306,6 +316,10 @@ export default function RoundHistoryPanel({
             )}
           </div>
         </div>
+
+        {loginHint && !userId && (
+          <p className="text-xs text-subtext mt-1">Please log in to use this feature</p>
+        )}
 
         {pastSessionsOpen && pastSessions.length > 0 && (
           <div className="mb-3 relative">
