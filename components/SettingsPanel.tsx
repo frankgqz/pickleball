@@ -42,7 +42,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
       {/* Event Name (full row) + session rename */}
       <div className="flex items-end gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <label className="text-xs font-medium text-subtext mb-0.5 block">Event Name (for CSV)</label>
+          <label className="text-xs font-medium text-subtext mb-0.5 block">Event Name (Session History and CSV)</label>
           <input
             type="text"
             value={config.eventName || ""}
@@ -73,7 +73,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
       </div>
 
       {/* Options: 3 per row on mobile, up to 4 on desktop */}
-      <div className="grid grid-cols-3 md:grid-cols-4 gap-2 mb-2">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-2">
         <div className="col-span-1">
           <label className="text-xs font-medium text-subtext mb-0.5 block">Match Type</label>
           <select
@@ -125,6 +125,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
         </div>
 
         {config.format !== "POOL_PLAY" && (
+          <>
           <div className="col-span-1">
             <label className="text-xs font-medium text-subtext mb-0.5 block">Round</label>
             <select
@@ -136,32 +137,30 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <option value="PICK_PARTNER">New Partners</option>
             </select>
           </div>
+          <div className="col-span-1">
+            <label className="text-xs font-medium text-subtext mb-0.5 block">Courts</label>
+            <input
+              type="number"
+              min="1"
+              max="16"
+              value={config.courts}
+              onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
+              className="w-full px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text"
+            />
+          </div>
+          </>
         )}
       </div>
 
       {/* Standard / Teams Settings */}
       {config.format !== "POOL_PLAY" && (
         <>
-          {/* Courts - always visible */}
-          <div className="grid grid-cols-5 gap-1.5 mb-2 text-xs">
-            <div>
-              <label className="block text-subtext mb-0.5">Courts</label>
-              <input
-                type="number"
-                min="1"
-                max="16"
-                value={config.courts}
-                onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
-                className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded-md text-xs text-text"
-              />
-            </div>
-          </div>
 
-          {/* ADV settings - standard specifics */}
+          {/* Adv Settings - standard specifics */}
           <details className="group mb-2">
             <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-subtext hover:text-text select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="transition-transform duration-150 group-open:rotate-90">▸</span>
-              ADV settings
+              Adv Settings
             </summary>
             <div className="grid grid-cols-4 gap-1.5 mt-1.5 text-xs">
             <div>
