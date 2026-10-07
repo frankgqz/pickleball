@@ -62,7 +62,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                   : "bg-red-100 text-red-600 border-red-300 hover:bg-red-200 hover:border-red-400"
               }`}
             >
-              {showClearConfirm ? "⚠ Confirm?" : "Clear All"}
+              {showClearConfirm ? "⚠ Confirm?" : "Clear"}
             </button>
           )}
         </div>
