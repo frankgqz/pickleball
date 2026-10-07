@@ -430,6 +430,7 @@ export default function Page() {
           onUpdateMatchScore={matchGenActions.updateMatchScore}
           onSwapPlayerTeam={matchGenActions.swapPlayerTeam}
           onSubmitRound={submitRoundResults}
+          sessionEnded={sessionEnded}
           onContinueSession={() => dbSessionId && handleContinueSession(dbSessionId)}
           onCancelRound={matchGenActions.cancelRound}
           onVetoBye={vetoPlayerBye}
