@@ -388,17 +388,25 @@ export default function RoundHistoryPanel({
         {/* Row 3: Action buttons - Edit/Delete or Save/Cancel */}
         {currentDbSessionId && currentDbSessionId === currentSessionId && (
           <div className="mb-2">
-            <button
-              onClick={async () => {
-                if (!onEndSession || !currentDbSessionId) return;
-                if (!confirm("End this session? You can still view and edit its rounds.")) return;
-                setPastSessionsOpen(false);
-                await onEndSession(currentDbSessionId);
-              }}
-              className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
-            >
-              ⏹ End Session
-            </button>
+            {pastSessions.find(s => s.id === currentDbSessionId)?.isEnded ? (
+              <div className="w-full px-3 py-2 rounded-lg bg-muted-bg border border-line text-subtext text-sm font-medium text-center">
+                ✅ Ended
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!onEndSession || !currentDbSessionId) return;
+                  if (!confirm("End this session? You can still view and edit its rounds.")) return;
+                  setPastSessionsOpen(false);
+                  await onEndSession(currentDbSessionId);
+                  loadPastSessions();
+                  setSelectedSessionLabel(l => (l ? l.replace("🔄 ", "✅ ") : l));
+                }}
+                className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
+              >
+                ⏹ End Session
+              </button>
+            )}
           </div>
         )}
         {selectedRound && (
