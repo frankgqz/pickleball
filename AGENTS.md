@@ -41,3 +41,13 @@ next-auth Google OAuth · server actions `app/actions.ts` · state hooks
   app named "Pickle Sessions"; all form fields themed — 2026-10-07.
 - -> Next on roadmap: best-of-3 score logic, pool-play formats, mobile
   standings; gqz rename sync (see theme/AGENTS.md).
+
+## State & persistence (verified 2026-10-07)
+- localStorage (device-local, works logged out AND in): config, players,
+  event pool, completed rounds, session metadata, standings, AND the
+  in-progress roundState (typed scores survive refresh/leave).
+- DB (Neon, logged in only): Session + SessionRound rows — written on
+  session create + round submit. "Load Sessions" reads the DB (cross-device).
+- Session lifecycle: End = sets isEnded (view stays loaded); ended sessions
+  gate Start/Submit/Next (CourtsPanel `sessionEnded` prop — MainApp wires it);
+  Continue Session reopens. New session + Restart reset the flag.

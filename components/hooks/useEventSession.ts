@@ -1,6 +1,6 @@
 // useEventSession.ts - Event config, session, and history management
 // Manages the overall event state: config settings, session ID, round history
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { TournamentConfig, CompletedRound, GameSession, MatchFormat, RoundState } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
 import { createSession, saveRound, updateRound, deleteRound } from "@/app/actions";
@@ -66,12 +66,17 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>([]);
-  const [roundState, setRoundState] = useState<RoundState>(() => ({
+  const [roundState, setRoundState] = useState<RoundState>(() => localStorageDb.loadRoundState() ?? ({
     active: false,
     format: PICK_PARTNER_FORMAT,
     matches: [],
     submitted: false
   }));
+
+  // Persist the in-progress round (typed scores survive refresh/leave)
+  useEffect(() => {
+    localStorageDb.saveRoundState(roundState);
+  }, [roundState]);
   const [dbSessionId, setDbSessionId] = useState<string | undefined>(undefined);
 
   // Derived: rounds in current session

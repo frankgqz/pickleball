@@ -1,7 +1,7 @@
 // useLocalStorage.ts - LocalStorage helpers
 // Handles persisting app state to localStorage
 
-import { Player, StandingsEntry, TournamentConfig, CompletedRound, GameSession } from "@/components/Types";
+import { Player, StandingsEntry, TournamentConfig, CompletedRound, GameSession, RoundState } from "@/components/Types";
 
 const STORAGE_KEYS = {
   ROUNDS: "pickleball_rounds_v1",
@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   SESSION: "pickleball_session_v1",
   STANDINGS: "pickleball_standings_v1",
   CONFIG: "pickleball_config_v1",
+  ROUND_STATE: "pickleball_round_state_v1",
 } as const;
 
 const isBrowser = typeof window !== "undefined";
@@ -36,6 +37,10 @@ function safeJsonStringify(key: string, data: unknown): void {
 }
 
 export const localStorageDb = {
+  // In-progress round (typed scores survive refresh)
+  saveRoundState: (state: RoundState) => safeJsonStringify(STORAGE_KEYS.ROUND_STATE, state),
+  loadRoundState: (): RoundState | null => safeJsonParse<RoundState | null>(STORAGE_KEYS.ROUND_STATE, null),
+
   // Rounds
   saveRounds: (rounds: CompletedRound[]) => safeJsonStringify(STORAGE_KEYS.ROUNDS, rounds),
   loadRounds: (): CompletedRound[] => safeJsonParse(STORAGE_KEYS.ROUNDS, []),
