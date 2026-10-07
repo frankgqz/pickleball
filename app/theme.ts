@@ -57,7 +57,7 @@ const SANS = '"Inter", var(--font-geist-sans, system-ui), sans-serif'
 const MONO = '"JetBrains Mono", var(--font-geist-mono, ui-monospace), monospace'
 const FREDERICKA = '"Fredericka the Great", Georgia, serif'
 const CAUSE = '"Cause", ui-rounded, "Segoe Sans", system-ui, sans-serif'
-const SQUARE_PEG = '"Square Peg", "Segoe Script", cursive'
+const PLAYWRITE = '"Playwrite NG Modern", cursive'
 const SERIF = '"Fraunces", Georgia, "Times New Roman", serif'
 
 function hexA(hex: string, alpha: number): string {
@@ -212,8 +212,8 @@ export const themes: Record<Theme, ThemeColors> = {
       { hue: [90, 130], sat: [20, 50] },
       { hue: [140, 180], sat: [15, 45] },
     ],
-    fontFamily: SQUARE_PEG,
-    fontFamilyHeading: SQUARE_PEG,
+    fontFamily: PLAYWRITE,
+    fontFamilyHeading: PLAYWRITE,
     radiusButton: '12px',
     radiusCard: '16px',
     radiusInput: '6px',
