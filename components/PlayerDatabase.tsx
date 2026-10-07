@@ -248,7 +248,7 @@ export default function PlayerDatabase({
       {/* Add form - single row */}
       <div className="flex flex-nowrap gap-1.5 md:gap-2 mb-1.5 items-end">
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 max-w-[45%]" 
           placeholder="Name *" 
           value={name} 
           onChange={e => setName(e.target.value)} 
@@ -260,7 +260,7 @@ export default function PlayerDatabase({
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-16 md:w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-24 md:w-28 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="webNumID" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
@@ -272,7 +272,7 @@ export default function PlayerDatabase({
           onChange={e => setDuprScore(e.target.value)} 
         />
         <button 
-          className="px-2.5 md:px-4 py-1.5 text-sm text-white bg-green-600 rounded-md hover:bg-green-700 font-bold" 
+          className="px-4 md:px-6 py-1.5 text-sm text-white bg-green-600 rounded-md hover:bg-green-700 font-bold" 
           onClick={handleAdd}
           title="Add to database"
         >
