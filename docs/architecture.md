@@ -1,3 +1,6 @@
+> **RETIRED 2026-10-07** — structure + stack now live in `AGENTS.md` (kept
+> current). The tree below is a historical snapshot. Delete this file whenever.
+
 /app
 
 ├── page.tsx              ← Main orchestrator

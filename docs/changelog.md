@@ -1,3 +1,7 @@
+> **RETIRED 2026-10-07** — the git log (`git log --oneline`) is the changelog
+> now: written at commit time, never goes stale. Kept below as history;
+> no longer maintained. Delete this file whenever.
+
 260808
 
 	Built and managed with Node.js, Neon, Prisma and Vercel

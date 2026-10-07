@@ -14,13 +14,10 @@ User has duprNumID entry field
 Feature to look up player and see their past games
 
 ### Database
-sessionround db, is 1 less round than loading the round in UI.  when deleting round the round still exists in SessionRound db.
 
 ### Design
 Mobile responsive design
 Mobile standings table visibility
-Shadows, curved edge, pastel theme
-Theme button, 4 themes originating from gqz.app cookie
 View of matches in viewport able to be cast onto bigscreen. fit nicely 
 
 ### Misc 
@@ -29,7 +26,6 @@ Feature to sort player in user’s playerdatabase, to the more frequent joiners
 Searching dupr, should update their dupr in event pool also
 
 # Check
-deleting  round deletes round from DB?
 
 ### Clean up / Refactor
 MatcheEngine logic, The bye logic (getByeTotal, getSeedTotal, generateMatches) is dense and has duplicated computations. The byeBase/byeTotal distinction is hard to follow, especially "sitBonus" "sitOutCount." consistent variable names.
@@ -37,7 +33,17 @@ MatcheEngine logic, The bye logic (getByeTotal, getSeedTotal, generateMatches) i
 Actions.ts bulky
 
 ### Current - immmediate
-Implement themes
-moving files to theme repo
+Session rename UI (updateSession action ready)
+gqz rename ritual (dark/sky -> night/bubble at its npm update)
+
+### Done (2026-10)
+- ✓ SessionRound DB: deleting a round now deletes the DB row, gap-safe
+  numbering (was: stale rows + save collisions) — 2026-10-07
+- ✓ Theme button, 4 themes from the gqz.app cookie (wood/night/bubble/matcha,
+  legacy values mapped) — 2026-10-06
+- ✓ Shadows, curved edges, pastel theme (per-theme radius + shadows via the
+  tiered theme system) — 2026-10-06
+- ✓ Implement themes / move files to theme repo (7 primitives -> derived
+  semantics, see theme/AGENTS.md) — 2026-10-06
 
   
