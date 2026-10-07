@@ -153,7 +153,7 @@ export default function StandingsTable({
             <thead>
               <tr className="bg-muted-bg">
                 <th
-                  className="px-1 py-1 text-left cursor-pointer hover:bg-hover-bg w-full"
+                  className="px-2.5 py-1 text-left cursor-pointer hover:bg-hover-bg"
                   onClick={() => headerClick("name")}
                 >
                   Name{getSortIcon("name")}
@@ -202,7 +202,7 @@ export default function StandingsTable({
                 </th>
 
                 <th className="px-1 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
-                  Order{getSortIcon("seedTotal")}
+                  Seed{getSortIcon("seedTotal")}
                 </th>
               </tr>
             </thead>
@@ -216,16 +216,16 @@ export default function StandingsTable({
                 const winPct = (entry as any).winPct ?? 0;
                 return (
                   <tr key={entry.id} className="border-t hover:bg-hover-bg">
-                    <td className="px-1 py-1"><div className="font-medium truncate max-w-[24ch]" title={entry.name}>{entry.name}</div></td>
+                    <td className="px-2.5 py-1"><div className="font-medium truncate max-w-[14ch]" title={entry.name}>{entry.name}</div></td>
 
-                    <td className="px-1 py-1 text-center text-green-600">{entry.wins || 0}</td>
-                    <td className="px-1 py-1 text-center text-red-500">{entry.losses || 0}</td>
-                    <td className="px-1 py-1 text-center text-text">{String(Math.round(winPct))}%</td>
+                    <td className="px-2.5 py-1 text-center text-green-600">{entry.wins || 0}</td>
+                    <td className="px-2.5 py-1 text-center text-red-500">{entry.losses || 0}</td>
+                    <td className="px-2.5 py-1 text-center text-text">{String(Math.round(winPct))}%</td>
 
-                    <td className="px-1 py-1 text-center">{entry.pointsFor || 0}</td>
-                    <td className="px-1 py-1 text-center">{entry.pointsAgainst || 0}</td>
+                    <td className="px-2.5 py-1 text-center">{entry.pointsFor || 0}</td>
+                    <td className="px-2.5 py-1 text-center">{entry.pointsAgainst || 0}</td>
 
-                    <td className={`px-1 py-1 text-center ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
+                    <td className={`px-2.5 py-1 text-center ${pointDiff >= 0 ? "text-green-600" : "text-red-600"}`}>{pointDiff >= 0 ? "+" : ""}{pointDiff}</td>
 
                     <td className="px-1 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
