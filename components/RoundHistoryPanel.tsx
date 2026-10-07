@@ -14,6 +14,7 @@ interface Props {
   currentDbSessionId?: string;         // ← ADD — to know which session is "active"
   onLoadSession?: (sessionId: string) => void;  // ← ADD
   onEndSession?: (sessionId: string) => void;    // ← ADD
+  onContinueSession?: (sessionId: string) => void;
   onDeleteSession?: (sessionId: string) => void; // ← ADD
   userId?: string;       // ← ADD — needed for getSessionList
   sessionRefreshKey?: number;
@@ -38,6 +39,7 @@ export default function RoundHistoryPanel({
   currentDbSessionId,     // ← ADD
   onLoadSession,          // ← ADD
   onEndSession,          // ← ADD
+  onContinueSession,
   onDeleteSession,       // ← ADD
   userId,       // ← ADD
   sessionRefreshKey = 0,
@@ -280,11 +282,11 @@ export default function RoundHistoryPanel({
   };
 
   return (
-    <section className="bg-panel rounded-2xl border border-line p-4">
+    <section className="bg-panel rounded-2xl border border-line p-3">
       {/* Header - Mobile-friendly layout */}
-      <div className="mb-4">
+      <div className="mb-3">
         {/* Row 1: Title + Export */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-bold text-text">📋 Session</h2>
           <div className="flex gap-2">
             <button
@@ -327,7 +329,7 @@ export default function RoundHistoryPanel({
                         setPickerOpen(false);
                         if (onLoadSession && confirm("Load this session?")) {
                           onLoadSession(s.id);
-                          setSelectedSessionLabel(`${s.isEnded ? "✅" : "🔄"} ${s.name}`);
+                          setSelectedSessionLabel(`${s.isEnded ? "🏁" : "🎾"} ${s.name}`);
                         }
                       }}
                       className="w-full text-left px-3 py-2 hover:bg-hover-bg transition-colors border-b border-line last:border-b-0"
@@ -335,7 +337,7 @@ export default function RoundHistoryPanel({
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 text-sm font-medium text-text">
-                            <span>{s.isEnded ? "✅" : "🔄"}</span>
+                            <span>{s.isEnded ? "🏁" : "🎾"}</span>
                             <span className="truncate">{s.name}</span>
                           </div>
                           <div className="text-xs text-subtext mt-0.5">
@@ -382,16 +384,19 @@ export default function RoundHistoryPanel({
           ))}
         </select>
         ) : (
-          <p className="text-subtext text-sm mb-3">No rounds yet</p>
+          <p className="text-subtext text-sm text-center mb-3">No rounds yet</p>
         )}
 
         {/* Row 3: Action buttons - Edit/Delete or Save/Cancel */}
         {currentDbSessionId && currentDbSessionId === currentSessionId && (
           <div className="mb-2">
             {pastSessions.find(s => s.id === currentDbSessionId)?.isEnded ? (
-              <div className="w-full px-3 py-2 rounded-lg bg-muted-bg border border-line text-subtext text-sm font-medium text-center">
-                ✅ Ended
-              </div>
+              <button
+                onClick={() => currentDbSessionId && onContinueSession?.(currentDbSessionId)}
+                className="w-full px-3 py-2 rounded-lg bg-muted-bg border border-line hover:bg-hover-bg text-text text-sm font-medium"
+              >
+                {"\u25b6"} Continue Session
+              </button>
             ) : (
               <button
                 onClick={async () => {
@@ -400,7 +405,7 @@ export default function RoundHistoryPanel({
                   setPastSessionsOpen(false);
                   await onEndSession(currentDbSessionId);
                   loadPastSessions();
-                  setSelectedSessionLabel(l => (l ? l.replace("🔄 ", "✅ ") : l));
+                  setSelectedSessionLabel(l => (l ? l.replace("🎾 ", "🏁 ") : l));
                 }}
                 className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
               >

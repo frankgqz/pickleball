@@ -15,6 +15,7 @@ interface Props {
   onUpdateMatchScore: (matchId: string, score: number, team: "team1" | "team2") => void;
   onSwapPlayerTeam: (matchId: string, playerId: string) => void;
   onSubmitRound: () => void;
+  sessionEnded?: boolean;
   onCancelRound?: () => void;
   onStartNextRound?: () => void;
   onVetoBye?: (playerId: string) => void;
@@ -33,6 +34,7 @@ export default function CourtsPanel({
   onUpdateMatchScore,
   onSwapPlayerTeam,
   onSubmitRound,
+  sessionEnded,
   onCancelRound,
   onStartNextRound,
   onVetoBye,
@@ -267,7 +269,9 @@ export default function CourtsPanel({
                   onStartFixed14v23();
                 }
               }}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!!sessionEnded}
+              title={sessionEnded ? "Session ended \u2014 Continue Session first" : undefined}
             >
               🚀 Start Round {currentRoundNumber}
             </button>
@@ -358,14 +362,15 @@ export default function CourtsPanel({
           <div className="mt-5 flex justify-center gap-5">
             <button
               onClick={handleSubmitRound}
-              disabled={roundState.submitted}
+              disabled={roundState.submitted || !!sessionEnded}
               className="bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              title={sessionEnded ? "Session ended \u2014 Continue Session first" : undefined}
             >
               ✓ Submit
             </button>
             <button
               onClick={onStartNextRound}
-              disabled={!roundState.submitted}
+              disabled={!roundState.submitted || !!sessionEnded}
               className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
               🚀 Next Round

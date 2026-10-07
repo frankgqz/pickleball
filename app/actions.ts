@@ -516,7 +516,7 @@ export async function getSession(sessionId: string) {
 // Update session metadata (e.g. session rename from the settings panel)
 export async function updateSession(
   sessionId: string,
-  data: { name?: string; config?: object }
+  data: { name?: string; config?: object; isEnded?: boolean }
 ) {
   try {
     const session = await prisma.session.update({

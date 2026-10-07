@@ -145,7 +145,7 @@ export default function StandingsTable({
       </div>
 
       {sorted.length === 0 ? (
-        <p className="text-subtext text-center py-8">Add players to see standings</p>
+        <p className="text-subtext text-center py-6 text-sm">Add players to see standings</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[600px]">

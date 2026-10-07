@@ -28,6 +28,7 @@ const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true
 export default function Page() {
   const [loading, setLoading] = useState(true);
   const [sessionRefreshKey, setSessionRefreshKey] = useState(0);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const { data: session } = useSession();
   // @ts-ignore
   const userId = session?.user?.id;
@@ -232,6 +233,7 @@ export default function Page() {
     };
     
     addRoundToHistory(completedRound);
+    setSessionRefreshKey((k: number) => k + 1);
   }, [roundState, currentRoundNumber, config, eventPool, currentSession, processMatchResults, addRoundToHistory]);
 
   const vetoPlayerBye = useCallback((playerId: string) => {
@@ -295,6 +297,7 @@ export default function Page() {
         name: session.name || undefined,
       });
       setDbSessionId(sessionId);
+      setSessionEnded(!!(session as any).isEnded);
       setRoundHistory([]);
       setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
       if (session.config) {
@@ -441,12 +444,20 @@ export default function Page() {
           onLoadSession={handleLoadSession}
           onEndSession={async (id) => {
             await endSession(id);
+            setSessionEnded(true);
             setCurrentSession({ sessionId: Date.now().toString(), startDate: new Date().toISOString() });
             setDbSessionId(undefined);
             setRoundHistory([]);
             setRoundState({ active: false, format: PICK_PARTNER_FORMAT, matches: [], submitted: false });
             setEventPool([]);
             setStandings([]);
+          }}
+          onContinueSession={async (id) => {
+            const r = await updateSession(id, { isEnded: false });
+            if (r.success) {
+              setSessionEnded(false);
+              setSessionRefreshKey((k: number) => k + 1);
+            }
           }}
           onDeleteSession={async (id) => {
             await deleteSession(id);
