@@ -439,8 +439,7 @@ export default function RoundHistoryPanel({
       </div>
 
       {/* Content */}
-      {!selectedRound ? (
-      ) : (
+      {selectedRound && (
         <div className="space-y-4">
           {selectedRound.sittingOut && selectedRound.sittingOut.length > 0 && (
             <div className="text-sm text-orange-400 mb-2">
