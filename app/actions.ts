@@ -30,10 +30,20 @@ let cachedDuprToken: string | null = null;
 let lastDuprLoginFailAt = 0;
 const DUPR_LOGIN_COOLDOWN_MS = 10 * 60 * 1000;
 
+let cachedTokenIsCookie = false;
 async function getDuprToken(): Promise<string | null> {
   if (cachedDuprToken) return cachedDuprToken;
   // Static token from the dupr-auth ritual (tools/dupr-auth.ts) — skips login
-  if (process.env.DUPR_TOKEN) return process.env.DUPR_TOKEN;
+  if (process.env.DUPR_TOKEN) { cachedTokenIsCookie = true; return process.env.DUPR_TOKEN; }
+  // Database token (kept fresh by the cron ritual) — production reads this
+  try {
+    const row = await prisma.authState.findUnique({ where: { key: "dupr_at" } });
+    if (row && row.value) {
+      cachedDuprToken = row.value;
+      cachedTokenIsCookie = true;
+      return row.value;
+    }
+  } catch { /* no table yet — fall through */ }
   if (Date.now() - lastDuprLoginFailAt < DUPR_LOGIN_COOLDOWN_MS) return null;
   const email = process.env.DUPR_EMAIL;
   const password = process.env.DUPR_PASSWORD;
@@ -257,7 +267,7 @@ export async function fetchDuprRating(playerId: string) {
       headers: {
         // DUPR_TOKEN (from the dupr-auth ritual) is a COOKIE-session token —
         // send it as the __Host-dupr_at cookie; login-flow tokens use Bearer.
-        ...(process.env.DUPR_TOKEN
+        ...(cachedTokenIsCookie
           ? { "Cookie": `__Host-dupr_at=${token}` }
           : { "Authorization": `Bearer ${token}` }),
         "Content-Type": "application/json",

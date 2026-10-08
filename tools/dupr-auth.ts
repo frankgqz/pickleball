@@ -56,19 +56,53 @@ function loadEnv(): Record<string, string> {
   return env;
 }
 
-function saveToken(token: string) {
+async function saveTokensToDb(at: string, rt?: string) {
+  try {
+    const { prisma } = await import("../prisma/client");
+    await prisma.authState.upsert({ where: { key: "dupr_at" }, update: { value: at }, create: { key: "dupr_at", value: at } });
+    if (rt) await prisma.authState.upsert({ where: { key: "dupr_rt" }, update: { value: rt }, create: { key: "dupr_rt", value: rt } });
+    await prisma.$disconnect();
+    console.log("  ✓ tokens saved to the database (production picks them up automatically)");
+  } catch (e) {
+    console.log("  (DB save skipped:", String((e as Error).message).slice(0, 70), ")");
+  }
+}
+
+function saveToken(token: string, rt?: string) {
   let env = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, "utf8") : "";
   const line = `DUPR_TOKEN=${token}`;
   if (/^DUPR_TOKEN=.*$/m.test(env)) env = env.replace(/^DUPR_TOKEN=.*$/m, line);
   else env = env.trimEnd() + "\n" + line + "\n";
+  if (rt) {
+    const rline = `DUPR_RT=${rt}`;
+    if (/^DUPR_RT=.*$/m.test(env)) env = env.replace(/^DUPR_RT=.*$/m, rline);
+    else env = env.trimEnd() + "\n" + rline + "\n";
+  }
   fs.writeFileSync(ENV_PATH, env);
   console.log(`\n✓ DUPR_TOKEN saved to .env (…${token.slice(-4)}).`);
-  console.log("  Next: copy the DUPR_TOKEN value from .env into Vercel");
-  console.log("  (Settings -> Environment Variables, NO quotes) -> Redeploy.");
+  void saveTokensToDb(token, rt);
+}
+
+function daysLeftOnToken(token: string): number | null {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+    return payload.exp ? (payload.exp * 1000 - Date.now()) / 86400000 : null;
+  } catch { return null; }
 }
 
 async function login() {
   const env = loadEnv();
+  // Cron mode: skip entirely while the token has plenty of life (≥ 7 days).
+  const current = env.DUPR_TOKEN;
+  const force = process.argv.includes("--force");
+  if (current && !force) {
+    const days = daysLeftOnToken(current);
+    if (days !== null && days >= 7) {
+      console.log(`Token still fresh (${days.toFixed(1)} days left) — nothing to do.`);
+      return;
+    }
+    console.log(`Token has ${days?.toFixed(1) ?? "?"} days left — renewing...`);
+  }
   if (!env.DUPR_EMAIL || !env.DUPR_PASSWORD) {
     console.log("DUPR_EMAIL / DUPR_PASSWORD missing in .env"); return;
   }
@@ -108,15 +142,7 @@ async function login() {
         const rt = sc.match(/(?:__Host-)?dupr_rt=([^;\s,]+)/);
         if (at) {
           fs.unlinkSync(STATE_PATH);
-          saveToken(at[1]);
-          if (rt) {
-            let e2 = fs.readFileSync(ENV_PATH, "utf8");
-            const line = `DUPR_RT=${rt[1]}`;
-            if (/^DUPR_RT=.*$/m.test(e2)) e2 = e2.replace(/^DUPR_RT=.*$/m, line);
-            else e2 = e2.trimEnd() + "\n" + line + "\n";
-            fs.writeFileSync(ENV_PATH, e2);
-            console.log("  (DUPR_RT captured too)");
-          }
+          saveToken(at[1], rt?.[1]);
           return;
         }
         console.log(`  attempt ${off}: ${d.status ?? res.status} ${String(d.message ?? "").slice(0, 60)}`);
@@ -223,15 +249,7 @@ async function verifyCode(code: string) {
         const at = setCookie.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
         const rt = setCookie.match(/(?:__Host-)?dupr_rt=([^;\s,]+)/);
         if (at) {
-          saveToken(at[1]);
-          if (rt) {
-            let env = fs.readFileSync(ENV_PATH, "utf8");
-            const line = `DUPR_RT=${rt[1]}`;
-            if (/^DUPR_RT=.*$/m.test(env)) env = env.replace(/^DUPR_RT=.*$/m, line);
-            else env = env.trimEnd() + "\n" + line + "\n";
-            fs.writeFileSync(ENV_PATH, env);
-            console.log("  (DUPR_RT refresh token captured too — enables auto-renewal)");
-          }
+          saveToken(at[1], rt?.[1]);
           return;
         }
         // Fallback: scan the whole response for a JWT (three dot-separated
