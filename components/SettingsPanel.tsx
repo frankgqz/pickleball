@@ -157,11 +157,11 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
       {config.format !== "POOL_PLAY" && (
         <>
 
-          {/* Adv Settings - standard specifics */}
+          {/* Seed Settings - standard specifics */}
           <details className="group mb-2">
             <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-subtext hover:text-text select-none list-none [&::-webkit-details-marker]:hidden">
               <span className="transition-transform duration-150 group-open:rotate-90">▸</span>
-              Adv Settings
+              Seed Settings
             </summary>
             <div className="grid grid-cols-4 gap-1.5 mt-1.5 text-xs">
             <div>
