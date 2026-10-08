@@ -112,8 +112,16 @@ async function verifyCode(code: string) {
       }
       if (data.status === "SUCCESS") {
         fs.unlinkSync(STATE_PATH);
-        // Scan the whole response for a JWT (three dot-separated segments) and
-        // save the longest — the token lives in an unknown slot (result.user…).
+        // DUPR sets the token as an HttpOnly cookie (__Host-dupr_at, ~30-day
+        // expiry) — grab that value first; it works as a Bearer token.
+        const setCookie = res.headers.get("set-cookie") || "";
+        const at = setCookie.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
+        if (at) {
+          saveToken(at[1]);
+          return;
+        }
+        // Fallback: scan the whole response for a JWT (three dot-separated
+        // segments) and save the longest.
         const jwts: string[] = [];
         const walk = (v: any) => {
           if (typeof v === "string" && /^[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}$/.test(v)) jwts.push(v);
