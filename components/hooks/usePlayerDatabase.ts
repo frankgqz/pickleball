@@ -17,7 +17,7 @@ export interface PlayerDatabaseActions {
   addNewPlayer: (formData: FormData, userId?: string) => Promise<void>;
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
   deleteExistingPlayer: (id: string) => Promise<void>;
-  fetchDuprForPlayer: (playerId: string) => Promise<void>;
+  fetchDuprForPlayer: (playerId: string) => Promise<Player | null>;
   resetPlayers: () => void;
   setAllPlayers: (players: Player[]) => void;    // ← ADD — replaces roster on session load
   // Event pool operations
@@ -135,7 +135,9 @@ export function usePlayerDatabase(
     if (result.success && result.player) {
       setAllPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
       setEventPool(prev => prev.map(p => p.id === playerId ? result.player! : p));
+      return result.player;
     }
+    return null;
   }, []);
 
   const resetPlayers = useCallback(() => {

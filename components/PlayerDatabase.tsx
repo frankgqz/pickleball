@@ -209,8 +209,10 @@ export default function PlayerDatabase({
   const fetchDuprFor = async (id: string) => {
     setFetchFeedback({ playerId: id, message: "Fetching...", success: true });
     try {
-      await onFetchDupr?.(id);
-      const updated = players.find(p => p.id === id);
+      const fetched = await onFetchDupr?.(id);
+      // Use the FETCHED player — `players` here is the stale render-time copy
+      // (the fields visibly populate but the old snapshot said "No rating")
+      const updated = (fetched as Player | null) ?? players.find(p => p.id === id);
       if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar", success: true });
       else if (updated?.duprScore) setFetchFeedback({ playerId: id, message: `✓ ${updated.duprScore}`, success: true });
       else setFetchFeedback({ playerId: id, message: "No rating", success: false });
