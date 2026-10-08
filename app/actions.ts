@@ -32,6 +32,8 @@ const DUPR_LOGIN_COOLDOWN_MS = 10 * 60 * 1000;
 
 async function getDuprToken(): Promise<string | null> {
   if (cachedDuprToken) return cachedDuprToken;
+  // Static token from the dupr-auth ritual (tools/dupr-auth.ts) — skips login
+  if (process.env.DUPR_TOKEN) return process.env.DUPR_TOKEN;
   if (Date.now() - lastDuprLoginFailAt < DUPR_LOGIN_COOLDOWN_MS) return null;
   const email = process.env.DUPR_EMAIL;
   const password = process.env.DUPR_PASSWORD;
