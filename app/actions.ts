@@ -23,7 +23,16 @@ interface DuprTokenResponse {
 }
 
 // ===== DUPR Authentication =====
+// Cache the login token and back off after a failed login: every login ATTEMPT
+// against a 2FA-challenged account makes DUPR email a fresh code (one search =
+// one email flood). Cooldown = at most one attempt per 10 minutes.
+let cachedDuprToken: string | null = null;
+let lastDuprLoginFailAt = 0;
+const DUPR_LOGIN_COOLDOWN_MS = 10 * 60 * 1000;
+
 async function getDuprToken(): Promise<string | null> {
+  if (cachedDuprToken) return cachedDuprToken;
+  if (Date.now() - lastDuprLoginFailAt < DUPR_LOGIN_COOLDOWN_MS) return null;
   const email = process.env.DUPR_EMAIL;
   const password = process.env.DUPR_PASSWORD;
   if (!email || !password) {
@@ -38,11 +47,14 @@ async function getDuprToken(): Promise<string | null> {
     });
     const data: DuprTokenResponse = await response.json();
     if (data.status === "SUCCESS" && data.result?.accessToken) {
-      return data.result.accessToken;
+      cachedDuprToken = data.result.accessToken;
+      return cachedDuprToken;
     }
+    lastDuprLoginFailAt = Date.now();
     return null;
   } catch (error) {
     console.error("DUPR login failed:", error);
+    lastDuprLoginFailAt = Date.now();
     return null;
   }
 }
