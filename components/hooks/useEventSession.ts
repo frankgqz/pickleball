@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { TournamentConfig, CompletedRound, GameSession, MatchFormat, RoundState } from "@/components/Types";
 import { localStorageDb } from "./useLocalStorage";
-import { createSession, saveRound, updateRound, deleteRound } from "@/app/actions";
+import { createSession, saveRound, updateRound, deleteRound, loadSession } from "@/app/actions";
 
 export const DEFAULT_CONFIG: TournamentConfig = {
   format: "STANDARD",
@@ -66,6 +66,7 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   const [config, setConfig] = useState<TournamentConfig>(() => savedConfig || initialConfig || DEFAULT_CONFIG);
   const [currentSession, setCurrentSession] = useState<GameSession>(initialSession);
   const [roundHistory, setRoundHistory] = useState<CompletedRound[]>(() => localStorageDb.loadRounds());
+
   const [roundState, setRoundState] = useState<RoundState>(() => localStorageDb.loadRoundState(initialSession.sessionId) ?? ({
     active: false,
     format: PICK_PARTNER_FORMAT,
@@ -80,6 +81,23 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   // Resume the DB session identity across refreshes (was undefined — rounds
   // stopped attaching and a new session could spawn on the next round 1)
   const [dbSessionId, setDbSessionId] = useState<string | undefined>(savedSession?.sessionId || undefined);
+  // Refresh = "do both": localStorage restores instantly above; the DB refills
+  // this session's rounds on mount as the authority (self-heals any local gap —
+  // Frank 2026-10-08: rounds/current-round went missing after load + refresh).
+  useEffect(() => {
+    if (dbSessionId) {
+      loadSession(dbSessionId).then((r: any) => {
+        if (r.success && r.session && Array.isArray(r.session.rounds) && r.session.rounds.length > 0) {
+          const dbRounds = r.session.rounds as CompletedRound[];
+          setRoundHistory(prev => {
+            const others = prev.filter(x => x.sessionId !== dbSessionId);
+            return [...others, ...dbRounds];
+          });
+        }
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dbSessionId]);
 
   // Derived: rounds in current session
   const currentSessionRounds = useMemo(
