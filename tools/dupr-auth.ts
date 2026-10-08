@@ -78,6 +78,7 @@ async function verifyCode(code: string) {
   // Bearer header before routing — so try each endpoint BOTH with and without
   // an Authorization header (token travels in the body).
   const endpoints = [
+    `${BASE}/auth/v1.0/2fa/verify/`,   // proven winner 2026-10-08
     `${BASE}/auth/v1.0/login/verify/`,
     `${BASE}/auth/v1.0/verify/`,
     `${BASE}/auth/v1.0/2fa/verify/`,
@@ -99,10 +100,24 @@ async function verifyCode(code: string) {
         body: JSON.stringify(body),
       });
       const data: any = await res.json();
-      const token = data.result?.accessToken ?? data.result?.token ?? data.accessToken;
+      const r = data.result;
+      const token =
+        (typeof r === "string" ? r : null) ??
+        r?.accessToken ?? r?.access_token ?? r?.token ?? r?.authToken ?? r?.jwt ??
+        data.accessToken ?? data.access_token ?? data.token;
       if (token) {
         fs.unlinkSync(STATE_PATH);
         saveToken(token);
+        return;
+      }
+      if (data.status === "SUCCESS") {
+        // Login worked but the token key wasn't recognized — show the SHAPE
+        // (never values) so the next wiring is exact.
+        fs.unlinkSync(STATE_PATH);
+        console.log("\nLOGIN SUCCEEDED. Response shape:");
+        console.log("  top keys:", Object.keys(data).join(","));
+        console.log("  result:", r && typeof r === "object" ? `keys: ${Object.keys(r).join(",")}` : typeof r);
+        console.log("  (run `npm run dupr:auth` again — the token key gets wired from this)");
         return;
       }
       console.log(`  ${url} ${Object.keys(extraHeaders).length ? "+bearer" : "no-auth"} ${JSON.stringify(body).slice(0, 40)} -> ${data.status ?? res.status} ${String(data.message ?? "").slice(0, 50)}`);
