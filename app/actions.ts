@@ -259,7 +259,9 @@ export async function fetchDuprRating(playerId: string) {
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
-          name: data.result?.fullName || player.name,
+          name: data.result?.fullName
+            || [data.result?.firstName, data.result?.lastName].filter(Boolean).join(" ")
+            || player.name,
           duprId: data.result?.duprId || player.duprId,
           duprNumericId: data.result?.id?.toString() || player.duprNumericId,
           duprScore: rating,
