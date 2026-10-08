@@ -225,6 +225,8 @@ export default function PlayerDatabase({
     if (!confirm(`Remove ${player.name} from your roster?`)) return;
     
     try {
+      // Removing from the database also drops them from the event pool + standings
+      onRemoveFromPool?.(player.id);
       if (userId && onRemoveFromClubRoster) {
         await onRemoveFromClubRoster(player.id);
         onRefreshPlayers?.();  // ← Add this line
