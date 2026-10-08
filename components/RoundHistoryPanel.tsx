@@ -73,7 +73,7 @@ export default function RoundHistoryPanel({
   const [pastSessions, setPastSessions] = useState<any[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [editMatches, setEditMatches] = useState<CompletedRound["matches"]>([]);
-  const [pastSessionsOpen, setPastSessionsOpen] = useState(false);  // ← ADD for collapsible
+  const [pastSessionsOpen, setPastSessionsOpen] = useState(true);  // ← ADD for collapsible
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pastSessionsLoading, setPastSessionsLoading] = useState(false);
   const [loginHint, setLoginHint] = useState(false);
@@ -351,6 +351,7 @@ export default function RoundHistoryPanel({
                           <div className="flex items-center gap-2 text-sm font-medium text-text">
                             <span>{s.isEnded ? "🏁" : "🎾"}</span>
                             <span className="truncate">{s.name}</span>
+                            {s.id === currentSessionId && <span className="text-accent text-xs font-semibold">{"✓"}</span>}
                           </div>
                           <div className="text-xs text-subtext mt-0.5">
                             {formatSessionDate(s.createdAt)} - {s._count?.rounds ?? 0}R {sessionPlayerCount(s)}P
