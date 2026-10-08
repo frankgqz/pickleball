@@ -111,6 +111,42 @@ export async function findPlayerByDupr(duprId?: string, duprNumericId?: string) 
   }
 }
 
+// Migrate players created while logged OUT into the DB on first login.
+// Keeps their LOCAL ids (Prisma accepts client-supplied ids) so event pool /
+// standings / rounds references never break. Idempotent.
+export async function importLocalPlayers(
+  players: Array<{ id: string; name: string; duprId?: string | null; duprNumericId?: string | null; duprScore?: number | null; manualDuprScore?: number | null }>,
+  userId: string
+) {
+  try {
+    for (const p of players) {
+      await prisma.player.upsert({
+        where: { id: p.id },
+        update: {},
+        create: {
+          id: p.id,
+          name: p.name,
+          duprId: p.duprId ?? null,
+          duprNumericId: p.duprNumericId ?? null,
+          duprScore: p.duprScore ?? null,
+          manualDuprScore: p.manualDuprScore ?? null,
+        },
+      });
+      try {
+        await prisma.clubPlayer.upsert({
+          where: { userId_playerId: { userId, playerId: p.id } },
+          update: {},
+          create: { userId, playerId: p.id },
+        });
+      } catch { /* roster link may already exist under another shape */ }
+    }
+    return { success: true, migrated: players.length };
+  } catch (error) {
+    console.error("Error importing local players:", error);
+    return { success: false, error: "Failed to import local players" };
+  }
+}
+
 // Add a new player to global database (with upsert/merge logic)
 export async function addPlayer(formData: FormData, userId?: string) {
   const name = formData.get("name") as string;
