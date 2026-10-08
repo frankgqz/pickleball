@@ -111,13 +111,26 @@ async function verifyCode(code: string) {
         return;
       }
       if (data.status === "SUCCESS") {
-        // Login worked but the token key wasn't recognized — show the SHAPE
-        // (never values) so the next wiring is exact.
         fs.unlinkSync(STATE_PATH);
-        console.log("\nLOGIN SUCCEEDED. Response shape:");
+        // Scan the whole response for a JWT (three dot-separated segments) and
+        // save the longest — the token lives in an unknown slot (result.user…).
+        const jwts: string[] = [];
+        const walk = (v: any) => {
+          if (typeof v === "string" && /^[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}$/.test(v)) jwts.push(v);
+          else if (v && typeof v === "object") Object.values(v).forEach(walk);
+        };
+        walk(data);
+        if (jwts.length > 0) {
+          jwts.sort((a, b) => b.length - a.length);
+          saveToken(jwts[0]);
+          return;
+        }
+        console.log("\nLOGIN SUCCEEDED but no JWT found in the response. Shape:");
         console.log("  top keys:", Object.keys(data).join(","));
-        console.log("  result:", r && typeof r === "object" ? `keys: ${Object.keys(r).join(",")}` : typeof r);
-        console.log("  (run `npm run dupr:auth` again — the token key gets wired from this)");
+        console.log("  result keys:", r && typeof r === "object" ? Object.keys(r).join(",") : typeof r);
+        if (r?.user && typeof r.user === "object") console.log("  result.user keys:", Object.keys(r.user).join(","));
+        const sc = res.headers.get("set-cookie");
+        console.log("  set-cookie:", sc ? sc.split(",").map(c => c.split("=")[0].trim()).join(",") : "none");
         return;
       }
       console.log(`  ${url} ${Object.keys(extraHeaders).length ? "+bearer" : "no-auth"} ${JSON.stringify(body).slice(0, 40)} -> ${data.status ?? res.status} ${String(data.message ?? "").slice(0, 50)}`);
