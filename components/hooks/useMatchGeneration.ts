@@ -38,10 +38,17 @@ export function useMatchGeneration(
   // Generate matches for PICK_PARTNER or FIXED_14V23 formats
   const generateStandardMatches = useCallback((format: MatchFormat): Match[] => {
     // generateMatches signature: (format, pool, standings, config, roundNumber, byeMap, setStandings)
+    // Round 1 runs in the same tick as regenerateByes — its setState hasn't
+    // flushed yet, so build entries for anyone missing (seeded by DUPR order).
+    const rank = [...eventPool].sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0)).map(p => p.id);
+    const effStandings = eventPool.map(p =>
+      standings.find(s => s.id === p.id) ??
+      ({ id: p.id, name: p.name, seed: rank.indexOf(p.id) + 1, seedAdjustment: 0 } as any)
+    );
     const result = generateMatches(
       format,
       eventPool,
-      standings,
+      effStandings,
       config,
       currentRoundNumber,
       null,  // byePlayerIdsMap - let it calculate internally

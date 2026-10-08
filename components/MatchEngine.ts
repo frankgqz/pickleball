@@ -36,7 +36,7 @@ export function getByeTotal(entry: StandingsEntry): number {
 }
 
 export function getSeedTotal(entry: StandingsEntry): number {
-  return (entry.seed || 0) + (entry.seedAdjustment || 0);
+  return (entry?.seed || 0) + (entry?.seedAdjustment || 0);
 }
 
 export function generateMatches(
