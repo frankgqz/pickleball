@@ -144,7 +144,8 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               min="1"
               max="16"
               value={config.courts}
-              onChange={(e) => handleChange("courts", parseInt(e.target.value) || 2)}
+              onChange={(e) => handleChange("courts", (e.target.value === "" ? "" : parseInt(e.target.value) || 1) as any)}
+              onBlur={(e) => { if (e.target.value === "" || isNaN(parseInt(e.target.value))) handleChange("courts", 2 as any); }}
               className="w-full px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text"
             />
           </div>

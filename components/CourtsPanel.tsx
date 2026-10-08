@@ -180,7 +180,7 @@ export default function CourtsPanel({
                     key={p.id}
                     onClick={i === 0 ? undefined : () => onSwapPlayerTeam(match.id, p.id)}
                     title={i === 0 ? "Picker (fixed)" : "Click to swap"}
-                    className={`flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border-2 border-purple-400/70 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
+                    className={`flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 border-purple-400/70 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
                   >
                     {p.name}
                   </button>
@@ -203,7 +203,7 @@ export default function CourtsPanel({
                     key={p.id}
                     onClick={() => onSwapPlayerTeam(match.id, p.id)}
                     title="Click to swap into Team 1"
-                    className="flex-1 min-w-0 truncate text-left rounded-lg px-2 py-1 bg-muted-bg border-2 border-green-400/70 text-text text-sm font-medium hover:bg-hover-bg"
+                    className="flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 border-green-400/70 text-text text-sm font-medium hover:bg-hover-bg"
                   >
                     {p.name}
                   </button>
