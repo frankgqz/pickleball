@@ -8,8 +8,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "dupr:auth": "tsx tools/dupr-auth.ts",
-    "dupr:code": "tsx tools/dupr-auth.ts code"
+    "dupr:auth": "npx tsx tools/dupr-auth.ts",
+    "dupr:code": "npx tsx tools/dupr-auth.ts code"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
