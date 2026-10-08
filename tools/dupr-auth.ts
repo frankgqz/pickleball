@@ -100,7 +100,7 @@ async function login() {
         const res = await fetch("https://api.dupr.com/auth/v1.0/2fa/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-dupr-client-capabilities": "totp,webauthn" },
-          body: JSON.stringify({ challengeToken, code: c.toString().padStart(6, "0") }),
+          body: JSON.stringify({ challengeToken, code: c.toString().padStart(6, "0"), method: { type: "urn:dupr:second-factor:totp" } }),
         });
         const d: any = await res.json().catch(() => ({}));
         const sc = res.headers.get("set-cookie") || "";
@@ -183,10 +183,10 @@ async function verifyCode(code: string) {
   }
   // Body variants for the winner: code/otp x optional method URN.
   const bodies = (ch: string, c: string) => [
+    // EXACT dashboard shape (2026-10-08 payload peek): method is an OBJECT
+    { challengeToken: ch, code: c, method: { type: "urn:dupr:second-factor:totp" } },
     { challengeToken: ch, code: c },
-    { challengeToken: ch, otp: c },
-    { challengeToken: ch, code: c, type: "urn:dupr:second-factor:totp" },
-    { challengeToken: ch, code: c, method: "urn:dupr:second-factor:totp" },
+    { challengeToken: ch, otp: c, method: { type: "urn:dupr:second-factor:totp" } },
   ];
   const expanded: Array<[string, object, object]> = [];
   for (const [url, body, hdrs] of candidates) {
