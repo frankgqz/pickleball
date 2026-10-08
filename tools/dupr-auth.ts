@@ -116,8 +116,17 @@ async function verifyCode(code: string) {
         // expiry) — grab that value first; it works as a Bearer token.
         const setCookie = res.headers.get("set-cookie") || "";
         const at = setCookie.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
+        const rt = setCookie.match(/(?:__Host-)?dupr_rt=([^;\s,]+)/);
         if (at) {
           saveToken(at[1]);
+          if (rt) {
+            let env = fs.readFileSync(ENV_PATH, "utf8");
+            const line = `DUPR_RT=${rt[1]}`;
+            if (/^DUPR_RT=.*$/m.test(env)) env = env.replace(/^DUPR_RT=.*$/m, line);
+            else env = env.trimEnd() + "\n" + line + "\n";
+            fs.writeFileSync(ENV_PATH, env);
+            console.log("  (DUPR_RT refresh token captured too — enables auto-renewal)");
+          }
           return;
         }
         // Fallback: scan the whole response for a JWT (three dot-separated
