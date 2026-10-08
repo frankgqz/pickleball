@@ -64,7 +64,8 @@ async function saveTokensToDb(at: string, rt?: string) {
     await prisma.$disconnect();
     console.log("  ✓ tokens saved to the database (production picks them up automatically)");
   } catch (e) {
-    console.log("  (DB save skipped:", String((e as Error).message).slice(0, 70), ")");
+    console.log("  ✗ TOKEN RENEWED BUT DB SAVE FAILED (production reads the DB!):", String((e as Error).message).slice(0, 70));
+    process.exitCode = 1; // watchdog: non-zero exit -> Telegram alert
   }
 }
 
