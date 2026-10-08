@@ -76,7 +76,6 @@ export default function RoundHistoryPanel({
   const [pastSessionsOpen, setPastSessionsOpen] = useState(true);  // ← ADD for collapsible
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pastSessionsLoading, setPastSessionsLoading] = useState(false);
-  const [loginHint, setLoginHint] = useState(false);
   const [selectedSessionLabel, setSelectedSessionLabel] = useState<string | null>(null);
   const pickerListRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +96,7 @@ export default function RoundHistoryPanel({
     // --- FETCH PAST SESSIONS ---
   // This populates the session list panel
   const loadPastSessions = async () => {
-    if (!userId) { setLoginHint(true); return; }
+    if (!userId) return;
     setPastSessionsLoading(true);
     try {
       const result = await getSessionList(userId);
@@ -300,7 +299,7 @@ export default function RoundHistoryPanel({
               <span className="inline-block w-3.5 h-3.5 border-2 border-line border-t-transparent rounded-full animate-spin" aria-label="Loading" />
             )}
             <button
-              onClick={() => { if (!userId) { setLoginHint(true); return; } setPastSessionsOpen(o => !o); }}
+              onClick={() => setPastSessionsOpen(o => !o)}
               className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
             >
               {pastSessionsOpen ? "▲ Hide" : "📂 Load"}
@@ -314,10 +313,6 @@ export default function RoundHistoryPanel({
             </button>
           </div>
         </div>
-
-        {loginHint && !userId && (
-          <p className="text-xs text-subtext mt-1">Please log in to use this feature</p>
-        )}
 
         {pastSessionsOpen && pastSessions.length > 0 && (
           <div className="mb-3 relative">
@@ -333,12 +328,20 @@ export default function RoundHistoryPanel({
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setPickerOpen(false)} />
                 <div ref={pickerListRef} className="absolute z-20 bottom-full mb-1 w-full bg-panel border border-line rounded-lg shadow-xl max-h-64 overflow-y-auto">
-                  {pastSessions.map(s => (
+                  {(!userId && currentSessionId ? [{
+                    id: currentSessionId,
+                    name: "Local session",
+                    createdAt: new Date().toISOString(),
+                    playerIds: [],
+                    _count: { rounds: sessionRounds.length },
+                    isLocal: true,
+                  } as any] : pastSessions).map(s => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => {
                         setPickerOpen(false);
+                        if ((s as any).isLocal) return;
                         if (onLoadSession && confirm("Load this session?")) {
                           onLoadSession(s.id);
                           setSelectedSessionLabel(`${s.isEnded ? "🏁" : "🎾"} ${s.name}`);

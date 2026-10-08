@@ -66,8 +66,18 @@ export function usePlayerDatabase(
       if (userId) {
         const result = await getClubPlayers(userId);
         if (result.success && result.clubPlayers && result.clubPlayers.length > 0) {
-          const players = result.clubPlayers.map(cp => cp.player);
-          setAllPlayers(players);
+          const dbPlayers = result.clubPlayers.map(cp => cp.player);
+          // MERGE on login, never replace: players added while logged out live
+          // only locally — replace used to drop them from the list AND overwrite
+          // them out of localStorage (mid-session login = data loss)
+          setAllPlayers(prev => {
+            const byId = new Map<string, Player>(dbPlayers.map(p => [p.id, p]));
+            const dbDupr = new Set(dbPlayers.map(p => p.duprId).filter(Boolean) as string[]);
+            for (const p of prev) {
+              if (!byId.has(p.id) && !(p.duprId && dbDupr.has(p.duprId))) byId.set(p.id, p);
+            }
+            return Array.from(byId.values());
+          });
         }
       }
     } catch (err) {
