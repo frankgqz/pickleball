@@ -250,9 +250,11 @@ export default function Page() {
 
   const handleRestartEvent = useCallback(() => {
     restartEvent();
-    setStandings([]);
+    // The pool is kept on restart — rehydrate standings from it instead of
+    // leaving the table empty (Frank 2026-10-08: "the standings disappear")
+    setStandings(initializeSeeds(buildEntriesFromPlayers(eventPool), config.orderGap));
     setSessionEnded(false);
-  }, [restartEvent, setStandings]);
+  }, [restartEvent, setStandings, eventPool, config.orderGap]);
 
   const handleClearPool = useCallback(() => {
     clearEventPool(currentSession);
