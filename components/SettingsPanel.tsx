@@ -27,7 +27,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
         <h2 className="text-base font-bold text-text">⚙️ Event Settings</h2>
         <button
           onClick={() => {
-            if (confirm("Restart event? This will clear all rounds but keep all the players in the event pool (not the database).")) {
+            if (confirm("Restart event? This will clear all rounds but keep all the players in the event pool.")) {
               onRestartEvent && onRestartEvent();
             }
           }}

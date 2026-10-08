@@ -210,7 +210,9 @@ export default function Page() {
         }
       }
       matchGenActions.generateStandardMatches(format);
-  }, [currentRoundNumber, config, regenerateByes, matchGenActions, dbSessionId, userId, eventPool, startNewSession]);
+      // Keep standings in step at round start too (not just round submit/load)
+      standingsActions.recalculateStandingsFromHistory(roundHistory, currentSession.sessionId, config, eventPool);
+  }, [currentRoundNumber, config, regenerateByes, matchGenActions, dbSessionId, userId, eventPool, startNewSession, standingsActions, roundHistory, currentSession]);
 
   const startNextRound = useCallback(() => {
     if (config.format === "POOL_PLAY") {

@@ -201,7 +201,9 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
     sortColumn,
     sortDirection,
     computedStandings,
-    setStandings,
+    // Persisting wrapper (was the raw setter — only player-entry actions
+    // persisted, so standings vanished on refresh unless players changed)
+    setStandings: setStandingsAndPersist,
   };
 
   // Actions
