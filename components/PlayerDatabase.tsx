@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
 import { Player } from "@/components/Types";
-import { findPlayerByDupr } from "@/app/actions";
+import { findPlayerByDupr, getSessionList } from "@/app/actions";
 
 interface Props {
   players: Player[];
@@ -32,7 +32,22 @@ export default function PlayerDatabase({
   onRefreshPlayers,  // ← Add this
 }: Props) {
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"recent" | "alpha">("recent");
+  const [sortBy, setSortBy] = useState<"recent" | "alpha" | "frequent">("recent");
+  // How often each player joined this user's sessions (for the "frequent" sort)
+  const [joinCounts, setJoinCounts] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (!userId) return;
+    getSessionList(userId).then((r: any) => {
+      if (!r.success || !Array.isArray(r.sessions)) return;
+      const counts: Record<string, number> = {};
+      for (const s of r.sessions) {
+        let ids = s.playerIds;
+        if (typeof ids === "string") { try { ids = JSON.parse(ids); } catch { ids = []; } }
+        if (Array.isArray(ids)) for (const id of ids) counts[id] = (counts[id] ?? 0) + 1;
+      }
+      setJoinCounts(counts);
+    }).catch(() => {});
+  }, [userId]);
 
   // Add form
   const [name, setName] = useState("");
@@ -66,8 +81,9 @@ export default function PlayerDatabase({
       (p.duprNumericId || "").toLowerCase().includes(q)
     );
     if (sortBy === "alpha") list.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    if (sortBy === "frequent") list.sort((a, b) => (joinCounts[b.id] ?? 0) - (joinCounts[a.id] ?? 0));
     return list;
-  }, [players, search, sortBy]);
+  }, [players, search, sortBy, joinCounts]);
 
   // Check for existing player when dupr fields change - prefill missing fields
   useEffect(() => {
@@ -234,6 +250,7 @@ export default function PlayerDatabase({
             className="ml-auto py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
           >
             <option value="recent">Recent</option>
+            <option value="frequent">Frequent</option>
             <option value="alpha">A - Z</option>
           </select>
         </div>
@@ -260,8 +277,8 @@ export default function PlayerDatabase({
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-16 md:w-20 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
-          placeholder="dNumID" 
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-20 md:w-24 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          placeholder="dURL#" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
