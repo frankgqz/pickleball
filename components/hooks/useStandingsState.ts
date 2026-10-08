@@ -54,10 +54,7 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
   // Load saved standings from localStorage on init
   const [standings, setStandings] = useState<StandingsEntry[]>(() => {
     const session = localStorageDb.loadSession();
-    if (session) {
-      return localStorageDb.loadStandings(session.sessionId);
-    }
-    return [];
+    return localStorageDb.loadStandings(session?.sessionId ?? "nosid");
   });
 
   const [sortColumn, setSortColumn] = useState("seedTotal");
@@ -75,9 +72,7 @@ export function useStandingsState(): [StandingsState, StandingsActions] {
   // Persist standings to localStorage
   const persistStandings = useCallback((entries: StandingsEntry[]) => {
     const session = localStorageDb.loadSession();
-    if (session) {
-      localStorageDb.saveStandings(entries, session.sessionId);
-    }
+    localStorageDb.saveStandings(entries, session?.sessionId ?? "nosid");
   }, []);
 
   // Wrapper that also persists

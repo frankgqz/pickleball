@@ -77,7 +77,9 @@ export function useEventSession(initialConfig?: TournamentConfig): [EventSession
   useEffect(() => {
     localStorageDb.saveRoundState(currentSession.sessionId, roundState);
   }, [roundState, currentSession.sessionId]);
-  const [dbSessionId, setDbSessionId] = useState<string | undefined>(undefined);
+  // Resume the DB session identity across refreshes (was undefined — rounds
+  // stopped attaching and a new session could spawn on the next round 1)
+  const [dbSessionId, setDbSessionId] = useState<string | undefined>(savedSession?.sessionId || undefined);
 
   // Derived: rounds in current session
   const currentSessionRounds = useMemo(
