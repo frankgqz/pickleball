@@ -344,7 +344,7 @@ export default function RoundHistoryPanel({
                           setSelectedSessionLabel(`${s.isEnded ? "🏁" : "🎾"} ${s.name}`);
                         }
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-hover-bg transition-colors border-b border-line last:border-b-0"
+                      className={`w-full text-left px-3 py-2 hover:bg-hover-bg transition-colors border-b border-line last:border-b-0 ${s.id === currentSessionId ? "bg-accent-soft border-l-4 border-l-accent pl-2.5" : ""}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
