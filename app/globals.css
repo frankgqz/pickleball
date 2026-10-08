@@ -22,11 +22,11 @@
   --font-mono: var(--font-jetbrains-mono);
 }
 
-/* Forms use the UI font in every theme: theme display fonts (Playwrite
-   cursive etc.) have quirky metrics that shrank input boxes and made
-   numbers hard to read. Display text keeps the theme font. */
-input, select, textarea {
-  font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+/* Forms follow the theme font (Frank 2026-10-08: theme identity beats
+   pixel uniformity — rather one box render slightly off than unthemed
+   text in settings). Line-height only = stable box metrics. */
+input, select, textarea, button {
+  font-family: inherit;
   line-height: 1.25;
 }
 
