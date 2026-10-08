@@ -314,7 +314,7 @@ export default function RoundHistoryPanel({
           </div>
         </div>
 
-        {pastSessionsOpen && pastSessions.length > 0 && (
+        {pastSessionsOpen && (pastSessions.length > 0 || (!userId && currentSessionId)) && (
           <div className="mb-3 relative">
             <button
               type="button"

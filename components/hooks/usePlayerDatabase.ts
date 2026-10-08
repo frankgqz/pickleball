@@ -71,8 +71,11 @@ export function usePlayerDatabase(
           // ids are kept, so pool/standings/rounds references stay valid)
           try {
             const { importLocalPlayers } = await import("@/app/actions");
-            const localOnly = (await new Promise<Player[]>(res => setAllPlayers(prev => { res(prev); return prev; })))
-              .filter(p => !dbPlayers.some(d => d.id === p.id) && !(p.duprId && dbPlayers.some(d => d.duprId === p.duprId)));
+            const samePerson = (a: Player, b: Player) =>
+            (!!a.duprId && a.duprId === b.duprId) ||
+            (!!a.duprNumericId && a.duprNumericId === b.duprNumericId);
+          const localOnly = (await new Promise<Player[]>(res => setAllPlayers(prev => { res(prev); return prev; })))
+              .filter(p => !dbPlayers.some(d => d.id === p.id || samePerson(d, p)));
             if (localOnly.length > 0) await importLocalPlayers(localOnly, userId);
           } catch (e) { console.warn("Local-player migration skipped:", e); }
           // MERGE on login, never replace: players added while logged out live
@@ -80,9 +83,11 @@ export function usePlayerDatabase(
           // them out of localStorage (mid-session login = data loss)
           setAllPlayers(prev => {
             const byId = new Map<string, Player>(dbPlayers.map(p => [p.id, p]));
-            const dbDupr = new Set(dbPlayers.map(p => p.duprId).filter(Boolean) as string[]);
+            const samePerson = (a: Player, b: Player) =>
+              (!!a.duprId && a.duprId === b.duprId) ||
+              (!!a.duprNumericId && a.duprNumericId === b.duprNumericId);
             for (const p of prev) {
-              if (!byId.has(p.id) && !(p.duprId && dbDupr.has(p.duprId))) byId.set(p.id, p);
+              if (!byId.has(p.id) && !dbPlayers.some(d => samePerson(d, p))) byId.set(p.id, p);
             }
             return Array.from(byId.values());
           });
