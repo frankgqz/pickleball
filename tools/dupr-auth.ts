@@ -74,17 +74,28 @@ async function verifyCode(code: string) {
   const { challengeToken } = JSON.parse(fs.readFileSync(STATE_PATH, "utf8"));
   // The consumer 2FA verify endpoint isn't publicly documented — try the
   // likely shapes and print whichever the API accepts.
-  const candidates: Array<[string, object]> = [
-    [`${BASE}/auth/v1.0/login/verify/`, { challengeToken, code }],
-    [`${BASE}/auth/v1.0/verify/`, { challengeToken, code }],
-    [`${BASE}/auth/v1.0/2fa/verify/`, { challengeToken, code }],
-    [`${BASE}/auth/v1.0/challenge/verify/`, { challengeToken, code }],
+  // "Invalid token" earlier = the gateway rejected the challengeToken as a
+  // Bearer header before routing — so try each endpoint BOTH with and without
+  // an Authorization header (token travels in the body).
+  const endpoints = [
+    `${BASE}/auth/v1.0/login/verify/`,
+    `${BASE}/auth/v1.0/verify/`,
+    `${BASE}/auth/v1.0/2fa/verify/`,
+    `${BASE}/auth/v1.0/challenge/verify/`,
   ];
-  for (const [url, body] of candidates) {
+  const candidates: Array<[string, object, object]> = [];
+  for (const url of endpoints) {
+    for (const headers of [{}, { Authorization: `Bearer ${challengeToken}` }]) {
+      for (const body of [{ challengeToken, code }, { code }]) {
+        candidates.push([url, body, headers]);
+      }
+    }
+  }
+  for (const [url, body, extraHeaders] of candidates) {
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${challengeToken}` },
+        headers: { "Content-Type": "application/json", ...(extraHeaders as any) },
         body: JSON.stringify(body),
       });
       const data: any = await res.json();
@@ -94,7 +105,7 @@ async function verifyCode(code: string) {
         saveToken(token);
         return;
       }
-      console.log(`  ${url} -> ${data.status ?? res.status} ${String(data.message ?? "").slice(0, 70)}`);
+      console.log(`  ${url} ${Object.keys(extraHeaders).length ? "+bearer" : "no-auth"} ${JSON.stringify(body).slice(0, 40)} -> ${data.status ?? res.status} ${String(data.message ?? "").slice(0, 50)}`);
     } catch {
       console.log(`  ${url} -> network/parse error`);
     }
