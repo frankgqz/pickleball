@@ -82,7 +82,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="D">Doubles (D)</option>
-            <option value="S">Singles (S)</option>
+            <option value="S" disabled>Singles (S) — coming soon</option>
           </select>
         </div>
 
