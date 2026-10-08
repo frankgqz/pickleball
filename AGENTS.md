@@ -51,3 +51,19 @@ next-auth Google OAuth · server actions `app/actions.ts` · state hooks
 - Session lifecycle: End = sets isEnded (view stays loaded); ended sessions
   gate Start/Submit/Next (CourtsPanel `sessionEnded` prop — MainApp wires it);
   Continue Session reopens. New session + Restart reset the flag.
+
+## DUPR authentication (2026-10-08) — solved, do not re-break
+DUPR enforces email/TOTP 2FA on ALL accounts — silent password login is dead.
+The working path = TOTP ritual (`tools/dupr-auth.ts`): login -> challenge ->
+code generated from `DUPR_TOTP_SECRET` (RFC 6238 SHA1/6/30) -> `POST
+https://api.dupr.com/auth/v1.0/2fa/verify` (no trailing slash!) with body
+`{challengeToken, code, method: {type: "urn:dupr:second-factor:totp"}}` (method
+is an OBJECT) + header `x-dupr-client-capabilities: totp,webauthn`. Response
+mints `__Host-dupr_at` (30d) + `__Host-dupr_rt` (90d) cookies — the API wants
+them as a Cookie header (Bearer fails with 401). Tokens persist in the
+`AuthState` DB table (production reads it — no Vercel env copies) + `.env`.
+Cron `DUPR token renewal` (394beb434fbd, daily 4am, no_agent script
+`tools/dupr-renew.sh` in HERMES_HOME/scripts) reruns the ritual when the token
+has <7 days left; failures -> Telegram. `npm run dupr:auth -- --force` renews
+manually. Challenge tokens expire in 5 minutes. Player lookups need modern
+"bit 33" duprNumericIds (10-digit); responses carry `fullName`.
