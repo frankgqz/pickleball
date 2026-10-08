@@ -67,3 +67,14 @@ Cron `DUPR token renewal` (394beb434fbd, daily 4am, no_agent script
 has <7 days left; failures -> Telegram. `npm run dupr:auth -- --force` renews
 manually. Challenge tokens expire in 5 minutes. Player lookups need modern
 "bit 33" duprNumericIds (10-digit); responses carry `fullName`.
+
+## State persistence architecture (2026-10-08) — the refresh design
+localStorage = instant restore layer (all keys sid-scoped + a "nosid" fallback);
+the DB = durable layer, and rounds refill from it on mount ("do both").
+dbSessionId hydrates from the saved session so refresh RESUMES the session
+(no duplicate rows). Standings persist via setStandingsAndPersist — the hook
+once exposed the raw setter (bug: standings vanished on refresh). Three wipe
+doors were closed: mount-clears in loadPlayersFromDatabase, resetPlayers
+firing during auth-loading (use authStatus transitions, not !session), and
+round-1 generation running against un-flushed standings (build entries from
+the pool inside generateStandardMatches).
