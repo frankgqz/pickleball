@@ -267,25 +267,25 @@ export default function PlayerDatabase({
       {/* Add form - single row */}
       <div className="flex flex-nowrap gap-1.5 md:gap-2 mb-1.5 items-end">
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 max-w-[60%]" 
-          placeholder="Name *" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
+          placeholder="Name*" 
           value={name} 
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 w-16 md:w-20 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="duprID" 
           value={duprId} 
           onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 placeholder:text-xs w-20 md:w-24 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 placeholder:text-xs flex-1 min-w-0 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="dURL#" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
         <input 
-          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 w-12 md:w-14" 
+          className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
           placeholder="Rating" 
           value={duprScore} 
           onChange={e => setDuprScore(e.target.value)} 
