@@ -16,6 +16,34 @@ const ENV_PATH = path.join(ROOT, ".env");
 const STATE_PATH = path.join(ROOT, "tools", ".dupr-challenge.json");
 const BASE = "https://api.dupr.gg";
 
+// ===== TOTP (RFC 6238) — generates the 6-digit code from DUPR_TOTP_SECRET =====
+import crypto from "crypto";
+function base32Decode(s: string): Buffer {
+  const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = 0, value = 0;
+  const out: number[] = [];
+  for (const c of s.replace(/=+$/, "").toUpperCase()) {
+    const idx = A.indexOf(c);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) { out.push((value >>> (bits - 8)) & 0xff); bits -= 8; }
+  }
+  return Buffer.from(out);
+}
+function totpCode(secretBase32: string): string {
+  const key = base32Decode(secretBase32);
+  const counter = Math.floor(Date.now() / 1000 / 30);
+  const buf = Buffer.alloc(8);
+  buf.writeBigUInt64BE(BigInt(counter));
+  const hmac = crypto.createHmac("sha1", key).update(buf).digest();
+  const offset = hmac[hmac.length - 1] & 0x0f;
+  const code =
+    (((hmac[offset] & 0x7f) << 24) | (hmac[offset + 1] << 16) | (hmac[offset + 2] << 8) | hmac[offset + 3]) %
+    1000000;
+  return code.toString().padStart(6, "0");
+}
+
 function loadEnv(): Record<string, string> {
   const env: Record<string, string> = {};
   for (const line of fs.readFileSync(ENV_PATH, "utf8").split(/\r?\n/)) {
@@ -45,7 +73,7 @@ async function login() {
     console.log("DUPR_EMAIL / DUPR_PASSWORD missing in .env"); return;
   }
   const res = await fetch(`${BASE}/auth/v1.0/login/`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
+    method: "POST", headers: { "Content-Type": "application/json", "x-dupr-client-capabilities": "totp,webauthn" },
     body: JSON.stringify({ email: env.DUPR_EMAIL, password: env.DUPR_PASSWORD }),
   });
   const data: any = await res.json();
@@ -55,6 +83,48 @@ async function login() {
   }
   if (data.errorCode === "2FA_CHALLENGE_REQUIRED" && data.requirements?.[0]?.challengeToken) {
     const challengeToken = data.requirements[0].challengeToken;
+    const env = loadEnv();
+    if (env.DUPR_TOTP_SECRET) {
+      console.log("2FA challenge — trying generated TOTP code (3 quick attempts)...");
+      fs.writeFileSync(STATE_PATH, JSON.stringify({ challengeToken }, null, 2));
+      // ONLY the exact endpoint + plain body, so a failure does not burn the
+      // challenge — then a manual `dupr:code <GA code>` can still test it.
+      for (const off of [-1, 0, 1]) {
+        const counter = Math.floor(Date.now() / 1000 / 30) + off;
+        const key = base32Decode(env.DUPR_TOTP_SECRET);
+        const buf = Buffer.alloc(8);
+        buf.writeBigUInt64BE(BigInt(counter));
+        const hmac = crypto.createHmac("sha1", key).update(buf).digest();
+        const o = hmac[hmac.length - 1] & 0x0f;
+        const c = (((hmac[o] & 0x7f) << 24) | (hmac[o + 1] << 16) | (hmac[o + 2] << 8) | hmac[o + 3]) % 1000000;
+        const res = await fetch("https://api.dupr.com/auth/v1.0/2fa/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-dupr-client-capabilities": "totp,webauthn" },
+          body: JSON.stringify({ challengeToken, code: c.toString().padStart(6, "0") }),
+        });
+        const d: any = await res.json().catch(() => ({}));
+        const sc = res.headers.get("set-cookie") || "";
+        const at = sc.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
+        const rt = sc.match(/(?:__Host-)?dupr_rt=([^;\s,]+)/);
+        if (at) {
+          fs.unlinkSync(STATE_PATH);
+          saveToken(at[1]);
+          if (rt) {
+            let e2 = fs.readFileSync(ENV_PATH, "utf8");
+            const line = `DUPR_RT=${rt[1]}`;
+            if (/^DUPR_RT=.*$/m.test(e2)) e2 = e2.replace(/^DUPR_RT=.*$/m, line);
+            else e2 = e2.trimEnd() + "\n" + line + "\n";
+            fs.writeFileSync(ENV_PATH, e2);
+            console.log("  (DUPR_RT captured too)");
+          }
+          return;
+        }
+        console.log(`  attempt ${off}: ${d.status ?? res.status} ${String(d.message ?? "").slice(0, 60)}`);
+      }
+      console.log("Auto-TOTP failed. To test with your REAL authenticator code, run now:");
+      console.log("  npm run dupr:code <the 6 digits from Google Authenticator>");
+      return;
+    }
     fs.writeFileSync(STATE_PATH, JSON.stringify({ challengeToken }, null, 2));
     console.log("DUPR wants an emailed 6-digit code (it just sent one).");
     console.log("When it arrives, run:  npm run dupr:code 123456");
@@ -77,8 +147,27 @@ async function verifyCode(code: string) {
   // "Invalid token" earlier = the gateway rejected the challengeToken as a
   // Bearer header before routing — so try each endpoint BOTH with and without
   // an Authorization header (token travels in the body).
+  // TOTP challenges accept codes in a ±1 window and may want the method URN.
+  const codes: string[] = [];
+  if (process.env.DUPR_TOTP_SECRET) {
+    for (const algo of ["sha1", "sha256", "sha512"]) {
+      for (const offset of [-1, 0, 1]) {
+        const counter = Math.floor(Date.now() / 1000 / 30) + offset;
+        const key = base32Decode(process.env.DUPR_TOTP_SECRET);
+        const buf = Buffer.alloc(8);
+        buf.writeBigUInt64BE(BigInt(counter));
+        const hmac = crypto.createHmac(algo, key).update(buf).digest();
+        const off = hmac[hmac.length - 1] & 0x0f;
+        const c = (((hmac[off] & 0x7f) << 24) | (hmac[off + 1] << 16) | (hmac[off + 2] << 8) | hmac[off + 3]) % 1000000;
+        codes.push(c.toString().padStart(6, "0"));
+      }
+    }
+  }
+  codes.push(code); // whatever was passed in (email code fallback)
+
   const endpoints = [
-    `${BASE}/auth/v1.0/2fa/verify/`,   // proven winner 2026-10-08
+    "https://api.dupr.com/auth/v1.0/2fa/verify", // EXACT dashboard endpoint (no slash) 2026-10-08
+    `${BASE}/auth/v1.0/2fa/verify/`,   // earlier winner (email flow)
     `${BASE}/auth/v1.0/login/verify/`,
     `${BASE}/auth/v1.0/verify/`,
     `${BASE}/auth/v1.0/2fa/verify/`,
@@ -92,11 +181,27 @@ async function verifyCode(code: string) {
       }
     }
   }
-  for (const [url, body, extraHeaders] of candidates) {
+  // Body variants for the winner: code/otp x optional method URN.
+  const bodies = (ch: string, c: string) => [
+    { challengeToken: ch, code: c },
+    { challengeToken: ch, otp: c },
+    { challengeToken: ch, code: c, type: "urn:dupr:second-factor:totp" },
+    { challengeToken: ch, code: c, method: "urn:dupr:second-factor:totp" },
+  ];
+  const expanded: Array<[string, object, object]> = [];
+  for (const [url, body, hdrs] of candidates) {
+    const b = body as any;
+    if (b.challengeToken && (b.code || b.otp)) {
+      for (const c of codes) for (const variant of bodies(b.challengeToken, c)) expanded.push([url, variant, hdrs]);
+    } else {
+      expanded.push([url, body, hdrs]);
+    }
+  }
+  for (const [url, body, extraHeaders] of expanded) {
     try {
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...(extraHeaders as any) },
+        headers: { "Content-Type": "application/json", "x-dupr-client-capabilities": "totp,webauthn", ...(extraHeaders as any) },
         body: JSON.stringify(body),
       });
       const data: any = await res.json();
