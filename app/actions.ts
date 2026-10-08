@@ -255,7 +255,11 @@ export async function fetchDuprRating(playerId: string) {
     const response = await fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token}`,
+        // DUPR_TOKEN (from the dupr-auth ritual) is a COOKIE-session token —
+        // send it as the __Host-dupr_at cookie; login-flow tokens use Bearer.
+        ...(process.env.DUPR_TOKEN
+          ? { "Cookie": `__Host-dupr_at=${token}` }
+          : { "Authorization": `Bearer ${token}` }),
         "Content-Type": "application/json",
       },
     });
