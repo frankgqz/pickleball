@@ -253,7 +253,7 @@ export default function PlayerDatabase({
       {/* Header */}
       <div className="flex flex-col gap-2 mb-2 pt-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold">🎾 Player Database</h2>
+          <h2 className="text-base font-semibold whitespace-nowrap">🎾 Player Database</h2>
           <div className="text-xs text-subtext">{players.length}</div>
           <div className="relative ml-auto flex items-center gap-1.5">
             <button
@@ -266,7 +266,7 @@ export default function PlayerDatabase({
             </button>
             {infoOpen && (
               <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5">
-                <p><span className="font-semibold">Dupr URL ID</span> (allows sync, recommended) — the number in your DUPR profile link on{" "}<a href="https://dashboard.dupr.com" target="_blank" rel="noreferrer" className="text-accent underline">dashboard.dupr.com</a></p>
+                <p><span className="font-semibold">Dupr URL ID</span> (allows sync, recommended) — the URL will contain the Dupr URL # when visiting a DUPR profile on{" "}<a href="https://dashboard.dupr.com" target="_blank" rel="noreferrer" className="text-accent underline">dashboard.dupr.com</a></p>
                 <p><span className="font-semibold">DuprID</span> is a unique identifier but doesn{"'"}t sync</p>
               </div>
             )}
@@ -277,7 +277,7 @@ export default function PlayerDatabase({
             className="py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
           >
             <option value="recent">Recent</option>
-            <option value="frequent">Frequent</option>
+            <option value="frequent">Played</option>
             <option value="alpha">A - Z</option>
           </select>
         </div>
