@@ -33,6 +33,7 @@ export default function PlayerDatabase({
 }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "alpha" | "frequent">("recent");
+  const [infoOpen, setInfoOpen] = useState(false);
   // How often each player joined this user's sessions (for the "frequent" sort)
   const [joinCounts, setJoinCounts] = useState<Record<string, number>>({});
   useEffect(() => {
@@ -148,7 +149,7 @@ export default function PlayerDatabase({
     const hasScore = duprScore.trim();
 
     if (!hasDuprId && !hasNum && !hasScore) {
-      setValidationError("Provide at least DUPR ID, webNumericID, or rating");
+      setValidationError("Provide at least DuprID, Dupr URL ID (allows sync), or Rating.");
       return;
     }
 
@@ -207,6 +208,12 @@ export default function PlayerDatabase({
   };
 
   const fetchDuprFor = async (id: string) => {
+    const target = players.find(p => p.id === id);
+    if (!target?.duprNumericId) {
+      setFetchFeedback({ playerId: id, message: "Requires Dupr URL ID", success: false });
+      setTimeout(() => setFetchFeedback(null), 3000);
+      return;
+    }
     setFetchFeedback({ playerId: id, message: "Fetching...", success: true });
     try {
       const fetched = await onFetchDupr?.(id);
@@ -248,10 +255,26 @@ export default function PlayerDatabase({
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold">🎾 Player Database</h2>
           <div className="text-xs text-subtext">{players.length}</div>
+          <div className="relative ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setInfoOpen(o => !o)}
+              className="px-1.5 py-1 rounded-lg bg-muted-bg border border-line text-subtext text-sm hover:bg-hover-bg"
+              title="About these IDs"
+            >
+              {"ⓘ"}
+            </button>
+            {infoOpen && (
+              <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5">
+                <p><span className="font-semibold">Dupr URL ID</span> (allows sync, recommended) — the number in your DUPR profile link on{" "}<a href="https://dashboard.dupr.com" target="_blank" rel="noreferrer" className="text-accent underline">dashboard.dupr.com</a></p>
+                <p><span className="font-semibold">DuprID</span> is a unique identifier but doesn{"'"}t sync</p>
+              </div>
+            )}
+          </div>
           <select 
             value={sortBy} 
             onChange={e => setSortBy(e.target.value as any)} 
-            className="ml-auto py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
+            className="py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
           >
             <option value="recent">Recent</option>
             <option value="frequent">Frequent</option>
@@ -275,16 +298,16 @@ export default function PlayerDatabase({
           onChange={e => setName(e.target.value)} 
         />
         <input 
-          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
-          placeholder="duprID" 
-          value={duprId} 
-          onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
-        />
-        <input 
           className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
           placeholder="dURL#" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
+        />
+        <input 
+          className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 ${duprIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
+          placeholder="DuprID" 
+          value={duprId} 
+          onChange={e => { setDuprId(e.target.value); setDuprIdExists(false); }} 
         />
         <input 
           className="px-2 py-1.5 bg-muted-bg border border-line rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0" 
@@ -326,15 +349,15 @@ export default function PlayerDatabase({
                       placeholder="Name" 
                     />
                     <input 
-                      value={editDuprId} 
-                      onChange={e => setEditDuprId(e.target.value)} 
-                      placeholder="duprID" 
+                      value={editDuprNumericId} 
+                      onChange={e => setEditDuprNumericId(e.target.value)} 
+                      placeholder="dURL#" 
                       className="px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50 w-18" 
                     />
                     <input 
-                      value={editDuprNumericId} 
-                      onChange={e => setEditDuprNumericId(e.target.value)} 
-                      placeholder="webID" 
+                      value={editDuprId} 
+                      onChange={e => setEditDuprId(e.target.value)} 
+                      placeholder="DuprID" 
                       className="px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50 w-18" 
                     />
                     <input 
