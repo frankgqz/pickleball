@@ -266,8 +266,11 @@ export default function PlayerDatabase({
             </button>
             {infoOpen && (
               <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5">
-                <p><span className="font-semibold">Dupr URL ID</span> (allows sync, recommended) — the URL will contain the Dupr URL # when visiting a DUPR profile on{" "}<a href="https://dashboard.dupr.com" target="_blank" rel="noreferrer" className="text-accent underline">dashboard.dupr.com</a></p>
-                <p><span className="font-semibold">DuprID</span> is a unique identifier but doesn{"'"}t sync</p>
+                <p><span className="font-semibold">Dupr URL ID</span> {"\u2b50"}</p>
+                <p>Allows Sync {"(\u{1f50d})"}</p>
+                <p>When visiting a profile on{" "}<a href="https://dashboard.dupr.com" target="_blank" rel="noreferrer" className="text-accent underline">dashboard.dupr.com</a> the URL will contain the duprURL#</p>
+                <p className="pt-1"><span className="font-semibold">DUPR ID</span></p>
+                <p>Unique identifier but doesn{"'"}t sync</p>
               </div>
             )}
           </div>
@@ -277,7 +280,7 @@ export default function PlayerDatabase({
             className="py-1 px-1.5 bg-muted-bg border border-line rounded-lg text-sm text-text"
           >
             <option value="recent">Recent</option>
-            <option value="frequent">Played</option>
+            <option value="frequent">Games</option>
             <option value="alpha">A - Z</option>
           </select>
         </div>
