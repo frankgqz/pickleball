@@ -78,3 +78,7 @@ doors were closed: mount-clears in loadPlayersFromDatabase, resetPlayers
 firing during auth-loading (use authStatus transitions, not !session), and
 round-1 generation running against un-flushed standings (build entries from
 the pool inside generateStandardMatches).
+
+- **Scratch:** temp work goes in `atelier/_scratch/pickleball/` (outside this
+  repo — never a `_scratch/` folder inside it; exception: scratch code that
+  needs this repo's node_modules runs from the gitignored `_scratch/` here).
