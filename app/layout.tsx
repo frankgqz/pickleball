@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* theme fonts as real links — Turbopack strips external @import from bundled CSS */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Mali:wght@200;300;400&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=The+Girl+Next+Door&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
         <Script id="theme-init" strategy="beforeInteractive">
           {`(function(){
             var m = document.cookie.match(/(?:^|;\\s*)gqz-theme=([^;]+)/);
