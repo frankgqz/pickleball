@@ -58,6 +58,16 @@ const MONO = '"JetBrains Mono", var(--font-geist-mono, ui-monospace), monospace'
 const FREDERICKA = '"Fredericka the Great", Georgia, serif'
 const CAUSE = '"Cause", ui-rounded, "Segoe Sans", system-ui, sans-serif'
 const PLAYWRITE = '"Playwrite NG Modern", cursive'
+const FRAUNCES = '"Fraunces", Georgia, serif'
+const DMSANS = '"DM Sans", ui-sans-serif, system-ui, sans-serif'
+const GIRLNEXTDOOR = '"The Girl Next Door", cursive'
+const SHANTELL = '"Shantell Sans", ui-rounded, cursive'
+
+// Single source of truth for the font FILE loading. The font names below are
+// just strings — the browser needs the files too. Consumers render this as a
+// <link> in their layout head (Turbopack strips the theme.css @import — see
+// AGENTS.md); theme.css keeps the same URL as its @import for vite consumers.
+export const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=The+Girl+Next+Door&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap'
 const SERIF = '"Fraunces", Georgia, "Times New Roman", serif'
 
 function hexA(hex: string, alpha: number): string {
@@ -188,32 +198,32 @@ export const themes: Record<Theme, ThemeColors> = {
       { hue: [260, 290], sat: [50, 80] },
       { hue: [200, 235], sat: [55, 85] },
     ],
-    fontFamily: CAUSE,
-    fontFamilyHeading: CAUSE,
+    fontFamily: SHANTELL,
+    fontFamilyHeading: SHANTELL,
     radiusButton: '20px',
     radiusCard: '24px',
     radiusInput: '12px',
     shadowStrength: 0.12,
   }),
 
-  // MATCHA — warm stone + sage, Fraunces serif
+  // ONSEN STONE — wet stone, cedar, moss, steam; Fraunces + DM Sans
   matcha: make({
     primitives: {
-      bg: '#f0f4e8',
-      surface: '#fbfbf2',
-      text: '#2d3a1f',
-      muted: '#6b7a52',
-      accent: '#7a9e3f',
-      accent2: '#4f6b29',
-      sparkle: '#a8c46a',
+      bg: '#e9eae5',
+      surface: '#f7f8f4',
+      text: '#2e3538',
+      muted: '#6b7472',
+      accent: '#6f8464',
+      accent2: '#a9714e',
+      sparkle: '#c5d4cc',
     },
     particleHues: [
-      { hue: [20, 45],  sat: [20, 50] },
-      { hue: [90, 130], sat: [20, 50] },
-      { hue: [140, 180], sat: [15, 45] },
+      { hue: [80, 130], sat: [8, 22] },   // moss
+      { hue: [20, 40],  sat: [18, 38] },  // cedar
+      { hue: [160, 190], sat: [6, 16] },  // steam
     ],
-    fontFamily: PLAYWRITE,
-    fontFamilyHeading: PLAYWRITE,
+    fontFamily: GIRLNEXTDOOR,
+    fontFamilyHeading: GIRLNEXTDOOR, // one font for everything — Frank's pick
     radiusButton: '12px',
     radiusCard: '16px',
     radiusInput: '6px',

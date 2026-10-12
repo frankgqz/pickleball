@@ -1,5 +1,5 @@
 # AGENTS.md — pickleball (Pickleball Event Manager)
-
+ 
 Frank's tournament manager for the RMIT Thursdays meetup. Repo:
 github.com/frankgqz/pickleball · live: pickleball.gqz.app (Vercel auto-deploys
 main). Dev copy: C:\Code\craft\pickleball.
