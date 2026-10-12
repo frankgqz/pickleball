@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Providers from "./Providers";  // ADD THIS
+import { googleFontsUrl } from "./theme"; // the theme owns the font URL
 //import '@gqz/theme/theme.css'
 import "./globals.css";
 import Script from 'next/script'
@@ -32,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* theme fonts as real links — Turbopack strips external @import from bundled CSS */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=The+Girl+Next+Door&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+        <link href={googleFontsUrl} rel="stylesheet" />
         <Script id="theme-init" strategy="beforeInteractive">
           {`(function(){
             var m = document.cookie.match(/(?:^|;\\s*)gqz-theme=([^;]+)/);
