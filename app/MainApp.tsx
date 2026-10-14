@@ -25,6 +25,7 @@ import { createStandingsEntry, buildEntriesFromPlayers, calculateStandingsFromRo
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
 const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 const SOCIAL_FORMAT: MatchFormat = { type: "SOCIAL" };
+const TEAMS_FORMAT: MatchFormat = { type: "TEAMS" };
 
 export default function Page() {
   const [loading, setLoading] = useState(true);
@@ -220,7 +221,7 @@ export default function Page() {
       matchGenActions.generatePoolPlayMatches(config.poolFinals?.poolsCount || 2);
     } else {
       const roundFmt = config.roundFormat || "FIXED_14V23";
-      const format: MatchFormat = roundFmt === "SOCIAL" ? SOCIAL_FORMAT : roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
+      const format: MatchFormat = roundFmt === "TEAMS" ? TEAMS_FORMAT : roundFmt === "SOCIAL" ? SOCIAL_FORMAT : roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
       startStandardRound(format);
     }
   }, [config, matchGenActions, startStandardRound]);
@@ -247,7 +248,7 @@ export default function Page() {
       return entry;
     }));
     const roundFmt = config.roundFormat || "FIXED_14V23";
-    const format: MatchFormat = roundFmt === "SOCIAL" ? SOCIAL_FORMAT : roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
+    const format: MatchFormat = roundFmt === "TEAMS" ? TEAMS_FORMAT : roundFmt === "SOCIAL" ? SOCIAL_FORMAT : roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
     matchGenActions.generateStandardMatches(format);
   }, [config.roundFormat, matchGenActions, setStandings]);
 

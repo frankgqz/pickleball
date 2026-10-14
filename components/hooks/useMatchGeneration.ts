@@ -72,6 +72,77 @@ export function useMatchGeneration(
       setRoundState({ active: true, format, matches, submitted: false });
       return matches;
     }
+    // TEAMS: pairMap units (2) + individuals (1) pack into courts of 4.
+    // Packing rule: PAIRS FIRST (seed order within each class) — the
+    // first-fit-decreasing move that gives pairs their pair-vs-pair matches
+    // whenever the roster allows; mixed 2+1+1 courts appear only when counts
+    // force it. Within a court: a pair = a team; 4 individuals keep the
+    // 14v23 spirit ([0]+[3] vs [1]+[2] by seed). Anyone unplaced takes a
+    // bye — BOTH members of an unplaced pair (that is the rule).
+    if (format.type === "TEAMS") {
+      const pairMap: Record<string, string> = config.pairMap || {};
+      const tRank = [...eventPool].sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0)).map(p => p.id);
+      const seedOf = (p: Player) => {
+        const s = standings.find(x => x.id === p.id);
+        return (s?.seed ?? tRank.indexOf(p.id) + 1) + (s?.seedAdjustment ?? 0);
+      };
+      const used = new Set<string>();
+      const units: { members: Player[]; order: number }[] = [];
+      for (const p of eventPool) {
+        if (p.isSitting || used.has(p.id)) continue;
+        const partnerId = pairMap[p.id];
+        const partner = partnerId ? eventPool.find(q => q.id === partnerId && !q.isSitting) : undefined;
+        if (partner && pairMap[partner.id] === p.id && !used.has(partner.id)) {
+          used.add(p.id); used.add(partner.id);
+          units.push({ members: [p, partner], order: (seedOf(p) + seedOf(partner)) / 2 });
+        } else {
+          used.add(p.id);
+          units.push({ members: [p], order: seedOf(p) });
+        }
+      }
+      // pairs first, seed order within each class
+      units.sort((a, b) => (b.members.length - a.members.length) || (a.order - b.order));
+      const pool = [...units];
+      const matches: Match[] = [];
+      let court = 1;
+      while (pool.length) {
+        const courtUnits: typeof units = [];
+        let slots = 4;
+        while (slots > 0) {
+          const idx = pool.findIndex(u => u.members.length <= slots);
+          if (idx === -1) break;
+          const u = pool.splice(idx, 1)[0];
+          courtUnits.push(u);
+          slots -= u.members.length;
+        }
+        const placed = courtUnits.flatMap(u => u.members);
+        if (slots > 0) {
+          // this court can't complete — these AND everyone remaining bye
+          for (const p of [...placed, ...pool.flatMap(u => u.members)]) {
+            matches.push({ id: `m-teams-bye-${Date.now()}-${p.id}`, court: 0, team1: [], team2: [], bye: true, byePlayerId: p.id });
+          }
+          break;
+        }
+        // team split: a pair = a team; 4 individuals = 14v23 within the court
+        const byOrder = [...placed].sort((a, b) => seedOf(a) - seedOf(b));
+        let team1: string[], team2: string[];
+        const pairUnits = courtUnits.filter(u => u.members.length === 2);
+        if (pairUnits.length === 2) {
+          team1 = pairUnits[0].members.map(p => p.id);
+          team2 = pairUnits[1].members.map(p => p.id);
+        } else if (pairUnits.length === 1) {
+          team1 = pairUnits[0].members.map(p => p.id);
+          team2 = courtUnits.filter(u => u.members.length === 1).map(u => u.members[0].id);
+        } else {
+          team1 = [byOrder[0].id, byOrder[3].id];
+          team2 = [byOrder[1].id, byOrder[2].id];
+        }
+        matches.push({ id: `m-teams-${Date.now()}-${court}`, court: court++, team1, team2 });
+      }
+      setRoundState({ active: true, format, matches, submitted: false });
+      return matches;
+    }
+
     // generateMatches signature: (format, pool, standings, config, roundNumber, byeMap, setStandings)
     // Round 1 runs in the same tick as regenerateByes — its setState hasn't
     // flushed yet, so build entries for anyone missing (seeded by DUPR order).

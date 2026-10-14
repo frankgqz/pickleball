@@ -7,6 +7,7 @@ export type MatchFormat =
   | { type: "FIXED_14V23"; partnerLock?: boolean }
   | { type: "POOL_PLAY"; poolsCount: number }
   | { type: "SOCIAL" }
+  | { type: "TEAMS" }
   | { type: "KING_OF_HILL" }
   | { type: "SEMIS" }
   | { type: "FINALS" };
@@ -16,6 +17,7 @@ export const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPar
 export const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 export const POOL_PLAY_FORMAT = (poolsCount: number): MatchFormat => ({ type: "POOL_PLAY", poolsCount });
 export const SOCIAL_FORMAT: MatchFormat = { type: "SOCIAL" };
+export const TEAMS_FORMAT: MatchFormat = { type: "TEAMS" };
 export const KING_OF_HILL_FORMAT: MatchFormat = { type: "KING_OF_HILL" };
 export const SEMIS_FORMAT: MatchFormat = { type: "SEMIS" };
 export const FINALS_FORMAT: MatchFormat = { type: "FINALS" };
@@ -85,7 +87,9 @@ export interface StandingsEntry {
 // ============================================================
 export interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
-  roundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL";
+  roundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL" | "TEAMS";
+  /** Teams mode: playerId -> partnerId (MUTUAL). Latest pairing only. */
+  pairMap?: Record<string, string>;
   eventName?: string;
   // CSV export settings
   matchType: "D" | "S";                        // "D" = doubles, "S" = singles

@@ -8,7 +8,7 @@ interface Props {
   eventPool: Player[];
   standings: StandingsEntry[];
   currentRoundNumber: number;
-  defaultRoundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL";
+  defaultRoundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL" | "TEAMS";
   onStartPickPartner: () => void;
   onStartFixed14v23: () => void;
   onRegenerateByes: () => void;
@@ -299,6 +299,9 @@ export default function CourtsPanel({
                   <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5 text-left">
                     <p>Click a player to adjust court pairing.</p>
                     <p>Click the ⏳ hourglass to delay a player's bye.</p>
+                    {defaultRoundFormat === "TEAMS" && (
+                      <p className="pt-1.5 border-t border-line">Teams: individuals and teams share the pool — even # of individuals works. Odd: 1 individual always byes/casual; 3 individuals ≈ 1/3 of games; 5+ mostly fine.</p>
+                    )}
                   </div>
                 )}
               </div>

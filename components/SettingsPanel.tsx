@@ -135,6 +135,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             >
               <option value="FIXED_14V23">Standard (by seed)</option>
               <option value="SOCIAL">Social (random partners)</option>
+              <option value="TEAMS">Teams (fixed partners)</option>
               <option value="PICK_PARTNER" disabled>New Partners (coming soon)</option>
             </select>
           </div>
