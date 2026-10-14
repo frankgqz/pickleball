@@ -178,7 +178,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               />
             </div>
             <div>
-              <label className="block text-subtext mb-0.5">Order Gap</label>
+              <label className="block text-subtext mb-0.5">Seed Gap</label>
               <input
                 type="number"
                 step="0.25"

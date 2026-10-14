@@ -202,7 +202,7 @@ export default function StandingsTable({
                   Bye{getSortIcon("byeTotal")}
                 </th>
 
-                <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("seedTotal")} title="Total seed (seed + adjustment)">
+                <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("seedTotal")} title="Seed after wins and losses (initial + adjustments)">
                   Seed{getSortIcon("seedTotal")}
                 </th>
               </tr>
@@ -239,7 +239,7 @@ export default function StandingsTable({
 
                     <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center ${partner ? "text-purple-600" : byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
-                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-help ${partner ? "text-purple-600" : "text-blue-600"}`} title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
+                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-help ${partner ? "text-purple-600" : "text-blue-600"}`} title={`Seed history:\ninitial seed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
                   </tr>
                 );
               })}

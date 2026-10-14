@@ -169,10 +169,10 @@ export default function CourtsPanel({
           </div>
         ) : (
           <div className="grid grid-cols-[0.9rem_minmax(0,1fr)] gap-x-0.5">
-            <span className="row-span-2 self-center text-[11px] text-subtext leading-none">{match.court}</span>
+            <span className="self-start pt-2.5 text-[11px] text-subtext leading-none">{match.court}</span>
             {/* Team 1 row — picker fixed */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-1 min-w-0">
+              <div className="flex items-center gap-1 flex-1 min-w-0">
                 {team1Players.map((p, i) => (
                   <button
                     key={p.id}
@@ -193,9 +193,10 @@ export default function CourtsPanel({
               />
             </div>
 
+            <span className="self-center mt-1 text-[11px] text-subtext leading-none">vs</span>
             {/* Team 2 row */}
-            <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-1 mt-1 min-w-0">
+              <div className="flex items-center gap-1 flex-1 min-w-0">
                 {team2Players.map((p) => (
                   <button
                     key={p.id}
