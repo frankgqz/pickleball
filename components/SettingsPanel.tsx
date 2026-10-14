@@ -151,7 +151,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             >
               <option value="FIXED_14V23">Standard by seed</option>
               <option value="TEAMS">Teams allowed</option>
-              <option value="SOCIAL">Random pairings</option>
+              <option value="SOCIAL">Random-ish pairings</option>
               <option value="TEAMS3" disabled>3 Player Teams (coming soon)</option>
             </select>
           </div>

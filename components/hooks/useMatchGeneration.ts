@@ -4,7 +4,7 @@
 // Handles: creating matches for rounds, updating scores, swapping players
 
 import { useCallback } from "react";
-import { Player, StandingsEntry, TournamentConfig, Match, MatchFormat, RoundState } from "@/components/Types";
+import { Player, StandingsEntry, TournamentConfig, Match, MatchFormat, RoundState, CompletedRound } from "@/components/Types";
 import { generateMatches, getByeTotal } from "../MatchEngine";
 
 // Format constants with proper literal types (avoids type inference issues)
@@ -30,6 +30,7 @@ export function useMatchGeneration(
   standings: StandingsEntry[],
   config: TournamentConfig,
   currentRoundNumber: number,
+  roundHistory: CompletedRound[],
   roundState: RoundState,
   setRoundState: React.Dispatch<React.SetStateAction<RoundState>>,
   regenerateByesFn: () => void
@@ -37,9 +38,13 @@ export function useMatchGeneration(
 
   // Generate matches for PICK_PARTNER or FIXED_14V23 formats
   const generateStandardMatches = useCallback((format: MatchFormat): Match[] => {
-    // SOCIAL: random partners and opponents — no seeds, no standings. Only
-    // the BYE is fair: it goes to whoever has byed the least (lowest bye
-    // total, ties broken randomly); the rest is pure shuffle.
+    // SOCIAL = "Random-ish pairings" (locked spec 2026-10-15):
+    // w = 1 / (1 + 3·t²), t = effective times-together decaying with
+    // half-life 15 rounds (derived from this event's match history — no
+    // stored state). Draw = most-repeats-first ordering + sequential
+    // weighted pick; then a SWAP PASS trades partners between team pairs
+    // while total familiarity strictly drops. Byes stay fair: lowest bye
+    // total sits (ties random).
     if (format.type === "SOCIAL") {
       const active = eventPool.filter(p => !p.isSitting);
       const rank = [...eventPool].sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0)).map(p => p.id);
@@ -47,24 +52,91 @@ export function useMatchGeneration(
         standings.find(s => s.id === p.id) ??
         ({ id: p.id, name: p.name, seed: rank.indexOf(p.id) + 1, seedAdjustment: 0 } as any);
       const leftovers = active.length % 4;
-      let rest = [...active].sort(() => Math.random() - 0.5);
-      const byePlayers: Player[] = [];
-      if (leftovers > 0) {
-        const byBye = [...rest].sort((a, b) => {
-          const d = getByeTotal(entryOf(a)) - getByeTotal(entryOf(b));
-          return d !== 0 ? d : Math.random() - 0.5;
-        });
-        byePlayers.push(...byBye.slice(0, leftovers));
-        const byeIds = new Set(byePlayers.map(p => p.id));
-        rest = rest.filter(p => !byeIds.has(p.id));
+      const byeOrder = [...active].sort((a, b) => {
+        const d = getByeTotal(entryOf(a)) - getByeTotal(entryOf(b));
+        return d !== 0 ? d : Math.random() - 0.5;
+      });
+      const byePlayers = leftovers > 0 ? byeOrder.slice(0, leftovers) : [];
+      const byeIds = new Set(byePlayers.map(p => p.id));
+      const rest = active.filter(p => !byeIds.has(p.id));
+
+      // effective times-together: every past partnership fades by half
+      // every 15 rounds (2^(-ago/15))
+      const pkey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+      const teff = new Map<string, number>();
+      for (const r of roundHistory) {
+        const decay = Math.pow(2, -Math.max(0, currentRoundNumber - r.roundNumber) / 15);
+        for (const m of r.matches) {
+          if (m.bye) continue;
+          for (const team of [m.team1, m.team2]) {
+            if (team && team.length === 2) {
+              const k = pkey(team[0], team[1]);
+              teff.set(k, (teff.get(k) || 0) + decay);
+            }
+          }
+        }
       }
+      const fam = (a: Player, b: Player) => teff.get(pkey(a.id, b.id)) || 0;
+      const weight = (a: Player, b: Player) => 1 / (1 + 3 * fam(a, b) * fam(a, b));
+
+      // most-repeats-first ordering (tiny jitter breaks ties)
+      const pressure = (p: Player) => rest.reduce((s, q) => s + (q.id === p.id ? 0 : fam(p, q)), 0);
+      const pickOrder = [...rest].sort((a, b) => (pressure(b) - pressure(a)) || (Math.random() - 0.5));
+
+      // sequential weighted pick
+      const used = new Set<string>();
+      const teams: Player[][] = [];
+      for (const i of pickOrder) {
+        if (used.has(i.id)) continue;
+        const cands = pickOrder.filter(j => j.id !== i.id && !used.has(j.id));
+        const w = cands.map(j => weight(i, j));
+        const total = w.reduce((a, b) => a + b, 0);
+        let x = Math.random() * total;
+        let pick = cands[cands.length - 1];
+        for (let ci = 0; ci < cands.length; ci++) {
+          x -= w[ci];
+          if (x <= 0) { pick = cands[ci]; break; }
+        }
+        used.add(i.id);
+        used.add(pick.id);
+        teams.push([i, pick]);
+      }
+
+      // swap pass: trade partners between team pairs while the total
+      // familiarity of the round strictly drops
+      let improved = true;
+      while (improved) {
+        improved = false;
+        outer:
+        for (let a = 0; a < teams.length; a++) {
+          for (let b = a + 1; b < teams.length; b++) {
+            const [p1, p2] = teams[a];
+            const [p3, p4] = teams[b];
+            const before = fam(p1, p2) + fam(p3, p4);
+            const alt1 = fam(p1, p3) + fam(p2, p4);
+            const alt2 = fam(p1, p4) + fam(p2, p3);
+            if (alt1 < before && alt1 <= alt2) {
+              teams[a] = [p1, p3];
+              teams[b] = [p2, p4];
+              improved = true;
+            } else if (alt2 < before) {
+              teams[a] = [p1, p4];
+              teams[b] = [p2, p3];
+              improved = true;
+            }
+            if (improved) break outer;
+          }
+        }
+      }
+
+      // teams pair into matches (random team-vs-team)
+      const courtTeams = [...teams].sort(() => Math.random() - 0.5);
       const matches: Match[] = [];
       let court = 1;
-      while (rest.length >= 4) {
-        const team1 = [rest[0].id, rest[1].id];
-        const team2 = [rest[2].id, rest[3].id];
-        rest.splice(0, 4);
-        matches.push({ id: `m-social-${Date.now()}-${court}`, court: court++, team1, team2 });
+      while (courtTeams.length >= 2) {
+        const t1 = courtTeams.shift()!;
+        const t2 = courtTeams.shift()!;
+        matches.push({ id: `m-social-${Date.now()}-${court}`, court: court++, team1: t1.map(p => p.id), team2: t2.map(p => p.id) });
       }
       for (const p of byePlayers) {
         matches.push({ id: `m-social-bye-${Date.now()}-${p.id}`, court: 0, team1: [], team2: [], bye: true, byePlayerId: p.id });
@@ -211,7 +283,7 @@ export function useMatchGeneration(
       submitted: false 
     });
     return result.matches;
-  }, [eventPool, standings, config, currentRoundNumber, setRoundState]);
+  }, [eventPool, standings, config, currentRoundNumber, roundHistory, setRoundState]);
 
   // Generate pool play matches (round-robin within each pool)
   const generatePoolPlayMatches = useCallback((poolsCount: number): Match[] => {

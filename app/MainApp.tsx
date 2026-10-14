@@ -107,6 +107,7 @@ export default function Page() {
     standings, 
     config, 
     currentRoundNumber, 
+    roundHistory, 
     roundState, 
     setRoundState, 
     () => regenerateByes(config.byeTopProtection, config.byeBonusTop)
