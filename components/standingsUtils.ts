@@ -234,7 +234,7 @@ export function calculateStandingsFromRounds(
 
     return {
       ...s,
-      seedAdjustment: 0,
+      seedAdjustment: (changes.orderHistory || []).reduce((a: number, h) => a + (h.change || 0), 0),
       byeCount: changes.byeCount,
       sitOutCount: 0,
       wins: changes.wins,
