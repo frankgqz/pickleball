@@ -8,7 +8,7 @@ interface Props {
   eventPool: Player[];
   standings: StandingsEntry[];
   currentRoundNumber: number;
-  defaultRoundFormat?: "FIXED_14V23" | "PICK_PARTNER";
+  defaultRoundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL";
   onStartPickPartner: () => void;
   onStartFixed14v23: () => void;
   onRegenerateByes: () => void;

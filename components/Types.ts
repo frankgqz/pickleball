@@ -6,6 +6,7 @@ export type MatchFormat =
   | { type: "PICK_PARTNER"; allowPartnerRepeat?: boolean }
   | { type: "FIXED_14V23"; partnerLock?: boolean }
   | { type: "POOL_PLAY"; poolsCount: number }
+  | { type: "SOCIAL" }
   | { type: "KING_OF_HILL" }
   | { type: "SEMIS" }
   | { type: "FINALS" };
@@ -14,6 +15,7 @@ export type MatchFormat =
 export const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
 export const FIXED_14V23_FORMAT: MatchFormat = { type: "FIXED_14V23", partnerLock: true };
 export const POOL_PLAY_FORMAT = (poolsCount: number): MatchFormat => ({ type: "POOL_PLAY", poolsCount });
+export const SOCIAL_FORMAT: MatchFormat = { type: "SOCIAL" };
 export const KING_OF_HILL_FORMAT: MatchFormat = { type: "KING_OF_HILL" };
 export const SEMIS_FORMAT: MatchFormat = { type: "SEMIS" };
 export const FINALS_FORMAT: MatchFormat = { type: "FINALS" };
@@ -83,7 +85,7 @@ export interface StandingsEntry {
 // ============================================================
 export interface TournamentConfig {
   format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
-  roundFormat?: "FIXED_14V23" | "PICK_PARTNER";
+  roundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL";
   eventName?: string;
   // CSV export settings
   matchType: "D" | "S";                        // "D" = doubles, "S" = singles

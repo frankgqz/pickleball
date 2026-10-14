@@ -134,6 +134,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
             >
               <option value="FIXED_14V23">Standard (by seed)</option>
+              <option value="SOCIAL">Social (random partners)</option>
               <option value="PICK_PARTNER" disabled>New Partners (coming soon)</option>
             </select>
           </div>

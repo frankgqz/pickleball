@@ -37,6 +37,25 @@ export function useMatchGeneration(
 
   // Generate matches for PICK_PARTNER or FIXED_14V23 formats
   const generateStandardMatches = useCallback((format: MatchFormat): Match[] => {
+    // SOCIAL: pure random partners and opponents — no seeds, no standings.
+    if (format.type === "SOCIAL") {
+      const active = eventPool.filter(p => !p.isSitting);
+      const shuffled = [...active].sort(() => Math.random() - 0.5);
+      const matches: Match[] = [];
+      let court = 1;
+      while (shuffled.length >= 4) {
+        const team1 = [shuffled[0].id, shuffled[1].id];
+        const team2 = [shuffled[2].id, shuffled[3].id];
+        shuffled.splice(0, 4);
+        matches.push({ id: `m-social-${Date.now()}-${court}`, court: court++, team1, team2 });
+      }
+      // the leftovers sit this round out (random by design — that IS the mode)
+      for (const p of shuffled) {
+        matches.push({ id: `m-social-bye-${Date.now()}-${p.id}`, court: court++, team1: [], team2: [], bye: true, byePlayerId: p.id });
+      }
+      setRoundState({ active: true, format, matches, submitted: false });
+      return matches;
+    }
     // generateMatches signature: (format, pool, standings, config, roundNumber, byeMap, setStandings)
     // Round 1 runs in the same tick as regenerateByes — its setState hasn't
     // flushed yet, so build entries for anyone missing (seeded by DUPR order).
