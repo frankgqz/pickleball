@@ -24,10 +24,10 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
   return (
     <section className="bg-panel rounded-2xl shadow-xl p-3">
       {/* Header */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="relative flex justify-between items-center mb-2">
         <h2 className="text-base font-bold text-text">⚙️ Event Settings</h2>
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <div>
             <button
               onClick={() => setShowTeamsInfo(v => !v)}
               aria-label="Teams mode info"
