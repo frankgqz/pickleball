@@ -193,7 +193,7 @@ export default function CourtsPanel({
               />
             </div>
 
-            <span className="self-center mt-1 text-[11px] text-subtext leading-none">vs</span>
+            <span className="self-center mt-1 -ml-1 text-[11px] text-subtext leading-none">vs</span>
             {/* Team 2 row */}
             <div className="flex items-center gap-1 mt-1 min-w-0">
               <div className="flex items-center gap-1 flex-1 min-w-0">

@@ -222,7 +222,7 @@ export default function StandingsTable({
                 const winPct = (entry as any).winPct ?? 0;
                 return (
                   <tr key={entry.id} className="border-t hover:bg-hover-bg">
-                    <td className="px-2.5 md:px-3 lg:px-4 py-1"><div className="font-medium truncate max-w-[14ch] md:max-w-[16ch] lg:max-w-[20ch]" title={entry.name}>{entry.name}{partner ? " \u264d" : ""}</div></td>
+                    <td className="px-2.5 md:px-3 lg:px-4 py-1"><div className="flex items-center gap-1 min-w-0" title={entry.name}><span className="font-medium truncate max-w-[16ch] md:max-w-[17ch] lg:max-w-[20ch]">{entry.name}</span>{partner ? <span className="flex-none text-[11px] leading-none" title={`teammates: ${partner.name}`}>🤝</span> : null}</div></td>
 
                     <td className="px-2.5 md:px-3 lg:px-5 py-1 text-center text-green-600">{entry.wins || 0}</td>
                     <td className="px-2.5 md:px-3 lg:px-5 py-1 text-center text-red-500">{entry.losses || 0}</td>

@@ -488,71 +488,76 @@ export default function RoundHistoryPanel({
               return (
                 <div
                   key={m.id}
-                  className={`rounded-lg border-2 px-3 py-2 ${m.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
+                  className={`rounded-lg border-2 px-2.5 py-1.5 ${m.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
                 >
-                  <div className="text-xs text-subtext font-medium mb-1">{m.bye ? "BYE" : `Court ${m.court ?? "\u2014"}`}</div>
-
-                  {/* Team 1 row */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      {m.bye ? (
-                        <span className="text-sm font-medium text-text truncate">{m.byePlayerId ? getPlayerName(m.byePlayerId) : "Unknown"}</span>
-                      ) : m.team1.map(id => (
-                        <span
-                          key={id}
-                          onClick={editMode ? () => handleNameClick(m, "team1", id) : undefined}
-                          title={editMode ? "Click to move to Team 2" : undefined}
-                          className={`text-sm font-medium text-text truncate flex-1 min-w-0 h-8 flex items-center px-2 rounded-lg border-2 border-purple-400/70 bg-muted-bg ${editMode ? "cursor-pointer hover:bg-hover-bg" : ""}`}
-                        >
-                          {getPlayerName(id)}
-                        </span>
-                      ))}
+                  {m.bye ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-subtext font-semibold w-7 shrink-0 text-center">–</span>
+                      <span className="text-xs font-medium text-text truncate flex-1">😴 {m.byePlayerId ? getPlayerName(m.byePlayerId) : "Unknown"}</span>
                     </div>
-                    {!m.bye && (
-                      editMode ? (
-                        <input
-                          type="number"
-                          value={m.team1Score ?? ""}
-                          onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team1Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
-                          className="w-14 h-8 shrink-0 px-1.5 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-sm"
-                          placeholder="0"
-                        />
-                      ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${"border-purple-400/70 text-text"}`}>{m.team1Score}</span>
-                      ) : (
-                        <span className="w-14 shrink-0" />
-                      )
-                    )}
-                  </div>
+                  ) : (
+                    <div className="grid grid-cols-[0.9rem_minmax(0,1fr)] gap-x-0.5">
+                      <span className="self-start pt-2 text-[11px] text-subtext leading-none">{m.court ?? "\u2014"}</span>
 
-                  {/* Team 2 row */}
-                  {!m.bye && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        {m.team2.map(id => (
-                          <span
-                            key={id}
-                            onClick={editMode ? () => handleNameClick(m, "team2", id) : undefined}
-                            title={editMode ? "Click to move to Team 1" : undefined}
-                            className={`text-sm font-medium text-text truncate flex-1 min-w-0 h-8 flex items-center px-2 rounded-lg border-2 border-green-400/70 bg-muted-bg ${editMode ? "cursor-pointer hover:bg-hover-bg" : ""}`}
-                          >
-                            {getPlayerName(id)}
-                          </span>
-                        ))}
+                      {/* Team 1 row */}
+                      <div className="flex items-center gap-1 min-w-0">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          {m.team1.map(id => (
+                            <span
+                              key={id}
+                              onClick={editMode ? () => handleNameClick(m, "team1", id) : undefined}
+                              title={editMode ? "Click to move to Team 2" : undefined}
+                              className={`text-xs font-medium text-text truncate flex-1 min-w-0 h-7 flex items-center px-1.5 rounded-lg border-2 border-purple-400/70 bg-muted-bg ${editMode ? "cursor-pointer hover:bg-hover-bg" : ""}`}
+                            >
+                              {getPlayerName(id)}
+                            </span>
+                          ))}
+                        </div>
+                        {editMode ? (
+                          <input
+                            type="number"
+                            value={m.team1Score ?? ""}
+                            onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team1Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
+                            className="w-10 h-7 shrink-0 px-1 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-xs"
+                            placeholder="0"
+                          />
+                        ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
+                          <span className="shrink-0 w-10 h-7 flex items-center justify-center text-xs rounded-lg border-2 border-purple-400/70 text-text">{m.team1Score}</span>
+                        ) : (
+                          <span className="w-10 shrink-0" />
+                        )}
                       </div>
-                      {editMode ? (
-                        <input
-                          type="number"
-                          value={m.team2Score ?? ""}
-                          onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team2Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
-                          className="w-14 h-8 shrink-0 px-1.5 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-sm"
-                          placeholder="0"
-                        />
-                      ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                        <span className={`shrink-0 w-14 h-8 flex items-center justify-center text-sm rounded-lg border-2 ${"border-green-400/70 text-text"}`}>{m.team2Score}</span>
-                      ) : (
-                        <span className="w-14 shrink-0" />
-                      )}
+
+                      <span className="self-center mt-0.5 -ml-1 text-[11px] text-subtext leading-none">vs</span>
+
+                      {/* Team 2 row */}
+                      <div className="flex items-center gap-1 mt-0.5 min-w-0">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          {m.team2.map(id => (
+                            <span
+                              key={id}
+                              onClick={editMode ? () => handleNameClick(m, "team2", id) : undefined}
+                              title={editMode ? "Click to move to Team 1" : undefined}
+                              className={`text-xs font-medium text-text truncate flex-1 min-w-0 h-7 flex items-center px-1.5 rounded-lg border-2 border-green-400/70 bg-muted-bg ${editMode ? "cursor-pointer hover:bg-hover-bg" : ""}`}
+                            >
+                              {getPlayerName(id)}
+                            </span>
+                          ))}
+                        </div>
+                        {editMode ? (
+                          <input
+                            type="number"
+                            value={m.team2Score ?? ""}
+                            onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team2Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
+                            className="w-10 h-7 shrink-0 px-1 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-xs"
+                            placeholder="0"
+                          />
+                        ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
+                          <span className="shrink-0 w-10 h-7 flex items-center justify-center text-xs rounded-lg border-2 border-green-400/70 text-text">{m.team2Score}</span>
+                        ) : (
+                          <span className="w-10 shrink-0" />
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
