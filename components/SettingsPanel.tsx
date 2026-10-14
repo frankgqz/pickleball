@@ -19,22 +19,39 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
   const [renameValue, setRenameValue] = React.useState("");
   const [renameStatus, setRenameStatus] = React.useState<"idle" | "ok" | "err">("idle");
   const [renaming, setRenaming] = React.useState(false);
+  const [showTeamsInfo, setShowTeamsInfo] = React.useState(false);
 
   return (
     <section className="bg-panel rounded-2xl shadow-xl p-3">
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-bold text-text">⚙️ Event Settings</h2>
-        <button
-          onClick={() => {
-            if (confirm("Restart event? This will clear all rounds but keep all the players in the event pool.")) {
-              onRestartEvent && onRestartEvent();
-            }
-          }}
-          className="px-2.5 py-1 text-sm bg-muted-bg text-red-600 rounded-lg hover:bg-hover-bg border border-red-400/70 transition-colors"
-        >
-          🔄 Restart
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              onClick={() => setShowTeamsInfo(v => !v)}
+              aria-label="Teams mode info"
+              className="w-5 h-5 rounded-full border border-line text-subtext text-xs leading-none hover:bg-hover-bg transition-colors"
+            >i</button>
+            {showTeamsInfo && (
+              <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5">
+                <p>Teams mode: individuals and teams share the pool — even # of individuals works.</p>
+                <p>Odd: 1 individual always byes/casual; 3 individuals ≈ 1/3 of games; 5+ mostly fine.</p>
+                <p>Pairing is optional — mark pairs in the event pool (⚭). A pair plays or byes together; changes affect the next round's generation.</p>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              if (confirm("Restart event? This will clear all rounds but keep all the players in the event pool.")) {
+                onRestartEvent && onRestartEvent();
+              }
+            }}
+            className="px-2.5 py-1 text-sm bg-muted-bg text-red-600 rounded-lg hover:bg-hover-bg border border-red-400/70 transition-colors"
+          >
+            🔄 Restart
+          </button>
+        </div>
       </div>
 
       {/* Event Name - for CSV export */}
