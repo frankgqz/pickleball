@@ -168,11 +168,11 @@ export default function CourtsPanel({
             </span>
           </div>
         ) : (
-          <div className="grid grid-cols-[1.75rem_1fr] gap-x-1">
-            <span className="row-span-2 self-center text-xs text-subtext font-semibold text-center">({match.court})</span>
+          <div className="grid grid-cols-[0.9rem_minmax(0,1fr)] gap-x-0.5">
+            <span className="row-span-2 self-center text-[11px] text-subtext leading-none">{match.court}</span>
             {/* Team 1 row — picker fixed */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 {team1Players.map((p, i) => (
                   <button
                     key={p.id}
@@ -194,8 +194,8 @@ export default function CourtsPanel({
             </div>
 
             {/* Team 2 row */}
-            <div className="flex items-center gap-2 mt-0.5">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
                 {team2Players.map((p) => (
                   <button
                     key={p.id}
@@ -287,8 +287,8 @@ export default function CourtsPanel({
       ) : (
         <>
           <div className="flex justify-between items-center mb-4">
+            <h3 className="text-base font-semibold text-text">Round {currentRoundNumber} Matches</h3>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-text">Round {currentRoundNumber} Matches</h3>
               <div className="relative">
                 <button
                   onClick={() => setShowHelp(v => !v)}
@@ -296,21 +296,21 @@ export default function CourtsPanel({
                   className="w-5 h-5 rounded-full border border-line text-subtext text-xs leading-none hover:bg-hover-bg transition-colors"
                 >i</button>
                 {showHelp && (
-                  <div className="absolute left-0 top-7 z-20 w-60 rounded-lg border-2 border-line bg-panel p-3 text-xs text-text shadow-lg">
-                    <p className="mb-1.5">Click a player to adjust court pairing.</p>
+                  <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5">
+                    <p>Click a player to adjust court pairing.</p>
                     <p>Click the ⏳ hourglass to delay a player's bye.</p>
                   </div>
                 )}
               </div>
+              {onCancelRound && (
+                <button
+                  onClick={onCancelRound}
+                  className="px-2.5 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors"
+                >
+                  ✕ Cancel Round
+                </button>
+              )}
             </div>
-            {onCancelRound && (
-              <button
-                onClick={onCancelRound}
-                className="px-2.5 py-1 bg-red-100 text-red-600 rounded-lg text-sm hover:bg-red-200 border border-red-300 transition-colors"
-              >
-                ✕ Cancel Round
-              </button>
-            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
