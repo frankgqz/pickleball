@@ -203,6 +203,42 @@ export default function Page() {
   // ============================================================
 
   
+  // ---- Teams mode: pairing lives in config.pairMap (mutual, latest only)
+  const handlePair = useCallback((a: string, b: string | null) => {
+    const prev = config.pairMap || {};
+    const next: Record<string, string> = { ...prev };
+    delete next[a];
+    if (prev[a] && next[prev[a]] === a) delete next[prev[a]];
+    if (b) {
+      delete next[b];
+      if (prev[b] && next[prev[b]] === b) delete next[prev[b]];
+      next[a] = b;
+      next[b] = a;
+    }
+    updateConfig("pairMap", next);
+  }, [config.pairMap, updateConfig]);
+
+  // sit one = sit the pair (a pair plays or byes together)
+  const toggleSittingPaired = useCallback((playerId: string) => {
+    const partnerId = config.pairMap?.[playerId];
+    const mutual = partnerId && config.pairMap?.[partnerId] === playerId ? partnerId : undefined;
+    togglePlayerSitting(playerId);
+    if (mutual) togglePlayerSitting(mutual);
+  }, [config.pairMap, togglePlayerSitting]);
+
+  // removal dissolves the pair (the pool shows the message)
+  const removeFromPoolPaired = useCallback((playerId: string) => {
+    const partnerId = config.pairMap?.[playerId];
+    const mutual = partnerId && config.pairMap?.[partnerId] === playerId ? partnerId : undefined;
+    if (mutual) {
+      const next: Record<string, string> = { ...config.pairMap };
+      delete next[playerId];
+      delete next[mutual];
+      updateConfig("pairMap", next);
+    }
+    removeFromPoolWithStandings(playerId);
+  }, [config.pairMap, updateConfig, removeFromPoolWithStandings]);
+
   const startStandardRound = useCallback(async (format: MatchFormat) => {
       if (currentRoundNumber === 1) {
         regenerateByes(config.byeTopProtection, config.byeBonusTop);
@@ -427,9 +463,12 @@ export default function Page() {
           />
           <EventPool
             eventPool={eventPool}
-            onToggleSitting={togglePlayerSitting}
-            onRemoveFromPool={removeFromPoolWithStandings}
+            onToggleSitting={toggleSittingPaired}
+            onRemoveFromPool={removeFromPoolPaired}
             onClearAll={handleClearPool}
+            teamsMode={config.roundFormat === "TEAMS"}
+            pairMap={config.pairMap || {}}
+            onPair={handlePair}
           />
         </div>
 

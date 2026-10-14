@@ -8,11 +8,46 @@ interface Props {
   onToggleSitting?: (id: string) => void;
   onRemoveFromPool?: (id: string) => void;
   onClearAll?: () => void;
+  teamsMode?: boolean;
+  pairMap?: Record<string, string>;
+  onPair?: (a: string, b: string | null) => void; // b=null = decouple
 }
 
-export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool, onClearAll }: Props) {
+export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool, onClearAll, teamsMode, pairMap, onPair }: Props) {
   const [sortBy, setSortBy] = useState<"dupr" | "recent">("dupr");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [pairingFor, setPairingFor] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // mutual pairs only — a one-way map entry is a misclick, not a pair
+  const partnerOf = (id: string): Player | undefined => {
+    const pid = pairMap?.[id];
+    return pid && pairMap?.[pid] === id ? eventPool.find(p => p.id === pid) : undefined;
+  };
+  const showNotice = (msg: string | null) => {
+    setNotice(msg);
+    if (msg) window.setTimeout(() => setNotice(cur => (cur === msg ? null : cur)), 3500);
+  };
+  const handlePairClick = (p: Player) => {
+    if (pairingFor) {
+      if (pairingFor === p.id) { setPairingFor(null); showNotice(null); return; }
+      const target = partnerOf(p.id);
+      if (target) { showNotice(`${p.name} is paired with ${target.name} — decouple first`); return; }
+      const a = eventPool.find(x => x.id === pairingFor);
+      onPair?.(pairingFor, p.id);
+      showNotice(`${a?.name ?? "player"} & ${p.name} paired — next round's generation`);
+      setPairingFor(null);
+      return;
+    }
+    const partner = partnerOf(p.id);
+    if (partner) {
+      onPair?.(p.id, null);
+      showNotice(`pair dissolved — ${p.name} & ${partner.name} (next round's generation)`);
+      return;
+    }
+    setPairingFor(p.id);
+    showNotice(`select the partner for ${p.name} — click their name`);
+  };
 
   const activeCount = eventPool.filter(p => !p.isSitting).length;
 
@@ -115,7 +150,10 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 </div>
 
                 {/* Name + DUPR in one line */}
-                <div className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-subtext" : "text-text"}`}>
+                <div
+                  onClick={pairingFor && pairingFor !== player.id ? () => handlePairClick(player) : undefined}
+                  className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-subtext" : "text-text"} ${pairingFor && pairingFor !== player.id ? "cursor-pointer hover:bg-purple-50 rounded-md -mx-1 px-1" : ""}`}
+                >
                   <span className="text-xs font-medium truncate">{player.name}</span>
                   {player.duprScore != null ? (
                     <span className="flex-none px-1.5 py-0.5 rounded-md bg-green-600 text-white text-[10px] font-bold">
@@ -126,10 +164,28 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       {player.manualDuprScore.toFixed(1)}
                     </span>
                   ) : null}
+                  {teamsMode && partnerOf(player.id) && (
+                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold max-w-[7rem] truncate" title={`Paired with ${partnerOf(player.id)!.name}`}>
+                      ⚭ {partnerOf(player.id)!.name}
+                    </span>
+                  )}
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-1.5 shrink-0">
+                  {teamsMode && (
+                    <button
+                      onClick={() => handlePairClick(player)}
+                      title={partnerOf(player.id) ? `Paired with ${partnerOf(player.id)!.name} — click to decouple` : "Pair with a partner"}
+                      className={`w-6 h-6 text-[11px] rounded-md transition-colors flex items-center justify-center ${
+                        partnerOf(player.id)
+                          ? "text-purple-700 bg-purple-100 hover:bg-purple-200"
+                          : pairingFor === player.id
+                            ? "text-white bg-purple-500"
+                            : "text-subtext hover:bg-hover-bg border border-line"
+                      }`}
+                    >⚭</button>
+                  )}
                   <label className="flex items-center gap-1 cursor-pointer">
                     <input
                       type="checkbox"
@@ -140,7 +196,10 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                     <span className={`text-xs ${player.isSitting ? "text-orange-500" : "text-subtext"}`}>sit</span>
                   </label>
                   <button
-                    onClick={() => onRemoveFromPool && onRemoveFromPool(player.id)}
+                    onClick={() => {
+                      if (partnerOf(player.id)) showNotice(`${player.name} removed — pair dissolved`);
+                      onRemoveFromPool && onRemoveFromPool(player.id);
+                    }}
                     className="w-6 h-6 text-[10px] text-red-400 hover:bg-red-100 rounded-md transition-colors flex items-center justify-center"
                     title="Remove"
                   >
