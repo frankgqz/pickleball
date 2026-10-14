@@ -98,7 +98,7 @@ export function useMatchGeneration(
         return pid && pairMap[pid] === p.id ? active.find(q => q.id === pid) : undefined;
       };
       // units: a mutual pair or a single; a pair's scores are the MEAN
-      const units: { members: Player[]; score: number }[] = [];
+      const units: { members: Player[]; score: number; order: number }[] = [];
       const claimed = new Set<string>();
       for (const p of active) {
         if (claimed.has(p.id)) continue;
@@ -108,6 +108,7 @@ export function useMatchGeneration(
         units.push({
           members,
           score: members.reduce((a, m) => a + getByeTotal(entryOf(m)), 0) / members.length,
+          order: members.reduce((a, m) => a + seedOf(m), 0) / members.length,
         });
       }
       // bye rotation first: lowest score sits (ties random); a pair = both
@@ -122,8 +123,18 @@ export function useMatchGeneration(
         sat += u.members.length;
       }
       const sitterIds = new Set(sitters.map(p => p.id));
-      // formation: the top-5 window rule
-      const pool = active.filter(p => !sitterIds.has(p.id)).sort((a, b) => seedOf(a) - seedOf(b));
+      // formation: the top-5 window rule. The QUEUE ranks UNITS by their
+      // COMBINED MEAN (Frank 2026-10-15) — pair members sit together at the
+      // pair's mean position. Ranking members individually split (hiro 1.0,
+      // Anshi 3.5) across windows: hiro read as a straddler every round and
+      // the pair fell to the last court.
+      const ranked = [...units].sort((a, b) =>
+        (a.order - b.order) ||
+        (Math.min(...a.members.map(seedOf)) - Math.min(...b.members.map(seedOf))));
+      const pool = ranked
+        .map(u => [...u.members].sort((x, y) => seedOf(x) - seedOf(y)))
+        .flat()
+        .filter(p => !sitterIds.has(p.id));
       const matches: Match[] = [];
       let court = 1;
       while (pool.length >= 4 && court <= config.courts) {
