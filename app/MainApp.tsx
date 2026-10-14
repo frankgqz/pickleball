@@ -379,7 +379,7 @@ export default function Page() {
           setStandings(initializeSeeds(freshEntries, config.orderGap));
           if (session.rounds) {
             const loadedRounds = session.rounds as unknown as CompletedRound[];
-            const computed = initializeSeeds(calculateStandingsFromRounds(freshEntries, loadedRounds), config.orderGap);
+            const computed = initializeSeeds(calculateStandingsFromRounds(freshEntries, loadedRounds, loadedPlayers, config), config.orderGap);
             setStandings(computed);
             loadedRounds.forEach(round => addRoundToHistory(round));
           }
@@ -389,7 +389,9 @@ export default function Page() {
         // they cannot diverge (the + button keys off pool state)
         const loadedRounds = session.rounds as unknown as CompletedRound[];
         loadedRounds.forEach(round => addRoundToHistory(round));
-        const computed = initializeSeeds(calculateStandingsFromRounds([], loadedRounds), config.orderGap);
+        const derivedIds = [...new Set(loadedRounds.flatMap(r => r.matches.flatMap(m => [...m.team1, ...m.team2, ...(m.byePlayerId ? [m.byePlayerId] : [])])))];
+        const derivedPool = derivedIds.map(id => ({ id, name: id, isSitting: false })) as unknown as Player[];
+        const computed = initializeSeeds(calculateStandingsFromRounds([], loadedRounds, derivedPool, config), config.orderGap);
         setStandings(computed);
         setEventPool(computed.map(e => ({ id: e.id, name: e.name, duprId: e.duprId, duprScore: e.duprScore })) as unknown as Player[]);
       }

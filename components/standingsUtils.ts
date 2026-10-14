@@ -171,79 +171,49 @@ export interface StandingsChanges {
  */
 export function calculateStandingsFromRounds(
   currentStandings: StandingsEntry[],
-  rounds: CompletedRound[]
+  rounds: CompletedRound[],
+  eventPool: Player[],
+  config: TournamentConfig
 ): StandingsEntry[] {
-  // Initialize changes map from current standings
-  const changesMap = new Map<string, StandingsChanges>();
-  
-  currentStandings.forEach(s => {
-    changesMap.set(s.id, { 
-      wins: 0, 
-      losses: 0, 
-      pointsFor: 0, 
-      pointsAgainst: 0, 
-      byeCount: 0, 
-      orderHistory: [] 
-    });
-  });
+  // FULL replay: zero the stats and re-run the LIVE per-match processor
+  // (processMatchResult) in round order — the exact code path a submit
+  // uses. The old partial copy rebuilt W/L but hardcoded seedAdjustment: 0
+  // and never re-recorded the orderHistory deltas, so generating a new
+  // round wiped the seed changes.
+  let state: StandingsEntry[] = currentStandings.map(s => ({
+    ...s,
+    wins: 0,
+    losses: 0,
+    pointsFor: 0,
+    pointsAgainst: 0,
+    byeCount: 0,
+    sitOutCount: 0,
+    seedAdjustment: 0,
+    orderHistory: [],
+  }));
 
-  // Process each round
-  rounds.forEach(r => {
-    r.matches.forEach(m => {
+  for (const r of rounds) {
+    for (const m of r.matches) {
       if (m.bye && m.byePlayerId) {
-        const changes = changesMap.get(m.byePlayerId);
-        if (changes) {
-          changes.byeCount++;
-          changes.orderHistory.push({ 
-            round: r.roundNumber, 
-            change: 0, 
-            reason: 'bye' 
-          });
-        }
+        state = state.map(s => (s.id === m.byePlayerId
+          ? {
+              ...s,
+              byeCount: (s.byeCount || 0) + 1,
+              orderHistory: [...(s.orderHistory || []), { round: r.roundNumber, change: 0, reason: "bye" }],
+            }
+          : s));
       } else {
-        const t1score = m.team1Score || 0;
-        const t2score = m.team2Score || 0;
-
-        [...m.team1, ...m.team2].forEach(pid => {
-          const changes = changesMap.get(pid);
-          if (!changes) return;
-
-          const isOnTeam1 = m.team1.includes(pid);
-          const myScore = isOnTeam1 ? t1score : t2score;
-          const oppScore = isOnTeam1 ? t2score : t1score;
-
-          if (myScore > oppScore) {
-            changes.wins++;
-          } else if (oppScore > myScore) {
-            changes.losses++;
-          }
-
-          changes.pointsFor += myScore;
-          changes.pointsAgainst += oppScore;
-        });
+        for (const pid of [...m.team1, ...m.team2]) {
+          if (!pid) continue;
+          state = state.map(s => (s.id === pid
+            ? processMatchResult(s, { match: m, eventPool, config, roundNumber: r.roundNumber })
+            : s));
+        }
       }
-    });
-  });
+    }
+  }
 
-  // Apply all changes to standings
-  return currentStandings.map(s => {
-    const changes = changesMap.get(s.id) || {
-      wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0,
-      byeCount: 0, orderHistory: []
-    };
-
-    return {
-      ...s,
-      seedAdjustment: (changes.orderHistory || []).reduce((a: number, h) => a + (h.change || 0), 0),
-      byeCount: changes.byeCount,
-      sitOutCount: 0,
-      wins: changes.wins,
-      losses: changes.losses,
-      pointsFor: changes.pointsFor,
-      pointsAgainst: changes.pointsAgainst,
-      orderHistory: changes.orderHistory,
-    };
-  });
+  return state;
 }
 
 /**
@@ -261,7 +231,7 @@ export function recalculateStandingsFromHistory(
     .filter(r => r.sessionId === sessionId)
     .sort((a, b) => a.roundNumber - b.roundNumber);
 
-  return calculateStandingsFromRounds(currentStandings, sessionRounds);
+  return calculateStandingsFromRounds(currentStandings, sessionRounds, eventPool, config);
 }
 
 // ============================================================
