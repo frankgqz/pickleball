@@ -153,7 +153,6 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <option value="TEAMS">Teams allowed</option>
               <option value="SOCIAL">Random pairings</option>
               <option value="TEAMS3" disabled>3 Player Teams (coming soon)</option>
-              <option value="PICK_PARTNER" disabled>New Partners (coming soon)</option>
             </select>
           </div>
           <div className="col-span-1">
