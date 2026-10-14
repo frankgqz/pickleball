@@ -43,6 +43,7 @@ export default function CourtsPanel({
   submitted = false,
 }: Props) {
   const [scoreError, setScoreError] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   const [confirmOverride, setConfirmOverride] = useState<{ matchId: string; team: "team1" | "team2"; value: number } | null>(null);
 
   const findPlayer = (id?: string) => eventPool.find(p => p.id === id) || null;
@@ -156,22 +157,19 @@ export default function CourtsPanel({
     return (
       <div
         key={match.id}
-        className={`rounded-lg border-2 px-3 py-2 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
+        className={`rounded-lg border-2 px-2.5 py-1.5 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
       >
-        <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-subtext font-medium">{match.bye ? "BYE" : `Court ${match.court}`}</span>
-          {!match.bye && <span className="text-xs text-subtext">Round {currentRoundNumber}</span>}
-        </div>
-
         {match.bye ? (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-text truncate">😴 {findPlayer(match.byePlayerId || "")?.name}</span>
-            <span className="text-xs text-subtext shrink-0 ml-auto" title={formatByeBreakdown(match.byePlayerId || "")}>
+            <span className="text-xs text-subtext font-semibold w-7 shrink-0 text-center">–</span>
+            <span className="text-sm font-medium text-text truncate flex-1">😴 {findPlayer(match.byePlayerId || "")?.name}</span>
+            <span className="text-xs text-subtext shrink-0" title={formatByeBreakdown(match.byePlayerId || "")}>
               bye: {getPlayerByeTotal(match.byePlayerId || "").toFixed(2)}
             </span>
           </div>
         ) : (
-          <>
+          <div className="grid grid-cols-[1.75rem_1fr] gap-x-1">
+            <span className="row-span-2 self-center text-xs text-subtext font-semibold text-center">({match.court})</span>
             {/* Team 1 row — picker fixed */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -188,7 +186,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 h-8 px-2 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
+                className="w-10 shrink-0 h-8 px-1 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
                 value={match.team1Score ?? ""}
                 onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team1"); }}
                 placeholder="0"
@@ -196,7 +194,7 @@ export default function CourtsPanel({
             </div>
 
             {/* Team 2 row */}
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-0.5">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {team2Players.map((p) => (
                   <button
@@ -211,7 +209,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-14 shrink-0 h-8 px-2 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
+                className="w-10 shrink-0 h-8 px-1 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
                 value={match.team2Score ?? ""}
                 onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team2"); }}
                 placeholder="0"
@@ -220,7 +218,7 @@ export default function CourtsPanel({
 
             {/* Unselected players available to pick */}
             {unselectedPlayers.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-line">
+              <div className="col-span-2 mt-1.5 pt-1.5 border-t border-line">
                 <div className="flex flex-wrap gap-1 items-center">
                   <span className="text-xs text-subtext">Available:</span>
                   {unselectedPlayers.slice(0, 6).map(p => (
@@ -241,7 +239,7 @@ export default function CourtsPanel({
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
@@ -289,7 +287,22 @@ export default function CourtsPanel({
       ) : (
         <>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-base font-semibold text-text">Round {currentRoundNumber} Matches</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-text">Round {currentRoundNumber} Matches</h3>
+              <div className="relative">
+                <button
+                  onClick={() => setShowHelp(v => !v)}
+                  aria-label="Court panel tips"
+                  className="w-5 h-5 rounded-full border border-line text-subtext text-xs leading-none hover:bg-hover-bg transition-colors"
+                >i</button>
+                {showHelp && (
+                  <div className="absolute left-0 top-7 z-20 w-60 rounded-lg border-2 border-line bg-panel p-3 text-xs text-text shadow-lg">
+                    <p className="mb-1.5">Click a player to adjust court pairing.</p>
+                    <p>Click the ⏳ hourglass to delay a player's bye.</p>
+                  </div>
+                )}
+              </div>
+            </div>
             {onCancelRound && (
               <button
                 onClick={onCancelRound}
