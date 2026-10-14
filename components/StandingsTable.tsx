@@ -6,6 +6,7 @@ import { StandingsEntry } from "@/components/Types";
 interface Props {
   standings: StandingsEntry[];
   onRegenerateByes?: () => void;
+  pairMap?: Record<string, string>;
 
   // Optional external control (parent can pass these to control sorting)
   sortColumn?: string;
@@ -16,6 +17,7 @@ interface Props {
 export default function StandingsTable({
   standings,
   onRegenerateByes,
+  pairMap,
   sortColumn: externalSortColumn,
   sortDirection: externalSortDirection,
   onSortChange,
@@ -208,14 +210,19 @@ export default function StandingsTable({
 
             <tbody>
               {sorted.map((entry) => {
-                const seedTotal = entry.seedTotal;
-                const byeTotal = entry.byeTotal;
+                const partnerId = pairMap?.[entry.id];
+                const partner: any = partnerId && pairMap?.[partnerId] === entry.id
+                  ? computed.find((c: any) => c.id === partnerId)
+                  : undefined;
+                // paired rows show the PAIR MEAN for both values (Frank's rule)
+                const seedTotal = partner ? (entry.seedTotal + (partner.seedTotal ?? 0)) / 2 : entry.seedTotal;
+                const byeTotal = partner ? (entry.byeTotal + (partner.byeTotal ?? 0)) / 2 : entry.byeTotal;
                 const pointDiff = entry.pointDiff;
                 const ptsPctVal = entry.ptsPct;
                 const winPct = (entry as any).winPct ?? 0;
                 return (
                   <tr key={entry.id} className="border-t hover:bg-hover-bg">
-                    <td className="px-2.5 md:px-3 lg:px-4 py-1"><div className="font-medium truncate max-w-[14ch] md:max-w-[16ch] lg:max-w-[20ch]" title={entry.name}>{entry.name}</div></td>
+                    <td className="px-2.5 md:px-3 lg:px-4 py-1"><div className="font-medium truncate max-w-[14ch] md:max-w-[16ch] lg:max-w-[20ch]" title={entry.name}>{entry.name}{partner ? " \u264d" : ""}</div></td>
 
                     <td className="px-2.5 md:px-3 lg:px-5 py-1 text-center text-green-600">{entry.wins || 0}</td>
                     <td className="px-2.5 md:px-3 lg:px-5 py-1 text-center text-red-500">{entry.losses || 0}</td>
@@ -230,9 +237,9 @@ export default function StandingsTable({
 
                     <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center"><span className="text-purple-600">{entry.byeCount || 0}</span></td>
 
-                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center ${byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
+                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center ${partner ? "text-purple-600" : byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
-                    <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center text-blue-600 cursor-help" title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
+                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-help ${partner ? "text-purple-600" : "text-blue-600"}`} title={`Order # History:\nseed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
                   </tr>
                 );
               })}

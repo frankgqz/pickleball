@@ -72,13 +72,16 @@ export function useMatchGeneration(
       setRoundState({ active: true, format, matches, submitted: false });
       return matches;
     }
-    // TEAMS: pairMap units (2) + individuals (1) pack into courts of 4.
-    // Packing rule: PAIRS FIRST (seed order within each class) — the
-    // first-fit-decreasing move that gives pairs their pair-vs-pair matches
-    // whenever the roster allows; mixed 2+1+1 courts appear only when counts
-    // force it. Within a court: a pair = a team; 4 individuals keep the
-    // 14v23 spirit ([0]+[3] vs [1]+[2] by seed). Anyone unplaced takes a
-    // bye — BOTH members of an unplaced pair (that is the rule).
+    // TEAMS: units (mutual pairs + singles). Formation = the top-5 window
+    // rule (Frank 2026-10-14): look at the top 5 players by seed. A pair
+    // forms a team iff BOTH members sit inside the window ("not only 5th" —
+    // a pair whose first member lands at the 5th spot has its partner outside
+    // -> it rolls to the next window). Two complete pairs -> both teams of
+    // the court; one complete pair -> its team + the top singles fill the
+    // other ("rest fill automatically"); none -> 4 singles (14v23 in-court).
+    // Leftover window players keep their place in line. Byes: the rotation
+    // goes FIRST — lowest bye score sits (a pair competes on its MEAN and
+    // byes as BOTH), then whoever can't fill a court byes too.
     if (format.type === "TEAMS") {
       const pairMap: Record<string, string> = config.pairMap || {};
       const tRank = [...eventPool].sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0)).map(p => p.id);
@@ -86,58 +89,87 @@ export function useMatchGeneration(
         const s = standings.find(x => x.id === p.id);
         return (s?.seed ?? tRank.indexOf(p.id) + 1) + (s?.seedAdjustment ?? 0);
       };
-      const used = new Set<string>();
-      const units: { members: Player[]; order: number }[] = [];
-      for (const p of eventPool) {
-        if (p.isSitting || used.has(p.id)) continue;
-        const partnerId = pairMap[p.id];
-        const partner = partnerId ? eventPool.find(q => q.id === partnerId && !q.isSitting) : undefined;
-        if (partner && pairMap[partner.id] === p.id && !used.has(partner.id)) {
-          used.add(p.id); used.add(partner.id);
-          units.push({ members: [p, partner], order: (seedOf(p) + seedOf(partner)) / 2 });
-        } else {
-          used.add(p.id);
-          units.push({ members: [p], order: seedOf(p) });
-        }
+      const entryOf = (p: Player) =>
+        standings.find(s => s.id === p.id) ??
+        ({ id: p.id, name: p.name, seed: tRank.indexOf(p.id) + 1, seedAdjustment: 0 } as any);
+      const active = eventPool.filter(p => !p.isSitting);
+      const partnerOf = (p: Player): Player | undefined => {
+        const pid = pairMap[p.id];
+        return pid && pairMap[pid] === p.id ? active.find(q => q.id === pid) : undefined;
+      };
+      // units: a mutual pair or a single; a pair's scores are the MEAN
+      const units: { members: Player[]; score: number }[] = [];
+      const claimed = new Set<string>();
+      for (const p of active) {
+        if (claimed.has(p.id)) continue;
+        const q = partnerOf(p);
+        const members = q ? [p, q] : [p];
+        members.forEach(m => claimed.add(m.id));
+        units.push({
+          members,
+          score: members.reduce((a, m) => a + getByeTotal(entryOf(m)), 0) / members.length,
+        });
       }
-      // pairs first, seed order within each class
-      units.sort((a, b) => (b.members.length - a.members.length) || (a.order - b.order));
-      const pool = [...units];
+      // bye rotation first: lowest score sits (ties random); a pair = both
+      const maxPlayers = config.courts * 4;
+      const needed = active.length > maxPlayers ? active.length - maxPlayers : active.length % 4;
+      const byScore = [...units].sort((a, b) => (a.score - b.score) || (Math.random() - 0.5));
+      const sitters: Player[] = [];
+      let sat = 0;
+      while (sat < needed && byScore.length) {
+        const u = byScore.shift()!;
+        sitters.push(...u.members);
+        sat += u.members.length;
+      }
+      const sitterIds = new Set(sitters.map(p => p.id));
+      // formation: the top-5 window rule
+      const pool = active.filter(p => !sitterIds.has(p.id)).sort((a, b) => seedOf(a) - seedOf(b));
       const matches: Match[] = [];
       let court = 1;
-      while (pool.length) {
-        const courtUnits: typeof units = [];
-        let slots = 4;
-        while (slots > 0) {
-          const idx = pool.findIndex(u => u.members.length <= slots);
-          if (idx === -1) break;
-          const u = pool.splice(idx, 1)[0];
-          courtUnits.push(u);
-          slots -= u.members.length;
-        }
-        const placed = courtUnits.flatMap(u => u.members);
-        if (slots > 0) {
-          // this court can't complete — these AND everyone remaining bye
-          for (const p of [...placed, ...pool.flatMap(u => u.members)]) {
-            matches.push({ id: `m-teams-bye-${Date.now()}-${p.id}`, court: 0, team1: [], team2: [], bye: true, byePlayerId: p.id });
+      while (pool.length >= 4 && court <= config.courts) {
+        const win = pool.slice(0, 5);
+        const winIds = new Set(win.map(p => p.id));
+        const complete: [Player, Player][] = [];
+        const used = new Set<string>();
+        for (const p of win) {
+          if (used.has(p.id)) continue;
+          const q = partnerOf(p);
+          if (q && winIds.has(q.id)) {
+            complete.push([p, q]);
+            used.add(p.id); used.add(q.id);
           }
-          break;
         }
-        // team split: a pair = a team; 4 individuals = 14v23 within the court
-        const byOrder = [...placed].sort((a, b) => seedOf(a) - seedOf(b));
-        let team1: string[], team2: string[];
-        const pairUnits = courtUnits.filter(u => u.members.length === 2);
-        if (pairUnits.length === 2) {
-          team1 = pairUnits[0].members.map(p => p.id);
-          team2 = pairUnits[1].members.map(p => p.id);
-        } else if (pairUnits.length === 1) {
-          team1 = pairUnits[0].members.map(p => p.id);
-          team2 = courtUnits.filter(u => u.members.length === 1).map(u => u.members[0].id);
+        const unpaired = win.filter(p => !used.has(p.id) && !partnerOf(p));
+        let team1: string[] = [];
+        let team2: string[] = [];
+        const courtIds: string[] = [];
+        if (complete.length >= 2) {
+          team1 = complete[0].map(p => p.id);
+          team2 = complete[1].map(p => p.id);
+          complete[0].concat(complete[1]).forEach(p => courtIds.push(p.id));
+        } else if (complete.length === 1) {
+          const fills = unpaired.slice(0, 2);
+          if (fills.length < 2) break;
+          team1 = complete[0].map(p => p.id);
+          team2 = fills.map(p => p.id);
+          complete[0].concat(fills).forEach(p => courtIds.push(p.id));
         } else {
+          const fills = unpaired.slice(0, 4);
+          if (fills.length < 4) break;
+          const byOrder = [...fills].sort((a, b) => seedOf(a) - seedOf(b));
           team1 = [byOrder[0].id, byOrder[3].id];
           team2 = [byOrder[1].id, byOrder[2].id];
+          fills.forEach(p => courtIds.push(p.id));
         }
         matches.push({ id: `m-teams-${Date.now()}-${court}`, court: court++, team1, team2 });
+        for (const id of courtIds) {
+          const i = pool.findIndex(x => x.id === id);
+          if (i >= 0) pool.splice(i, 1);
+        }
+      }
+      // byes: the rotation sitters + everyone who couldn't fill a court
+      for (const p of [...sitters, ...pool]) {
+        matches.push({ id: `m-teams-bye-${Date.now()}-${p.id}`, court: 0, team1: [], team2: [], bye: true, byePlayerId: p.id });
       }
       setRoundState({ active: true, format, matches, submitted: false });
       return matches;

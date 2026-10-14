@@ -203,6 +203,13 @@ export default function Page() {
   // ============================================================
 
   
+  // round 1 must honor the configured Mode (this was the "pairs don't
+  // populate on start round 1" bug — the button hardcoded FIXED_14V23)
+  const resolveRoundFormat = useCallback((): MatchFormat => {
+    const roundFmt = config.roundFormat || "FIXED_14V23";
+    return roundFmt === "TEAMS" ? TEAMS_FORMAT : roundFmt === "SOCIAL" ? SOCIAL_FORMAT : roundFmt === "PICK_PARTNER" ? PICK_PARTNER_FORMAT : FIXED_14V23_FORMAT;
+  }, [config.roundFormat]);
+
   // ---- Teams mode: pairing lives in config.pairMap (mutual, latest only)
   const handlePair = useCallback((a: string, b: string | null) => {
     const prev = config.pairMap || {};
@@ -479,7 +486,7 @@ export default function Page() {
           currentRoundNumber={currentRoundNumber}
           defaultRoundFormat={config.roundFormat || "FIXED_14V23"}
           onStartPickPartner={() => startStandardRound(PICK_PARTNER_FORMAT)}
-          onStartFixed14v23={() => startStandardRound(FIXED_14V23_FORMAT)}
+          onStartFixed14v23={() => startStandardRound(resolveRoundFormat())}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
           onUpdateMatchScore={matchGenActions.updateMatchScore}
           onSwapPlayerTeam={matchGenActions.swapPlayerTeam}
@@ -493,6 +500,7 @@ export default function Page() {
         />
 
         <StandingsTable
+            pairMap={config.pairMap || {}}
           standings={computedStandings}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
         />

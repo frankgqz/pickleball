@@ -119,23 +119,23 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="STANDARD">Standard</option>
-            <option value="FIXED_PARTNER" disabled>Teams (coming soon)</option>
-            <option value="POOL_PLAY" disabled>Pool / Finals (coming soon)</option>
+            <option value="POOL_PLAY" disabled>Pools / Finals (coming soon)</option>
           </select>
         </div>
 
         {config.format !== "POOL_PLAY" && (
           <>
           <div className="col-span-1">
-            <label className="text-xs font-medium text-subtext mb-0.5 block">Round</label>
+            <label className="text-xs font-medium text-subtext mb-0.5 block">Mode</label>
             <select
               value={config.roundFormat || "FIXED_14V23"}
               onChange={(e) => handleChange("roundFormat" as any, e.target.value as any)}
               className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
             >
-              <option value="FIXED_14V23">Standard (by seed)</option>
-              <option value="SOCIAL">Social (random partners)</option>
-              <option value="TEAMS">Teams (fixed partners)</option>
+              <option value="FIXED_14V23">Standard by seed</option>
+              <option value="TEAMS">Teams allowed</option>
+              <option value="SOCIAL">Random pairings</option>
+              <option value="TEAMS3" disabled>3 Player Teams (coming soon)</option>
               <option value="PICK_PARTNER" disabled>New Partners (coming soon)</option>
             </select>
           </div>
