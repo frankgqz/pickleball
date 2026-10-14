@@ -286,17 +286,17 @@ export default function CourtsPanel({
         </div>
       ) : (
         <>
-          <div className="flex justify-between items-center mb-4">
+          <div className="relative flex justify-between items-center mb-4">
             <h3 className="text-base font-semibold text-text">Round {currentRoundNumber} Matches</h3>
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div>
                 <button
                   onClick={() => setShowHelp(v => !v)}
                   aria-label="Court panel tips"
                   className="w-5 h-5 rounded-full border border-line text-subtext text-xs leading-none hover:bg-hover-bg transition-colors"
                 >i</button>
                 {showHelp && (
-                  <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5">
+                  <div className="absolute right-0 top-full mt-1 z-20 w-64 bg-panel border border-line rounded-lg shadow-xl p-2.5 text-xs text-text space-y-1.5 text-left">
                     <p>Click a player to adjust court pairing.</p>
                     <p>Click the ⏳ hourglass to delay a player's bye.</p>
                   </div>

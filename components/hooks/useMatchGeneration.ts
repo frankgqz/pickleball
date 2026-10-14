@@ -5,7 +5,7 @@
 
 import { useCallback } from "react";
 import { Player, StandingsEntry, TournamentConfig, Match, MatchFormat, RoundState } from "@/components/Types";
-import { generateMatches } from "../MatchEngine";
+import { generateMatches, getByeTotal } from "../MatchEngine";
 
 // Format constants with proper literal types (avoids type inference issues)
 const PICK_PARTNER_FORMAT: MatchFormat = { type: "PICK_PARTNER", allowPartnerRepeat: false };
@@ -37,21 +37,37 @@ export function useMatchGeneration(
 
   // Generate matches for PICK_PARTNER or FIXED_14V23 formats
   const generateStandardMatches = useCallback((format: MatchFormat): Match[] => {
-    // SOCIAL: pure random partners and opponents — no seeds, no standings.
+    // SOCIAL: random partners and opponents — no seeds, no standings. Only
+    // the BYE is fair: it goes to whoever has byed the least (lowest bye
+    // total, ties broken randomly); the rest is pure shuffle.
     if (format.type === "SOCIAL") {
       const active = eventPool.filter(p => !p.isSitting);
-      const shuffled = [...active].sort(() => Math.random() - 0.5);
+      const rank = [...eventPool].sort((a, b) => (b.duprScore || 0) - (a.duprScore || 0)).map(p => p.id);
+      const entryOf = (p: Player) =>
+        standings.find(s => s.id === p.id) ??
+        ({ id: p.id, name: p.name, seed: rank.indexOf(p.id) + 1, seedAdjustment: 0 } as any);
+      const leftovers = active.length % 4;
+      let rest = [...active].sort(() => Math.random() - 0.5);
+      const byePlayers: Player[] = [];
+      if (leftovers > 0) {
+        const byBye = [...rest].sort((a, b) => {
+          const d = getByeTotal(entryOf(a)) - getByeTotal(entryOf(b));
+          return d !== 0 ? d : Math.random() - 0.5;
+        });
+        byePlayers.push(...byBye.slice(0, leftovers));
+        const byeIds = new Set(byePlayers.map(p => p.id));
+        rest = rest.filter(p => !byeIds.has(p.id));
+      }
       const matches: Match[] = [];
       let court = 1;
-      while (shuffled.length >= 4) {
-        const team1 = [shuffled[0].id, shuffled[1].id];
-        const team2 = [shuffled[2].id, shuffled[3].id];
-        shuffled.splice(0, 4);
+      while (rest.length >= 4) {
+        const team1 = [rest[0].id, rest[1].id];
+        const team2 = [rest[2].id, rest[3].id];
+        rest.splice(0, 4);
         matches.push({ id: `m-social-${Date.now()}-${court}`, court: court++, team1, team2 });
       }
-      // the leftovers sit this round out (random by design — that IS the mode)
-      for (const p of shuffled) {
-        matches.push({ id: `m-social-bye-${Date.now()}-${p.id}`, court: court++, team1: [], team2: [], bye: true, byePlayerId: p.id });
+      for (const p of byePlayers) {
+        matches.push({ id: `m-social-bye-${Date.now()}-${p.id}`, court: 0, team1: [], team2: [], bye: true, byePlayerId: p.id });
       }
       setRoundState({ active: true, format, matches, submitted: false });
       return matches;
