@@ -2,10 +2,10 @@ import type { Theme } from './theme'
 
 export const STORAGE_KEY = 'gqz-theme'
 
-const VALID_THEMES: Theme[] = ['wood', 'night', 'bubble', 'matcha']
+const VALID_THEMES: Theme[] = ['wood', 'night', 'bubble', 'onsen']
 
 // legacy cookie values from before the rename
-const LEGACY: Record<string, Theme> = { dark: 'night', sky: 'bubble' }
+const LEGACY: Record<string, Theme> = { dark: 'night', sky: 'bubble', matcha: 'onsen' }
 
 export function getStoredTheme(): Theme | null {
   if (typeof document === 'undefined') return null

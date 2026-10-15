@@ -6,14 +6,14 @@ const themeIcons: Record<Theme, string> = {
   wood: '🍂',
   night: '🌙',
   bubble: '🫧',
-  matcha: '🍵',
+  onsen: '♨️',
 }
 
 const toggleBg: Record<Theme, string> = {
   wood: '#E8E0D5',
   night: '#22262C',
   bubble: '#DCEEFF',
-  matcha: '#E0DDD5',
+  onsen: '#E9EAE5',
 }
 
 export function ThemeToggle() {

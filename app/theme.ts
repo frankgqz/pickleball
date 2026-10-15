@@ -1,4 +1,4 @@
-export type Theme = 'wood' | 'night' | 'bubble' | 'matcha'
+export type Theme = 'wood' | 'night' | 'bubble' | 'onsen'
 
 // ============================================
 // Tier 1 — PRIMITIVES: the only typed colors.
@@ -30,6 +30,14 @@ export interface ThemeColors {
   buttonEnd: string
   buttonShadow: string
   buttonShadowPressed: string
+  // Tier 3 — interactive ladder (mirror of theme.css; per-theme voices live in CSS)
+  motionFast: string
+  motionBase: string
+  motionEase: string
+  error: string
+  disabledOpacity: number
+  focusRing: string
+  hoverShadow: string
   panel: string
   particleHues?: { hue: [number, number]; sat: [number, number] }[];
 
@@ -106,6 +114,14 @@ function make(t: ThemeSpec): ThemeColors {
     buttonEnd: p.accent2,
     buttonShadow: hexA(p.accent, 0.45),
     buttonShadowPressed: hexA(p.accent2, 0.3),
+    // interactive ladder (generic derivations; theme.css carries the voices)
+    motionFast: '150ms',
+    motionBase: '220ms',
+    motionEase: 'cubic-bezier(0.2, 0, 0, 1)',
+    error: '#c4453c',
+    disabledOpacity: 0.45,
+    focusRing: `0 0 0 2px ${hexA(p.bg, 0.9)}, 0 0 0 5px ${p.accent}`,
+    hoverShadow: `0 0 18px ${hexA(p.sparkle, 0.4)}`,
     particleHues: t.particleHues,
     // typography
     fontFamily: body,
@@ -137,8 +153,8 @@ export const themes: Record<Theme, ThemeColors> = {
       text: '#f5e6d3',
       muted: '#b8956a',
       accent: '#d4a574',
-      accent2: '#8b6f47',
-      sparkle: '#e8b06a',
+      accent2: '#e8b06a',
+      sparkle: '#f4c887',
     },
     particleHues: [
       { hue: [15, 35],  sat: [50, 80] },
@@ -207,7 +223,7 @@ export const themes: Record<Theme, ThemeColors> = {
   }),
 
   // ONSEN STONE — wet stone, cedar, moss, steam; Fraunces + DM Sans
-  matcha: make({
+  onsen: make({
     primitives: {
       bg: '#e9eae5',
       surface: '#f7f8f4',
@@ -231,4 +247,4 @@ export const themes: Record<Theme, ThemeColors> = {
   }),
 }
 
-export const themeOrder: Theme[] = ['wood', 'night', 'bubble', 'matcha']
+export const themeOrder: Theme[] = ['wood', 'night', 'bubble', 'onsen']

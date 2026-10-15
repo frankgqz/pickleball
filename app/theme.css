@@ -1,7 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cause&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Playwrite+NG+Modern:wght@100;200;300;400&display=swap");
+/* keep this URL identical to googleFontsUrl in theme.ts */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Bellota:wght@300;400;700&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap");
 
 
 /* src/theme.css — tiered palette
@@ -44,8 +42,8 @@
   --c3: #f5e6d3;
   --c4: #b8956a;
   --c5: #d4a574;
-  --c6: #8b6f47;
-  --c7: #e8b06a;
+  --c6: #e8b06a;
+  --c7: #f4c887;
 }
 
 [data-theme='night'] {
@@ -74,18 +72,21 @@
   --c7: #FF8FC5;
 }
 
+[data-theme='onsen'],
 [data-theme='matcha'] {
   --theme-radius-button: 14px;
   --theme-radius-card: 18px;
   --theme-radius-input: 8px;
-  --c1: #f0f4e8;
-  --c2: #fbfbf2;
-  --c3: #2d3a1f;
-  --c4: #6b7a52;
-  --c5: #7a9e3f;
-  --c6: #4f6b29;
-  --c7: #a8c46a;
+  --c1: #e9eae5;
+  --c2: #f7f8f4;
+  --c3: #2e3538;
+  --c4: #6b7472;
+  --c5: #6f8464;
+  --c6: #a9714e;
+  --c7: #c5d4cc;
 }
+
+
 
 @keyframes theme-icon-spin {
   from { transform: rotate(0deg) scale(0.5); opacity: 0; }
@@ -97,4 +98,121 @@ body {
   background-color: var(--theme-bg);
   color: var(--theme-text);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================================
+   Tier 3 — THE INTERACTIVE LADDER (states layer)
+   Every interactive element gets hover / press / focus / error /
+   disabled free. :where() keeps specificity at zero — consumers
+   override freely. Per-theme VOICES below; keep shared values in
+   sync with theme.ts (motion/error/disabled).
+   ============================================================ */
+
+:root {
+  --theme-error: #c4453c;
+  --theme-disabled-opacity: 0.45;
+  --theme-motion-fast: 150ms;
+  --theme-motion-base: 220ms;
+  --theme-motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  /* state voice defaults (per themes refine below) */
+  --theme-hover-lift: 1px;
+  --theme-hover-brightness: 1.08;
+  --theme-hover-saturate: 1.05;
+  --theme-hover-shadow: none;
+  --theme-focus-shadow: 0 0 0 2px var(--c2), 0 0 0 5px var(--c5);
+}
+
+/* wood — the verb is an amber glow (accent-2 = the maple light) */
+[data-theme='wood'] {
+  --theme-hover-brightness: 1.14;
+  --theme-hover-saturate: 1.18;
+  --theme-hover-shadow: 0 0 18px color-mix(in srgb, var(--c7) 45%, transparent);
+  --theme-focus-shadow: 0 0 0 3px var(--c1), 0 0 0 6px var(--c7), 0 0 18px color-mix(in srgb, var(--c7) 55%, transparent);
+}
+
+/* night — the verb is neon (accent-2 = the cyberpunk green), never murky */
+[data-theme='night'] {
+  --theme-hover-brightness: 1.18;
+  --theme-hover-saturate: 1.25;
+  --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--c6) 26%, transparent);
+  --theme-focus-shadow: 0 0 0 2px var(--c1), 0 0 0 5px var(--c5), 0 0 16px color-mix(in srgb, var(--c5) 45%, transparent), 0 0 26px color-mix(in srgb, var(--c6) 22%, transparent);
+}
+
+/* bubble — the verb is float (the pink-into-sky gradient layer intact) */
+[data-theme='bubble'] {
+  --theme-hover-lift: 3px;
+  --theme-hover-brightness: 1.03;
+  --theme-hover-saturate: 1.1;
+  --theme-hover-shadow: 0 12px 26px rgba(46, 74, 107, 0.18);
+  --theme-focus-shadow: 0 0 0 2px #fff, 0 0 0 6px color-mix(in srgb, var(--c5) 65%, transparent);
+}
+
+/* onsen — the verb is mist (sparkle = the steam), ring in moss (readable) */
+[data-theme='onsen'],
+[data-theme='matcha'] {
+  --theme-hover-brightness: 1.05;
+  --theme-hover-saturate: 1.08;
+  --theme-hover-shadow: 0 0 0 1px color-mix(in srgb, var(--c7) 85%, transparent), 0 0 16px color-mix(in srgb, var(--c7) 50%, transparent);
+  --theme-focus-shadow: 0 0 0 2px var(--c2), 0 0 0 5px var(--c5), 0 0 14px color-mix(in srgb, var(--c5) 35%, transparent);
+}
+
+/* motion + state transitions */
+:where(button, [role='button'], input, select, textarea, a, .btn, [data-interactive]) {
+  transition:
+    transform var(--theme-motion-fast) var(--theme-motion-ease),
+    background var(--theme-motion-fast) var(--theme-motion-ease),
+    border-color var(--theme-motion-fast) var(--theme-motion-ease),
+    box-shadow var(--theme-motion-fast) var(--theme-motion-ease),
+    filter var(--theme-motion-fast) var(--theme-motion-ease),
+    opacity var(--theme-motion-fast) var(--theme-motion-ease);
+}
+
+/* hover — only on devices that actually hover (no stuck taps) */
+@media (hover: hover) {
+  :where(button, [role='button'], .btn, [data-interactive]):hover {
+    transform: translateY(calc(var(--theme-hover-lift) * -1));
+    filter: brightness(var(--theme-hover-brightness)) saturate(var(--theme-hover-saturate));
+    box-shadow: var(--theme-hover-shadow);
+  }
+}
+
+/* press — the dip */
+:where(button, [role='button'], .btn, [data-interactive]):active {
+  transform: scale(0.96);
+  filter: brightness(0.95);
+  box-shadow: var(--theme-btn-shadow-pressed, none);
+}
+
+/* focus — keyboard only, the theme's voice */
+:where(button, [role='button'], input, select, textarea, a, .btn, [data-interactive]):focus-visible {
+  outline: none;
+  box-shadow: var(--theme-focus-shadow);
+}
+:where(input, select, textarea):focus-visible {
+  border-color: var(--theme-accent);
+}
+
+/* error — semantic, theme-independent */
+:where(input, select, textarea):where(.is-error, [aria-invalid='true']) {
+  border-color: var(--theme-error);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-error) 25%, transparent);
+}
+
+/* disabled */
+:where(:disabled, [aria-disabled='true']) {
+  opacity: var(--theme-disabled-opacity);
+  cursor: not-allowed;
+  filter: saturate(0.55);
+}
+
+/* reduced motion — nothing moves for users who asked for stillness */
+@media (prefers-reduced-motion: reduce) {
+  :where(button, [role='button'], input, select, textarea, a, .btn, [data-interactive]) {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  :where(button, [role='button'], .btn, [data-interactive]):hover,
+  :where(button, [role='button'], .btn, [data-interactive]):active {
+    transform: none;
+  }
 }
