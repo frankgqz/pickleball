@@ -186,7 +186,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-10 shrink-0 h-8 px-1 border-2 team-1 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
+                className="w-11 shrink-0 h-8 px-1 no-spin border-2 team-1 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
                 value={match.team1Score ?? ""}
                 onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team1"); }}
                 placeholder="0"
@@ -210,7 +210,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-10 shrink-0 h-8 px-1 border-2 team-2 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
+                className="w-11 shrink-0 h-8 px-1 no-spin border-2 team-2 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
                 value={match.team2Score ?? ""}
                 onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team2"); }}
                 placeholder="0"

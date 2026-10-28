@@ -518,13 +518,13 @@ export default function RoundHistoryPanel({
                             type="number"
                             value={m.team1Score ?? ""}
                             onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team1Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
-                            className="w-10 h-7 shrink-0 px-1 border-2 team-1 rounded-lg text-center bg-muted-bg text-text text-xs"
+                            className="w-11 h-7 shrink-0 px-1 no-spin border-2 team-1 rounded-lg text-center bg-muted-bg text-text text-xs"
                             placeholder="0"
                           />
                         ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                          <span className="shrink-0 w-10 h-7 flex items-center justify-center text-xs rounded-lg border-2 team-1 text-text">{m.team1Score}</span>
+                          <span className="shrink-0 w-11 h-7 flex items-center justify-center text-xs rounded-lg border-2 team-1 text-text">{m.team1Score}</span>
                         ) : (
-                          <span className="w-10 shrink-0" />
+                          <span className="w-11 shrink-0" />
                         )}
                       </div>
 
@@ -549,13 +549,13 @@ export default function RoundHistoryPanel({
                             type="number"
                             value={m.team2Score ?? ""}
                             onChange={(e) => { const v = e.target.value; updateMatchScore(m.id, "team2Score", (v === "" ? undefined : parseInt(v) || 0) as any); }}
-                            className="w-10 h-7 shrink-0 px-1 border-2 team-2 rounded-lg text-center bg-muted-bg text-text text-xs"
+                            className="w-11 h-7 shrink-0 px-1 no-spin border-2 team-2 rounded-lg text-center bg-muted-bg text-text text-xs"
                             placeholder="0"
                           />
                         ) : m.team1Score !== undefined && m.team2Score !== undefined ? (
-                          <span className="shrink-0 w-10 h-7 flex items-center justify-center text-xs rounded-lg border-2 team-2 text-text">{m.team2Score}</span>
+                          <span className="shrink-0 w-11 h-7 flex items-center justify-center text-xs rounded-lg border-2 team-2 text-text">{m.team2Score}</span>
                         ) : (
-                          <span className="w-10 shrink-0" />
+                          <span className="w-11 shrink-0" />
                         )}
                       </div>
                     </div>

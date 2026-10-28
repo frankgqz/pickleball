@@ -85,3 +85,8 @@ code, kbd, pre, .font-mono {
   color: #fff;
 }
 .role-danger:hover:not(:disabled) { filter: brightness(1.08); }
+
+/* score pills: kill number spinners (Chrome reserves ~15px for them) so 2-3 digits fit */
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
+.no-spin { -moz-appearance: textfield; appearance: textfield; }
