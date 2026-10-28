@@ -300,7 +300,7 @@ export default function RoundHistoryPanel({
             )}
             <button
               onClick={() => setPastSessionsOpen(o => !o)}
-              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+              className="px-2.5 py-1 rounded-lg role-quiet   text-sm font-medium"
             >
               {pastSessionsOpen ? "▲ Hide" : "📂 Load"}
             </button>
@@ -422,7 +422,7 @@ export default function RoundHistoryPanel({
                   loadPastSessions();
                   setSelectedSessionLabel(l => (l ? l.replace("🎾 ", "🏁 ") : l));
                 }}
-                className="w-full px-3 py-2 rounded-lg role-quiet   text-sm font-medium"
+                className="w-full px-3 py-2 rounded-lg role-tint   text-sm font-medium"
               >
                 ⏹ End Session
               </button>

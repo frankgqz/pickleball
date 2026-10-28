@@ -148,3 +148,92 @@ three volumes of one family; Danger (red) sits outside it.
 2. Quiet/Tint button washes (settings + courts panel compact scale)
 3. byes quiet + missing-DUPR red-warning tint
 4. docs committed alongside the implementation
+
+---
+
+# Part 4 — palette notes & the stray pair (2026-10-28, discussion only)
+
+**Verdict: EventPool highlight -> accent-2; wood accent-1 darkens to bark
+(amber stays; don't steal onsen's palette — season is the differentiation);
+night's brown is the WASH recipe, not the palette (mix toward transparent +
+dark themes wash with their neon side); bubble swaps to blue + PINK-red (guard
+the danger pin); onsen's stone (c7) becomes its wash/glow source; the two +
+buttons share Tint; Edit Round = Tint ("goes somewhere"), Hide = Quiet ghost
+("small thing in place"). Theme-repo edits needed: wood c5 + bubble c5/c6 only.**
+
+## The night-brown mechanism (why brown "shouldn't exist" and doesn't have to)
+
+The washes mixed accent TOWARD THE PANEL; orange 14% toward #131316 = mud.
+Fix: wash = hue at low alpha toward transparent (hue stays pure), and dark
+themes wash with their NEON side (night quiet/tint = blue family). Orange
+stays in night's palette where it belongs (the Blade Runner pair) — it just
+stops being diluted into mud.
+
+## Per-theme wash sources (the "per-theme verbs" pattern)
+
+wood = amber · night = neon blue · bubble = pink/blue · onsen = STONE (c7 —
+the sparkle finally works for a living: misty washes + steam glow).
+
+## Theme-repo primitive edits (when approved)
+
+| theme | change | why |
+|---|---|---|
+| wood | c5 -> deep bark brown (c6 amber stays) | accents were twins; contrast inside autumn, onsen keeps its forest identity |
+| bubble | c5 -> baby blue, c6 -> pink-red (#FF7A9E-ish, NOT brick) | blue is bubble's soul as primary; pink-red guards the pinned danger red |
+| night | none (palette right) | the brown was the recipe's fault |
+| onsen | none (c7 promoted in the ROLE layer) | stone = wash/glow source |
+
+## The stray pair (think-first items, proposed not built)
+
+Edit Round = **Tint** (enters a mode — "goes somewhere"); Hide = **Quiet
+ghost** (visibility toggle — "small thing in place"). Rule this encodes:
+Tint = open/move, Quiet = in-place utility. Retro-explains ✏️/rename/csv
+(quiet) vs pair/add (tint).
+
+## Queued for the next build
+
+EventPool green highlight -> accent-2 tint · both + buttons on Tint · wash
+recipe fix (transparent-mix + per-theme wash hue) · Edit Round + Hide per the
+rule above.
+
+---
+
+# Part 5 — palette decisions + the naming unification (2026-10-28, discussion)
+
+**Verdict: buttons live in accent-1 at three volumes (14%/22%/full) — accent-2
+becomes pure identity (team-2, state hues); the EventPool highlight = c7
+SPARKLE tint; wood = popped gold c5 / autumn amber c6 / LEAF-GREEN c7; onsen
+drops bark for stone (wood owns warm, onsen owns cool); bubble = baby-blue c5
++ pink-red c6 (#FF7A9E, never brick — the danger pin); the two + buttons share
+Tint (= accent-1, so bubble's + is blue, not pink). Naming: theme.ts's named
+primitives WIN; --c1..--c7 become documented aliases. c2 gets named out loud.**
+
+## The sourcing correction (Frank's "+ is pink" caught it)
+
+Tint was wrongly sourced from accent-2 — but accent-2's job is TEAM-2
+identity (it's the other team on the card). Buttons borrowing it collide.
+New law: the button family = accent-1 only, three volumes; identity hues
+(accent-2, sparkle) never dress buttons.
+
+## Palette proposals (hex candidates)
+
+| theme | c5 accent | c6 accent-2 | c7 sparkle |
+|---|---|---|---|
+| wood | #f4c887 (popped gold — old c7 promoted) | #e8b06a (autumn amber) | #8ab264 (leaf green; #6f8464 if moodier) |
+| night | #FF6A1F (stays) | #35C4FF (stays) | #35C4FF (stays) |
+| bubble | #8ED0FF (baby blue — promoted) | #FF7A9E (pink-red, NOT brick) | pink-red sparkle or pale blue |
+| onsen | #6f8464 (moss, stays) | #a3b0a6 (STONE — bark dropped) | #c5d4cc (pale mist, stays) |
+
+Condition on wood: c5 must read clearly LIGHTER than c6 or the twins return.
+
+## The naming unification (theme repo)
+
+theme.ts names = the vocabulary (bg/panel/text/muted/accent/accent2/sparkle);
+--c1..--c7 = documented aliases with ONE published mapping table. c2 = the
+raised-surface color — name it out loud. "A name carries the why" (Frank's
+law) — position numbers don't.
+
+## Highlight + strays (queued)
+
+EventPool highlight -> sparkle (c7) tint · both + on Tint(accent-1) ·
+Edit Round = Tint (goes somewhere) · Hide = Quiet ghost (in place).

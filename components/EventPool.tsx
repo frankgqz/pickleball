@@ -115,7 +115,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
             const containerClass = player.isSitting
               ? "flex items-center gap-2 px-2 rounded-lg border edge-quiet bg-muted-bg h-10"
               : hasDupr
-              ? "flex items-center gap-2 px-2 rounded-lg border border-green-400/70 bg-muted-bg h-10"
+              ? "flex items-center gap-2 px-2 rounded-lg border edge-sparkle bg-muted-bg h-10"
               : "flex items-center gap-2 px-2 rounded-lg border edge-warn bg-muted-bg h-10";
 
             return (
@@ -139,7 +139,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                         player.isSitting 
                           ? "bg-muted-bg text-subtext" 
                           : hasDupr 
-                            ? "bg-green-200 text-green-800" 
+                            ? "bg-sparkle text-text" 
                             : "bg-red-100 text-red-600"
                       }`}
                       style={{ textTransform: 'uppercase' }}
