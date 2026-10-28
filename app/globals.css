@@ -44,3 +44,24 @@ h1, h2, h3, h4, h5, h6 {
 code, kbd, pre, .font-mono {
   font-family: var(--theme-font-family-mono, var(--font-geist-mono, ui-monospace, SFMono-Regular, Menlo, monospace));
 }
+
+/* ---- color role pass (docs/button-roles.md, Frank 2026-10-28) ---- */
+:root, [data-theme='wood']   { --skeu-glow: #e8b06a9e; }
+[data-theme='night']         { --skeu-glow: #ff6a1f9e; }
+[data-theme='bubble']        { --skeu-glow: #8b7cf8a6; }
+[data-theme='onsen'],
+[data-theme='matcha']        { --skeu-glow: #6f8464a6; }
+.team-1 { border-color: color-mix(in srgb, var(--c5) 45%, transparent); background: color-mix(in srgb, var(--c5) 10%, var(--theme-muted-bg)); }
+.team-2 { border-color: color-mix(in srgb, var(--c6) 45%, transparent); background: color-mix(in srgb, var(--c6) 10%, var(--theme-muted-bg)); }
+.edge-quiet { border-color: var(--theme-border); }
+.edge-tint { border-color: color-mix(in srgb, var(--c6) 45%, transparent); }
+.edge-warn { border-color: color-mix(in srgb, var(--theme-error) 45%, transparent); }
+.tint-text { color: var(--c6); }
+.accent-text { color: var(--c5); }
+.tint-bg { background: color-mix(in srgb, var(--c6) 10%, var(--theme-muted-bg)); }
+.role-quiet { background: color-mix(in srgb, var(--c5) 14%, var(--theme-panel)); border: 1px solid color-mix(in srgb, var(--c5) 32%, transparent); color: var(--theme-text); }
+.role-quiet:hover { background: color-mix(in srgb, var(--c5) 20%, var(--theme-panel)); border-color: color-mix(in srgb, var(--c5) 55%, transparent); }
+.role-tint { background: color-mix(in srgb, var(--c6) 22%, var(--theme-panel)); border: 1px solid color-mix(in srgb, var(--c6) 45%, transparent); color: var(--theme-text); }
+.role-tint:hover { background: color-mix(in srgb, var(--c6) 30%, var(--theme-panel)); }
+.role-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--c5) 85%, #fff) 0%, var(--c5) 52%, color-mix(in srgb, var(--c5) 72%, var(--c6)) 100%); color: #fff; border: 0; box-shadow: inset 0 1px 0 #ffffff59, inset 0 -2px 0 #0003, 0 1px 2px #0006, 0 8px 24px -6px var(--skeu-glow); }
+.role-primary:hover { filter: brightness(1.05); }

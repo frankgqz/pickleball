@@ -341,7 +341,7 @@ export default function PlayerDatabase({
           const isEditing = editingId === player.id;
 
           return (
-            <div key={player.id} className={`px-2 py-1 rounded-lg border border-line ${hasId ? 'bg-muted-bg text-text' : 'bg-yellow-50 text-yellow-900'}`}>
+            <div key={player.id} className={`px-2 py-1 rounded-lg border border-line ${hasId ? 'bg-muted-bg text-text' : 'bg-red-50 text-red-700'}`}>
               {isEditing ? (
                 <div className="space-y-1.5 py-1">
                   <div className="flex flex-wrap gap-1.5 items-end">
@@ -381,7 +381,7 @@ export default function PlayerDatabase({
                     {player.imageUrl ? (
                       <img src={player.imageUrl} alt={player.name} className="w-7 h-7 rounded-full object-cover border border-line" />
                     ) : (
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-line ${hasId ? 'bg-muted-bg text-text' : 'bg-yellow-200 text-yellow-800'}`} style={{ textTransform: 'uppercase' }}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[10px] border border-line ${hasId ? 'bg-muted-bg text-text' : 'bg-red-100 text-red-600'}`} style={{ textTransform: 'uppercase' }}>
                         {initials}
                       </div>
                     )}
@@ -406,7 +406,7 @@ export default function PlayerDatabase({
                       </div>
                       <div className="flex items-center gap-1.5">
                         {inPool ? (
-                          <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded-md bg-muted-bg text-orange-500 border border-orange-300 hover:bg-orange-100 transition-colors text-sm font-bold">−</button>
+                          <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded-md bg-muted-bg text-subtext border border-line hover:bg-muted-bg transition-colors text-sm font-bold">−</button>
                         ) : (
                           <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded-md bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10">+</button>
                         )}

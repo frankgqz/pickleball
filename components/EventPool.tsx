@@ -113,10 +113,10 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
             
             // Consistent row height, background based on state
             const containerClass = player.isSitting
-              ? "flex items-center gap-2 px-2 rounded-lg border border-orange-400/70 bg-muted-bg h-10"
+              ? "flex items-center gap-2 px-2 rounded-lg border edge-quiet bg-muted-bg h-10"
               : hasDupr
               ? "flex items-center gap-2 px-2 rounded-lg border border-green-400/70 bg-muted-bg h-10"
-              : "flex items-center gap-2 px-2 rounded-lg border border-yellow-400/70 bg-muted-bg h-10";
+              : "flex items-center gap-2 px-2 rounded-lg border edge-warn bg-muted-bg h-10";
 
             return (
               <div key={player.id} className={containerClass} title={player.duprId || player.duprNumericId || "No DUPR - may affect export"}>
@@ -137,10 +137,10 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                     <div
                       className={`w-full h-full rounded-full flex items-center justify-center font-bold text-xs border border-line ${
                         player.isSitting 
-                          ? "bg-orange-200 text-orange-700" 
+                          ? "bg-muted-bg text-subtext" 
                           : hasDupr 
                             ? "bg-green-200 text-green-800" 
-                            : "bg-yellow-200 text-yellow-800"
+                            : "bg-red-100 text-red-600"
                       }`}
                       style={{ textTransform: 'uppercase' }}
                     >
@@ -160,7 +160,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       {player.duprScore.toFixed(3)}
                     </span>
                   ) : player.manualDuprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-yellow-50 text-yellow-900 text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-bold">
                       {player.manualDuprScore.toFixed(1)}
                     </span>
                   ) : null}
@@ -193,7 +193,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       onChange={() => onToggleSitting && onToggleSitting(player.id)}
                       className="w-3.5 h-3.5 rounded-md"
                     />
-                    <span className={`text-xs ${player.isSitting ? "text-orange-500" : "text-subtext"}`}>sit</span>
+                    <span className={`text-xs ${player.isSitting ? "text-subtext" : "text-subtext"}`}>sit</span>
                   </label>
                   <button
                     onClick={() => {

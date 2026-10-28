@@ -138,7 +138,7 @@ export default function StandingsTable({
         <div className="flex items-center gap-3">
           <button
             onClick={onRegenerateByes}
-            className="px-2.5 py-1 bg-muted-bg text-orange-600 rounded-lg text-sm hover:bg-hover-bg border border-orange-400/70"
+            className="px-2.5 py-1 bg-muted-bg text-red-600 rounded-lg text-sm hover:bg-hover-bg border border-red-300"
             title="Regen bye base scores"
           >
             🎲 Regen Bye
@@ -235,11 +235,11 @@ export default function StandingsTable({
 
                     <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
-                    <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center"><span className="text-purple-600">{entry.byeCount || 0}</span></td>
+                    <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center"><span className="accent-text">{entry.byeCount || 0}</span></td>
 
-                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center ${partner ? "text-purple-600" : byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
+                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center ${partner ? "accent-text" : byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
-                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-help ${partner ? "text-purple-600" : "text-blue-600"}`} title={`Seed history:\ninitial seed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
+                    <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-help ${partner ? "accent-text" : "text-blue-600"}`} title={`Seed history:\ninitial seed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
                   </tr>
                 );
               })}

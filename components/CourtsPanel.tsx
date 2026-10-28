@@ -157,7 +157,7 @@ export default function CourtsPanel({
     return (
       <div
         key={match.id}
-        className={`rounded-lg border-2 px-2.5 py-1.5 ${match.bye ? "border-orange-400/70 bg-muted-bg" : "border-line bg-muted-bg"}`}
+        className={`rounded-lg border-2 px-2.5 py-1.5 ${match.bye ? "edge-quiet bg-muted-bg" : "border-line bg-muted-bg"}`}
       >
         {match.bye ? (
           <div className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export default function CourtsPanel({
                     key={p.id}
                     onClick={i === 0 ? undefined : () => onSwapPlayerTeam(match.id, p.id)}
                     title={i === 0 ? "Picker (fixed)" : "Click to swap"}
-                    className={`flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 border-purple-400/70 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
+                    className={`flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 team-1 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
                   >
                     {p.name}
                   </button>
@@ -186,7 +186,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-10 shrink-0 h-8 px-1 border-2 border-purple-400/70 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
+                className="w-10 shrink-0 h-8 px-1 border-2 team-1 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
                 value={match.team1Score ?? ""}
                 onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team1"); }}
                 placeholder="0"
@@ -202,7 +202,7 @@ export default function CourtsPanel({
                     key={p.id}
                     onClick={() => onSwapPlayerTeam(match.id, p.id)}
                     title="Click to swap into Team 1"
-                    className="flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 border-green-400/70 text-text text-sm font-medium hover:bg-hover-bg"
+                    className="flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 team-2 text-text text-sm font-medium hover:bg-hover-bg"
                   >
                     {p.name}
                   </button>
@@ -210,7 +210,7 @@ export default function CourtsPanel({
               </div>
               <input
                 type="number"
-                className="w-10 shrink-0 h-8 px-1 border-2 border-green-400/70 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
+                className="w-10 shrink-0 h-8 px-1 border-2 team-2 rounded-lg text-center bg-muted-bg text-text text-sm font-medium"
                 value={match.team2Score ?? ""}
                 onChange={(e) => { const v = e.target.value; onUpdateMatchScore(match.id, (v === "" ? undefined : parseInt(v) || 0) as any, "team2"); }}
                 placeholder="0"
@@ -253,9 +253,9 @@ export default function CourtsPanel({
     <section className="bg-panel rounded-2xl shadow-xl p-4">
       {!roundState.active ? (
         <div className="text-center py-3">
-          <div className={`rounded-xl p-4 ${submitted ? "bg-muted-bg border-2 border-purple-500/40" : "bg-muted-bg border-2 border-green-500/40"}`}>
+          <div className={`rounded-xl p-4 ${submitted ? "bg-muted-bg border-2 edge-quiet" : "bg-muted-bg border-2 edge-tint"}`}>
             <h3 className="text-base font-semibold mb-1 text-text whitespace-nowrap flex items-center justify-center gap-2">
-              <span className={submitted ? "text-purple-500" : "text-green-500"}>{submitted ? "✓" : "🎾"}</span>
+              <span className={submitted ? "text-subtext" : "tint-text"}>{submitted ? "✓" : "🎾"}</span>
               {submitted ? `Round ${currentRoundNumber - 1} Complete!` : `Ready to start Round ${currentRoundNumber}?`}
             </h3>
             <p className="text-subtext text-xs mb-2">{eventPool.filter(p => !p.isSitting).length} active players</p>
@@ -319,18 +319,18 @@ export default function CourtsPanel({
           </div>
 
           {byeMatches.length > 0 && (
-            <div className="mt-4 bg-muted-bg rounded-xl p-4 border-2 border-orange-400/70">
-              <h4 className="font-semibold text-orange-600 mb-3 text-sm">😴 Players Having a Bye</h4>
+            <div className="mt-4 bg-muted-bg rounded-xl p-4 border-2 edge-quiet">
+              <h4 className="font-semibold text-subtext mb-3 text-sm">😴 Players Having a Bye</h4>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                 {byeMatches.map(m => {
                   const player = findPlayer(m.byePlayerId);
                   return (
-                    <div key={m.id} className="flex items-center gap-1.5 bg-muted-bg rounded-lg px-2 py-1 border-2 border-orange-400/70 h-8">
+                    <div key={m.id} className="flex items-center gap-1.5 bg-muted-bg rounded-lg px-2 py-1 border-2 edge-quiet h-8">
                       <span className="font-medium text-sm text-text truncate flex-1 min-w-0">{player?.name}</span>
                       {onVetoBye && m.byePlayerId && (
                         <button
                           onClick={() => onVetoBye(m.byePlayerId!)}
-                          className="text-orange-500 hover:text-orange-700 text-sm shrink-0"
+                          className="text-subtext hover:text-text text-sm shrink-0"
                           title="No bye this round - add 0.25 to bye score"
                         >
                           ⏳
@@ -361,7 +361,7 @@ export default function CourtsPanel({
 
           {/* Confirmation dialog for invalid scores */}
           {confirmOverride && (
-            <div className="mt-4 p-4 bg-muted-bg border-2 border-yellow-400 rounded-xl text-center">
+            <div className="mt-4 p-4 bg-muted-bg border-2 edge-warn rounded-xl text-center">
               <p className="text-red-600 font-medium mb-4">
                 ⚠️ On Court {roundState.matches.find(m => m.id === confirmOverride.matchId)?.court}: score "{confirmOverride.value}" is {confirmOverride.value > 99 ? "over 99" : "less than 0"}. Are you sure?
               </p>

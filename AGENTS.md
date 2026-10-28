@@ -82,3 +82,9 @@ the pool inside generateStandardMatches).
 - **Scratch:** working files go in `atelier/_floor/pickleball/` (outside this
   repo — never a `_scratch/` folder inside it; exception: scratch code that
   needs this repo's node_modules runs from the gitignored `_scratch/` here).
+
+- **Lessons (2026-10-08 gravel, graduated 2026-10-25):** `prisma/client.ts`
+  is TRACKED source — untracking it broke the Vercel build (reverted
+  62cb376); regex audits of handlers miss the ones wired via onChange —
+  check both paths; "swap" in the pairing UI = partner-slot trade semantics
+  (not position swap).
