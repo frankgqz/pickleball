@@ -263,7 +263,7 @@ export default function CourtsPanel({
             {sessionEnded ? (
               <button
                 onClick={() => onContinueSession?.()}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
+                className="role-primary   font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
               >
                 {"\u25b6"} Continue Session
               </button>
@@ -278,7 +278,7 @@ export default function CourtsPanel({
                     onStartFixed14v23();
                   }
                 }}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
+                className="role-primary   font-semibold px-6 py-2.5 rounded-lg text-base whitespace-nowrap shadow-sm hover:shadow transition-all"
               >
                 🚀 Start Round {currentRoundNumber}
               </button>
@@ -368,7 +368,7 @@ export default function CourtsPanel({
               <div className="flex justify-center gap-4">
                 <button
                   onClick={handleConfirmOverride}
-                  className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-colors"
+                  className="px-6 py-2 role-primary   font-bold rounded-lg transition-colors"
                 >
                   Yes
                 </button>
@@ -386,7 +386,7 @@ export default function CourtsPanel({
             <button
               onClick={handleSubmitRound}
               disabled={roundState.submitted || !!sessionEnded}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              className="role-primary   font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
               title={sessionEnded ? "Session ended \u2014 Continue Session first" : undefined}
             >
               ✓ Submit
@@ -394,7 +394,7 @@ export default function CourtsPanel({
             <button
               onClick={onStartNextRound}
               disabled={!roundState.submitted || !!sessionEnded}
-              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              className="role-primary   font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
               🚀 Next Round
             </button>

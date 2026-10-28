@@ -152,11 +152,11 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 {/* Name + DUPR in one line */}
                 <div
                   onClick={pairingFor && pairingFor !== player.id ? () => handlePairClick(player) : undefined}
-                  className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-subtext" : "text-text"} ${pairingFor && pairingFor !== player.id ? "cursor-pointer hover:bg-purple-50 rounded-md -mx-1 px-1" : ""}`}
+                  className={`flex-1 min-w-0 flex items-center gap-2 ${player.isSitting ? "text-subtext" : "text-text"} ${pairingFor && pairingFor !== player.id ? "cursor-pointer tint-bg rounded-md -mx-1 px-1" : ""}`}
                 >
                   <span className="text-xs font-medium truncate">{player.name}</span>
                   {player.duprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-green-600 text-white text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded-md role-tint  text-[10px] font-bold">
                       {player.duprScore.toFixed(3)}
                     </span>
                   ) : player.manualDuprScore != null ? (
@@ -165,7 +165,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                     </span>
                   ) : null}
                   {teamsMode && partnerOf(player.id) && (
-                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold max-w-[7rem] truncate" title={`Paired with ${partnerOf(player.id)!.name}`}>
+                    <span className="flex-none px-1.5 py-0.5 rounded-md role-tint  text-[10px] font-bold max-w-[7rem] truncate" title={`Paired with ${partnerOf(player.id)!.name}`}>
                       ⚭ {partnerOf(player.id)!.name}
                     </span>
                   )}
@@ -179,9 +179,9 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                       title={partnerOf(player.id) ? `Paired with ${partnerOf(player.id)!.name} — click to decouple` : "Pair with a partner"}
                       className={`w-6 h-6 text-[11px] rounded-md transition-colors flex items-center justify-center ${
                         partnerOf(player.id)
-                          ? "text-purple-700 bg-purple-100 hover:bg-purple-200"
+                          ? "role-tint  "
                           : pairingFor === player.id
-                            ? "text-white bg-purple-500"
+                            ? " role-tint"
                             : "text-subtext hover:bg-hover-bg border border-line"
                       }`}
                     >⚭</button>

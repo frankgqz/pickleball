@@ -319,7 +319,7 @@ export default function PlayerDatabase({
           onChange={e => setDuprScore(e.target.value)} 
         />
         <button 
-          className="px-4 md:px-6 py-1.5 text-sm text-white bg-green-600 rounded-md hover:bg-green-700 font-bold" 
+          className="px-4 md:px-6 py-1.5 text-sm  role-tint rounded-md  font-bold" 
           onClick={handleAdd}
           title="Add to database"
         >
@@ -371,7 +371,7 @@ export default function PlayerDatabase({
                     />
                   </div>
                   <div className="flex gap-1.5">
-                    <button onClick={saveEdit} className="px-3 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700 font-medium">Save</button>
+                    <button onClick={saveEdit} className="px-3 py-1 role-primary  text-xs rounded-md  font-medium">Save</button>
                     <button onClick={cancelEdit} className="px-3 py-1 bg-muted-bg text-text text-xs rounded-md hover:bg-hover-bg">Cancel</button>
                   </div>
                 </div>
@@ -408,7 +408,7 @@ export default function PlayerDatabase({
                         {inPool ? (
                           <button aria-label="Remove from pool" onClick={() => onRemoveFromPool?.(player.id)} className="w-7 h-7 rounded-md bg-muted-bg text-subtext border border-line hover:bg-muted-bg transition-colors text-sm font-bold">−</button>
                         ) : (
-                          <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded-md bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors text-base font-bold ml-10">+</button>
+                          <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded-md role-quiet  border border-green-600  transition-colors text-base font-bold ml-10">+</button>
                         )}
                         <button onClick={() => startEditing(player)} className="px-1.5 py-0.5 bg-muted-bg border border-line rounded-md text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors">✏️</button>
                         <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"} className={`px-1.5 py-0.5 rounded-md text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-muted-bg border border-line text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>

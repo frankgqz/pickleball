@@ -306,7 +306,7 @@ export default function RoundHistoryPanel({
             </button>
             <button
               onClick={exportToCSV}
-              className="px-2.5 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+              className="px-2.5 py-1 rounded-lg role-quiet   text-sm font-medium"
               title="Export to CSV"
             >
               📥 CSV
@@ -422,7 +422,7 @@ export default function RoundHistoryPanel({
                   loadPastSessions();
                   setSelectedSessionLabel(l => (l ? l.replace("🎾 ", "🏁 ") : l));
                 }}
-                className="w-full px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium"
+                className="w-full px-3 py-2 rounded-lg role-quiet   text-sm font-medium"
               >
                 ⏹ End Session
               </button>
@@ -441,7 +441,7 @@ export default function RoundHistoryPanel({
                 </button>
                 <button
                   onClick={saveEdits}
-                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg role-primary   text-sm font-medium"
                 >
                   ✓ Save Changes
                 </button>

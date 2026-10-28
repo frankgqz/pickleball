@@ -80,7 +80,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               else setRenameStatus("err");
             }}
             disabled={renaming || !(config.eventName || "").trim()}
-            className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="px-3 py-1 text-xs role-quiet  rounded-lg  transition-colors disabled:opacity-50"
           >
             {renaming ? "…" : "Rename"}
           </button>
