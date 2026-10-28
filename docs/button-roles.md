@@ -237,3 +237,9 @@ law) — position numbers don't.
 
 EventPool highlight -> sparkle (c7) tint · both + on Tint(accent-1) ·
 Edit Round = Tint (goes somewhere) · Hide = Quiet ghost (in place).
+
+## Revision 2026-10-28b (Frank, live-court feedback)
+wood: accent-2 -> leaf green, sparkle -> amber (the amber/gold twins split).
+onsen stone -> granite #86a3b0 (teal-tinged, accent strength).
+EventPool states: playing = accent wash/edge (the blue in bubble), sitting out
+= accent-2 wash/edge (soft red in bubble), missing stays red-warning.
