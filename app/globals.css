@@ -58,7 +58,7 @@ code, kbd, pre, .font-mono {
 .bg-accent { background: color-mix(in srgb, var(--theme-accent) 20%, transparent); color: var(--theme-text); }
 .bg-accent2 { background: color-mix(in srgb, var(--theme-accent-2) 20%, transparent); color: var(--theme-text); }
 .bg-sparkle { background: color-mix(in srgb, var(--theme-sparkle) 20%, transparent); color: var(--theme-text); }
-:root { --skeu-glow: color-mix(in srgb, var(--theme-sparkle) 62%, transparent); } /* the glow IS the sparkle family (Frank) - derived, no hexes left to drift */
+:root { --skeu-glow: color-mix(in srgb, var(--theme-sparkle) 75%, transparent); } /* the glow IS the sparkle family (Frank) - derived, no hexes left to drift */
 [data-theme='onsen'],
 .team-1 { border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent); background: color-mix(in srgb, var(--theme-accent) 18%, transparent); }
 .team-2 { border-color: color-mix(in srgb, var(--theme-accent-2) 50%, transparent); background: color-mix(in srgb, var(--theme-accent-2) 18%, transparent); }
