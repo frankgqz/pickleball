@@ -156,11 +156,11 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                 >
                   <span className="text-xs font-medium truncate">{player.name}</span>
                   {player.duprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded-md role-tint  text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded-md role-quiet  text-[10px] font-bold">
                       {player.duprScore.toFixed(3)}
                     </span>
                   ) : player.manualDuprScore != null ? (
-                    <span className="flex-none px-1.5 py-0.5 rounded-md bg-red-50 text-red-700 text-[10px] font-bold">
+                    <span className="flex-none px-1.5 py-0.5 rounded-md role-tint  text-[10px] font-bold">
                       {player.manualDuprScore.toFixed(1)}
                     </span>
                   ) : null}
