@@ -113,7 +113,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
             
             // Consistent row height, background based on state
             const containerClass = player.isSitting
-              ? "flex items-center gap-2 px-2 rounded-lg border edge-tint bg-muted-bg h-10"
+              ? "flex items-center gap-2 px-2 rounded-lg border edge-warn bg-muted-bg h-10"
               : hasDupr
               ? "flex items-center gap-2 px-2 rounded-lg border edge-accent bg-muted-bg h-10"
               : "flex items-center gap-2 px-2 rounded-lg border edge-warn bg-muted-bg h-10";
@@ -137,7 +137,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
                     <div
                       className={`w-full h-full rounded-full flex items-center justify-center font-bold text-xs border border-line ${
                         player.isSitting 
-                          ? "bg-accent2 " 
+                          ? "bg-red-100 text-red-600 " 
                           : hasDupr 
                             ? "bg-accent text-text" 
                             : "bg-red-100 text-red-600"

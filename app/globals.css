@@ -49,7 +49,7 @@ code, kbd, pre, .font-mono {
 /* wash hue per theme (the night-brown fix): night washes with its NEON side —
    orange diluted on dark IS mud; onsen washes with stone (the sparkle's debut) */
 :root, [data-theme='wood']   { --wash: var(--theme-accent); }
-[data-theme='night']         { --wash: var(--theme-accent-2); }
+[data-theme='night']         { --wash: var(--theme-accent); } /* the neon IS the main accent now */
 [data-theme='bubble']        { --wash: var(--theme-accent); }
 [data-theme='onsen'],
 [data-theme='matcha']        { --wash: var(--theme-sparkle); }
@@ -60,7 +60,7 @@ code, kbd, pre, .font-mono {
 .bg-sparkle { background: color-mix(in srgb, var(--theme-sparkle) 20%, transparent); color: var(--theme-text); }
 :root, [data-theme='wood']   { --skeu-glow: #e8b06a9e; }
 [data-theme='night']         { --skeu-glow: #ff6a1f9e; }
-[data-theme='bubble']        { --skeu-glow: #8b7cf8a6; }
+[data-theme='bubble']        { --skeu-glow: #FF7A9E99; } /* pink glow — the violet read dark (Frank) */
 [data-theme='onsen'],
 [data-theme='matcha']        { --skeu-glow: #6f8464a6; }
 .team-1 { border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent); background: color-mix(in srgb, var(--theme-accent) 18%, transparent); }
