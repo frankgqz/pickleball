@@ -70,7 +70,7 @@
      --c1..--c7 are deprecated position aliases */
   --theme-bg: #131316;
   --theme-panel: #1C1F24;
-  --theme-text: #f5f5f5;
+  --theme-text: #f1f4f8;
   --theme-subtext: #959AA3;
   --theme-accent: #35C4FF;
   --theme-accent-2: #FF6A1F;
@@ -113,14 +113,14 @@
 [data-theme='matcha']  {
   /* named primitives — the vocabulary (a name carries the why);
      --c1..--c7 are deprecated position aliases */
-  --theme-bg: #e6eded;
-  --theme-panel: #f8fbfb;
-  --theme-text: #22394b;
-  --theme-subtext: #7c96a1;
-  --theme-accent: #6f8464;
-  --theme-accent-2: #41647c;
-  --theme-sparkle: #6da89b;
-  --theme-wash: var(--theme-sparkle); /* onsen washes with its teal mist */
+  --theme-bg: hsl(150, 16%, 92%);
+  --theme-panel: hsl(155, 27%, 99%);
+  --theme-text: hsl(152, 12%, 15%);
+  --theme-subtext: hsl(158, 15%, 35%);
+  --theme-accent: hsl(161, 58%, 45%);
+  --theme-accent-2: hsl(230, 64%, 74%);
+  --theme-sparkle: hsl(184, 70%, 67%);
+  --theme-wash: var(--theme-sparkle); /* onsen washes with its spring mist */
   --c1: var(--theme-bg);
   --c2: var(--theme-panel);
   --c3: var(--theme-text);

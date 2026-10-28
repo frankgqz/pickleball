@@ -78,8 +78,24 @@ const SHANTELL = '"Shantell Sans", ui-rounded, cursive'
 export const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Bellota:wght@300;400;700&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap'
 const SERIF = '"Fraunces", Georgia, "Times New Roman", serif'
 
-function hexA(hex: string, alpha: number): string {
-  const h = hex.replace('#', '')
+function hexA(color: string, alpha: number): string {
+  if (color.startsWith('hsl')) {
+    const m = color.match(/hsla?\(\s*([-.\d]+)\s*,\s*([-.\d]+)%\s*,\s*([-.\d]+)%/)
+    if (m) {
+      const hue = ((+m[1] % 360) + 360) % 360
+      const sat = +m[2] / 100
+      const lig = +m[3] / 100
+      const c = (1 - Math.abs(2 * lig - 1)) * sat
+      const x = c * (1 - Math.abs(((hue / 60) % 2) - 1))
+      const base = lig - c / 2
+      const t = hue / 60
+      const rgb: [number, number, number] =
+        t < 1 ? [c, x, 0] : t < 2 ? [x, c, 0] : t < 3 ? [0, c, x] :
+        t < 4 ? [0, x, c] : t < 5 ? [x, 0, c] : [c, 0, x]
+      return `rgba(${Math.round((rgb[0] + base) * 255)}, ${Math.round((rgb[1] + base) * 255)}, ${Math.round((rgb[2] + base) * 255)}, ${alpha})`
+    }
+  }
+  const h = color.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16)
   const g = parseInt(h.slice(2, 4), 16)
   const b = parseInt(h.slice(4, 6), 16)
@@ -176,7 +192,7 @@ export const themes: Record<Theme, ThemeColors> = {
     primitives: {
       bg: '#131316',
       panel: '#1C1F24',
-      text: '#f5f5f5',
+      text: '#f1f4f8',
       subtext: '#959AA3',
       accent: '#35C4FF',
       accent2: '#FF6A1F',
@@ -225,13 +241,13 @@ export const themes: Record<Theme, ThemeColors> = {
   // ONSEN STONE — wet stone, cedar, moss, steam; Fraunces + DM Sans
   onsen: make({
     primitives: {
-      bg: '#e6eded',
-      panel: '#f8fbfb',
-      text: '#22394b',
-      subtext: '#7c96a1',
-      accent: '#6f8464',
-      accent2: '#41647c',
-      sparkle: '#6da89b',
+      bg: 'hsl(150, 16%, 92%)',
+      panel: 'hsl(155, 27%, 99%)',
+      text: 'hsl(152, 12%, 15%)',
+      subtext: 'hsl(158, 15%, 35%)',
+      accent: 'hsl(161, 58%, 45%)',
+      accent2: 'hsl(230, 64%, 74%)',
+      sparkle: 'hsl(184, 70%, 67%)',
     },
     particleHues: [
       { hue: [80, 130], sat: [8, 22] },   // moss

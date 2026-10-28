@@ -43,3 +43,5 @@ next-env.d.ts
 /app/generated/prisma
 tools/.dupr-challenge.json
 _scratch/
+
+*.tgz  # npm pack drop-boxes (binary repair recipe)
