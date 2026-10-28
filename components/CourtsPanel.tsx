@@ -386,17 +386,17 @@ export default function CourtsPanel({
             <button
               onClick={handleSubmitRound}
               disabled={roundState.submitted || !!sessionEnded}
-              className="role-primary   font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              className="role-primary flex-1 max-w-[14rem] font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
               title={sessionEnded ? "Session ended \u2014 Continue Session first" : undefined}
             >
-              ✓ Submit
+              Submit
             </button>
             <button
               onClick={onStartNextRound}
               disabled={!roundState.submitted || !!sessionEnded}
-              className="role-primary   font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
+              className="role-primary flex-1 max-w-[14rem] font-semibold px-7 py-2.5 rounded-lg text-sm whitespace-nowrap disabled:bg-muted-bg disabled:text-subtext disabled:cursor-not-allowed transition-colors"
             >
-              🚀 Next Round
+              Next Round
             </button>
           </div>
           {roundState.submitted && (
