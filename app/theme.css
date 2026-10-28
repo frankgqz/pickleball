@@ -3,87 +3,134 @@
 
 
 /* src/theme.css — tiered palette
-   Tier 1: --c1..--c7 primitives (only typed colors, per theme)
+   Tier 1: named primitives per theme (bg/panel/text/subtext/accent/accent-2/sparkle)
+   c-map (deprecated aliases): c1=bg c2=panel(=surface) c3=text c4=subtext(=muted)
+   c5=accent c6=accent-2 c7=sparkle
    Tier 2: --theme-* semantic (derived below, same code for every theme) */
 
 :root {
   /* ---- Tier 2 — derived (re-resolve per theme via --c vars) ---- */
-  --theme-bg: var(--c1);
-  --theme-panel: var(--c2);
-  --theme-text: var(--c3);
-  --theme-subtext: var(--c4);
-  --theme-accent: var(--c5);
-  --theme-accent-2: var(--c6);
-  --theme-sparkle: var(--c7);
 
-  --theme-btn-start: var(--c5);
-  --theme-btn-end: var(--c6);
-  --theme-btn-shadow: 0 8px 32px color-mix(in srgb, var(--c5) 45%, transparent), 0 2px 8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
-  --theme-btn-shadow-pressed: 0 2px 12px color-mix(in srgb, var(--c6) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
-  --theme-glow: radial-gradient(circle, color-mix(in srgb, var(--c7) 14%, transparent) 0%, transparent 70%);
+  --theme-btn-start: var(--theme-accent);
+  --theme-btn-end: var(--theme-accent-2);
+  --theme-btn-shadow: 0 8px 32px color-mix(in srgb, var(--theme-accent) 45%, transparent), 0 2px 8px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.12);
+  --theme-btn-shadow-pressed: 0 2px 12px color-mix(in srgb, var(--theme-accent-2) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.08);
+  --theme-glow: radial-gradient(circle, color-mix(in srgb, var(--theme-sparkle) 14%, transparent) 0%, transparent 70%);
 
   /* shade family — the light/dark variants (like Tailwind -300 / -700) */
-  --theme-accent-soft: color-mix(in srgb, var(--c5) 30%, var(--c2));
-  --theme-accent-strong: color-mix(in srgb, var(--c5) 75%, black);
-  --theme-border: color-mix(in srgb, var(--c4) 35%, transparent);
-  --theme-muted-bg: color-mix(in srgb, var(--c4) 12%, var(--c2));
-  --theme-hover-bg: color-mix(in srgb, var(--c4) 22%, var(--c2));
+  --theme-accent-soft: color-mix(in srgb, var(--theme-accent) 30%, var(--theme-panel));
+  --theme-accent-strong: color-mix(in srgb, var(--theme-accent) 75%, black);
+  --theme-border: color-mix(in srgb, var(--theme-subtext) 35%, transparent);
+  --theme-muted-bg: color-mix(in srgb, var(--theme-subtext) 12%, var(--theme-panel));
+  --theme-hover-bg: color-mix(in srgb, var(--theme-subtext) 22%, var(--theme-panel));
+
+  /* Tier 2.5 — the role brush (Frank 2026-10-28): one recipe, every consumer.
+     Fill = accent, glow = sparkle, alarm = red. Themes redirect --theme-wash. */
+  --theme-wash: var(--theme-accent);
+  --theme-halo: color-mix(in srgb, var(--theme-sparkle) 75%, transparent);
+  --theme-role-primary-bg: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 85%, #fff) 0%, var(--theme-accent) 52%, color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-2)) 100%);
+  --theme-role-primary-shadow: inset 0 1px 0 #ffffff59, inset 0 -2px 0 #0003, 0 1px 2px #0006, 0 8px 24px -6px var(--theme-halo);
+  --theme-role-primary-pressed: inset 0 1px 0 #ffffff30, inset 0 -1px 0 #0002, 0 0 2px #0005, 0 3px 10px -6px var(--theme-halo);
+  --theme-role-quiet-bg: color-mix(in srgb, var(--theme-wash) 14%, transparent);
+  --theme-role-quiet-bg-hover: color-mix(in srgb, var(--theme-wash) 20%, transparent);
+  --theme-role-quiet-border: color-mix(in srgb, var(--theme-wash) 32%, transparent);
+  --theme-role-quiet-border-hover: color-mix(in srgb, var(--theme-wash) 55%, transparent);
+  --theme-role-tint-bg: color-mix(in srgb, var(--theme-wash) 22%, transparent);
+  --theme-role-tint-bg-hover: color-mix(in srgb, var(--theme-wash) 30%, transparent);
+  --theme-role-tint-border: color-mix(in srgb, var(--theme-wash) 45%, transparent);
 }
 
 /* ---- Tier 1 — primitives per theme ---- */
 
-:root {
+:root  {
+  /* named primitives — the vocabulary (a name carries the why);
+     --c1..--c7 are deprecated position aliases */
+  --theme-bg: #1a120b;
+  --theme-panel: #241710;
+  --theme-text: #f5e6d3;
+  --theme-subtext: #b8956a;
+  --theme-accent: #e59b4e;
+  --theme-accent-2: #8ab264;
+  --theme-sparkle: #f7d268;
+  --c1: var(--theme-bg);
+  --c2: var(--theme-panel);
+  --c3: var(--theme-text);
+  --c4: var(--theme-subtext);
+  --c5: var(--theme-accent);
+  --c6: var(--theme-accent-2);
+  --c7: var(--theme-sparkle);
   /* wood (default) */
   --theme-radius-button: 12px;
   --theme-radius-card: 16px;
   --theme-radius-input: 8px;
-  --c1: #1a120b;
-  --c2: #241710;
-  --c3: #f5e6d3;
-  --c4: #b8956a;
-  --c5: #d4a574;
-  --c6: #e8b06a;
-  --c7: #f4c887;
 }
 
-[data-theme='night'] {
+[data-theme='night']  {
+  /* named primitives — the vocabulary (a name carries the why);
+     --c1..--c7 are deprecated position aliases */
+  --theme-bg: #131316;
+  --theme-panel: #1C1F24;
+  --theme-text: #f5f5f5;
+  --theme-subtext: #959AA3;
+  --theme-accent: #35C4FF;
+  --theme-accent-2: #FF6A1F;
+  --theme-sparkle: #2EE66B;
+  --c1: var(--theme-bg);
+  --c2: var(--theme-panel);
+  --c3: var(--theme-text);
+  --c4: var(--theme-subtext);
+  --c5: var(--theme-accent);
+  --c6: var(--theme-accent-2);
+  --c7: var(--theme-sparkle);
   --theme-radius-button: 6px;
   --theme-radius-card: 8px;
   --theme-radius-input: 4px;
-  --c1: #131316;
-  --c2: #1C1F24;
-  --c3: #f5f5f5;
-  --c4: #959AA3;
-  --c5: #FF6A1F;
-  --c6: #2EE66B;
-  --c7: #2EE66B;
 }
 
-[data-theme='bubble'] {
+[data-theme='bubble']  {
+  /* named primitives — the vocabulary (a name carries the why);
+     --c1..--c7 are deprecated position aliases */
+  --theme-bg: #EAF6FF;
+  --theme-panel: #ffffff;
+  --theme-text: #2E4A6B;
+  --theme-subtext: #7FA8D6;
+  --theme-accent: #8ED0FF;
+  --theme-accent-2: #FF7A9E;
+  --theme-sparkle: #C5B6F5;
+  --c1: var(--theme-bg);
+  --c2: var(--theme-panel);
+  --c3: var(--theme-text);
+  --c4: var(--theme-subtext);
+  --c5: var(--theme-accent);
+  --c6: var(--theme-accent-2);
+  --c7: var(--theme-sparkle);
   --theme-radius-button: 20px;
   --theme-radius-card: 24px;
   --theme-radius-input: 12px;
-  --c1: #EAF6FF;
-  --c2: #ffffff;
-  --c3: #2E4A6B;
-  --c4: #7FA8D6;
-  --c5: #FF8FC5;
-  --c6: #8ED0FF;
-  --c7: #FF8FC5;
 }
 
 [data-theme='onsen'],
-[data-theme='matcha'] {
+[data-theme='matcha']  {
+  /* named primitives — the vocabulary (a name carries the why);
+     --c1..--c7 are deprecated position aliases */
+  --theme-bg: #e6eded;
+  --theme-panel: #f8fbfb;
+  --theme-text: #22394b;
+  --theme-subtext: #7c96a1;
+  --theme-accent: #6f8464;
+  --theme-accent-2: #41647c;
+  --theme-sparkle: #6da89b;
+  --theme-wash: var(--theme-sparkle); /* onsen washes with its teal mist */
+  --c1: var(--theme-bg);
+  --c2: var(--theme-panel);
+  --c3: var(--theme-text);
+  --c4: var(--theme-subtext);
+  --c5: var(--theme-accent);
+  --c6: var(--theme-accent-2);
+  --c7: var(--theme-sparkle);
   --theme-radius-button: 14px;
   --theme-radius-card: 18px;
   --theme-radius-input: 8px;
-  --c1: #e9eae5;
-  --c2: #f7f8f4;
-  --c3: #2e3538;
-  --c4: #6b7472;
-  --c5: #6f8464;
-  --c6: #a9714e;
-  --c7: #c5d4cc;
 }
 
 
@@ -119,23 +166,23 @@ body {
   --theme-hover-brightness: 1.08;
   --theme-hover-saturate: 1.05;
   --theme-hover-shadow: none;
-  --theme-focus-shadow: 0 0 0 2px var(--c2), 0 0 0 5px var(--c5);
+  --theme-focus-shadow: 0 0 0 2px var(--theme-panel), 0 0 0 5px var(--theme-accent);
 }
 
 /* wood — the verb is an amber glow (accent-2 = the maple light) */
 [data-theme='wood'] {
   --theme-hover-brightness: 1.14;
   --theme-hover-saturate: 1.18;
-  --theme-hover-shadow: 0 0 18px color-mix(in srgb, var(--c7) 45%, transparent);
-  --theme-focus-shadow: 0 0 0 3px var(--c1), 0 0 0 6px var(--c7), 0 0 18px color-mix(in srgb, var(--c7) 55%, transparent);
+  --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
+  --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
 
 /* night — the verb is neon (accent-2 = the cyberpunk green), never murky */
 [data-theme='night'] {
   --theme-hover-brightness: 1.18;
   --theme-hover-saturate: 1.25;
-  --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--c6) 26%, transparent);
-  --theme-focus-shadow: 0 0 0 2px var(--c1), 0 0 0 5px var(--c5), 0 0 16px color-mix(in srgb, var(--c5) 45%, transparent), 0 0 26px color-mix(in srgb, var(--c6) 22%, transparent);
+  --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
+  --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
 
 /* bubble — the verb is float (the pink-into-sky gradient layer intact) */
@@ -143,8 +190,8 @@ body {
   --theme-hover-lift: 3px;
   --theme-hover-brightness: 1.03;
   --theme-hover-saturate: 1.1;
-  --theme-hover-shadow: 0 12px 26px rgba(46, 74, 107, 0.18);
-  --theme-focus-shadow: 0 0 0 2px #fff, 0 0 0 6px color-mix(in srgb, var(--c5) 65%, transparent);
+  --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
+  --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
 
 /* onsen — the verb is mist (sparkle = the steam), ring in moss (readable) */
@@ -152,8 +199,8 @@ body {
 [data-theme='matcha'] {
   --theme-hover-brightness: 1.05;
   --theme-hover-saturate: 1.08;
-  --theme-hover-shadow: 0 0 0 1px color-mix(in srgb, var(--c7) 85%, transparent), 0 0 16px color-mix(in srgb, var(--c7) 50%, transparent);
-  --theme-focus-shadow: 0 0 0 2px var(--c2), 0 0 0 5px var(--c5), 0 0 14px color-mix(in srgb, var(--c5) 35%, transparent);
+  --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
+  --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
 
 /* motion + state transitions */
@@ -169,7 +216,7 @@ body {
 
 /* hover — only on devices that actually hover (no stuck taps) */
 @media (hover: hover) {
-  :where(button, [role='button'], .btn, [data-interactive]):hover {
+  :where(button, [role='button'], input, select, textarea, a, .btn, [data-interactive]):hover {
     transform: translateY(calc(var(--theme-hover-lift) * -1));
     filter: brightness(var(--theme-hover-brightness)) saturate(var(--theme-hover-saturate));
     box-shadow: var(--theme-hover-shadow);
