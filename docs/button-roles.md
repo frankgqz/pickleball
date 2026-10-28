@@ -243,3 +243,9 @@ wood: accent-2 -> leaf green, sparkle -> amber (the amber/gold twins split).
 onsen stone -> granite #86a3b0 (teal-tinged, accent strength).
 EventPool states: playing = accent wash/edge (the blue in bubble), sitting out
 = accent-2 wash/edge (soft red in bubble), missing stays red-warning.
+
+## Onsen direction (2026-10-28, Frank's four answers)
+Winter resort sanctuary, light theme. The palette is a LANDSCAPE ARC and the
+sparkle sits literally between the accents: moss valley (accent-1 #6f8464) ->
+teal water (sparkle #6da89b, a whisper of moss) -> blue mountains (accent-2
+#41647c). Ground = steam mist #eef4f3. Teal glows but never fills.

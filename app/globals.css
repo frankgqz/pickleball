@@ -46,19 +46,12 @@ code, kbd, pre, .font-mono {
 }
 
 /* ---- color role pass (docs/button-roles.md, Frank 2026-10-28) ---- */
-/* wash hue per theme (the night-brown fix): night washes with its NEON side —
-   orange diluted on dark IS mud; onsen washes with stone (the sparkle's debut) */
-:root, [data-theme='wood']   { --wash: var(--theme-accent); }
-[data-theme='night']         { --wash: var(--theme-accent); } /* the neon IS the main accent now */
-[data-theme='bubble']        { --wash: var(--theme-accent); }
 [data-theme='onsen'],
-[data-theme='matcha']        { --wash: var(--theme-sparkle); }
 .edge-sparkle { border-color: color-mix(in srgb, var(--theme-sparkle) 45%, transparent); }
 .edge-accent { border-color: color-mix(in srgb, var(--theme-accent) 45%, transparent); }
 .bg-accent { background: color-mix(in srgb, var(--theme-accent) 20%, transparent); color: var(--theme-text); }
 .bg-accent2 { background: color-mix(in srgb, var(--theme-accent-2) 20%, transparent); color: var(--theme-text); }
 .bg-sparkle { background: color-mix(in srgb, var(--theme-sparkle) 20%, transparent); color: var(--theme-text); }
-:root { --skeu-glow: color-mix(in srgb, var(--theme-sparkle) 75%, transparent); } /* the glow IS the sparkle family (Frank) - derived, no hexes left to drift */
 [data-theme='onsen'],
 .team-1 { border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent); background: color-mix(in srgb, var(--theme-accent) 18%, transparent); }
 .team-2 { border-color: color-mix(in srgb, var(--theme-accent-2) 50%, transparent); background: color-mix(in srgb, var(--theme-accent-2) 18%, transparent); }
@@ -68,9 +61,8 @@ code, kbd, pre, .font-mono {
 .tint-text { color: var(--c6); }
 .accent-text { color: var(--c5); }
 .tint-bg { background: color-mix(in srgb, var(--c6) 10%, var(--theme-muted-bg)); }
-.role-quiet { background: color-mix(in srgb, var(--wash, var(--theme-accent)) 14%, transparent); border: 1px solid color-mix(in srgb, var(--wash, var(--theme-accent)) 32%, transparent); color: var(--theme-text); }
-.role-quiet:hover { background: color-mix(in srgb, var(--wash, var(--theme-accent)) 20%, transparent); border-color: color-mix(in srgb, var(--wash, var(--theme-accent)) 55%, transparent); }
-.role-tint { background: color-mix(in srgb, var(--wash, var(--theme-accent)) 22%, transparent); border: 1px solid color-mix(in srgb, var(--wash, var(--theme-accent)) 45%, transparent); color: var(--theme-text); }
-.role-tint:hover { background: color-mix(in srgb, var(--wash, var(--theme-accent)) 30%, transparent); }
-.role-primary { background: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 85%, #fff) 0%, var(--theme-accent) 52%, color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-2)) 100%); color: #fff; border: 0; box-shadow: inset 0 1px 0 #ffffff59, inset 0 -2px 0 #0003, 0 1px 2px #0006, 0 8px 24px -6px var(--skeu-glow); }
+.role-quiet { background: var(--theme-role-quiet-bg); border: 1px solid var(--theme-role-quiet-border); color: var(--theme-text); }
+.role-quiet:hover { background: var(--theme-role-quiet-bg-hover); border-color: var(--theme-role-quiet-border-hover); }
+.role-tint { background: var(--theme-role-tint-bg); border: 1px solid var(--theme-role-tint-border); color: var(--theme-text); }
+.role-tint:hover { background: var(--theme-role-tint-bg-hover); }
 .role-primary:hover { filter: brightness(1.05); }
