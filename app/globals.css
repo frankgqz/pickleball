@@ -46,13 +46,11 @@ code, kbd, pre, .font-mono {
 }
 
 /* ---- color role pass (docs/button-roles.md, Frank 2026-10-28) ---- */
-[data-theme='onsen'],
 .edge-sparkle { border-color: color-mix(in srgb, var(--theme-sparkle) 45%, transparent); }
 .edge-accent { border-color: color-mix(in srgb, var(--theme-accent) 45%, transparent); }
 .bg-accent { background: color-mix(in srgb, var(--theme-accent) 20%, transparent); color: var(--theme-text); }
 .bg-accent2 { background: color-mix(in srgb, var(--theme-accent-2) 20%, transparent); color: var(--theme-text); }
 .bg-sparkle { background: color-mix(in srgb, var(--theme-sparkle) 20%, transparent); color: var(--theme-text); }
-[data-theme='onsen'],
 .team-1 { border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent); background: color-mix(in srgb, var(--theme-accent) 18%, transparent); }
 .team-2 { border-color: color-mix(in srgb, var(--theme-accent-2) 50%, transparent); background: color-mix(in srgb, var(--theme-accent-2) 18%, transparent); }
 .edge-quiet { border-color: var(--theme-border); }
@@ -65,4 +63,25 @@ code, kbd, pre, .font-mono {
 .role-quiet:hover { background: var(--theme-role-quiet-bg-hover); border-color: var(--theme-role-quiet-border-hover); }
 .role-tint { background: var(--theme-role-tint-bg); border: 1px solid var(--theme-role-tint-border); color: var(--theme-text); }
 .role-tint:hover { background: var(--theme-role-tint-bg-hover); }
-.role-primary:hover { filter: brightness(1.05); }
+.role-primary {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--theme-text);
+  background: var(--theme-role-primary-bg);
+  box-shadow: var(--theme-role-primary-shadow);
+}
+.role-primary:hover:not(:disabled) { filter: brightness(1.05); }
+.role-primary:active:not(:disabled) {
+  box-shadow: var(--theme-role-primary-pressed);
+  transform: translateY(2px) scale(0.98);
+}
+.role-primary:disabled { box-shadow: none; cursor: not-allowed; }
+.role-danger {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  background: var(--theme-error);
+  color: #fff;
+}
+.role-danger:hover:not(:disabled) { filter: brightness(1.08); }

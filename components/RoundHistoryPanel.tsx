@@ -450,13 +450,13 @@ export default function RoundHistoryPanel({
               <>
                 <button
                   onClick={startEditing}
-                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg role-primary text-sm font-medium"
                 >
                   ✏️ Edit Round
                 </button>
                 <button
                   onClick={deleteRound}
-                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium"
+                  className="flex-1 min-w-[100px] px-3 py-2 rounded-lg role-danger text-sm font-medium"
                 >
                   🗑️ Delete Round
                 </button>
