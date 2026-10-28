@@ -129,13 +129,14 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
         </div>
 
         <div className="col-span-1">
-          <label className="text-xs font-medium text-subtext mb-0.5 block">Event</label>
+          <label className="text-xs font-medium text-subtext mb-0.5 block">Mode</label>
           <select
             value={config.format}
             onChange={(e) => handleChange("format", e.target.value as TournamentConfig["format"])}
             className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
-            <option value="STANDARD">Standard</option>
+            <option value="STANDARD">by Round</option>
+            <option value="COURT" disabled>by Court (coming soon)</option>
             <option value="POOL_PLAY" disabled>Pools / Finals (coming soon)</option>
           </select>
         </div>
@@ -143,14 +144,14 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
         {config.format !== "POOL_PLAY" && (
           <>
           <div className="col-span-1">
-            <label className="text-xs font-medium text-subtext mb-0.5 block">Mode</label>
+            <label className="text-xs font-medium text-subtext mb-0.5 block">Matching</label>
             <select
               value={config.roundFormat || "FIXED_14V23"}
               onChange={(e) => handleChange("roundFormat" as any, e.target.value as any)}
               className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
             >
-              <option value="FIXED_14V23">Standard by seed</option>
-              <option value="TEAMS">Teams allowed</option>
+              <option value="FIXED_14V23">Seed - Standard</option>
+              <option value="TEAMS">Seed - Teams allowed</option>
               <option value="SOCIAL">Random-ish pairings</option>
               <option value="TEAMS3" disabled>3 Player Teams (coming soon)</option>
             </select>
