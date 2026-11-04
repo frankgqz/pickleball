@@ -25,7 +25,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   finalsFormat: "top2",
   courtGames: 7.5,
   courtWaitMin: -1,
-  courtDuprClose: 5,
+  courtDuprClose: 10,
   courtMinPlayed: 0.25,
   courtDuprScore: -1,
   courtDupLast: 2,
