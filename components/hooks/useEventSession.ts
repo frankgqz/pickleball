@@ -23,6 +23,13 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   courts: 5,
   teamsPerPool: 4,
   finalsFormat: "top2",
+  courtGames: 7.5,
+  courtWaitMin: -1,
+  courtDuprClose: 5,
+  courtMinPlayed: 0.25,
+  courtDuprScore: -1,
+  courtDupLast: 2,
+  courtSitRatio: 0.9,
 };
 
 // Format constants with proper literal types

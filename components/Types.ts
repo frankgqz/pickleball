@@ -86,7 +86,15 @@ export interface StandingsEntry {
 // TOURNAMENT CONFIG
 // ============================================================
 export interface TournamentConfig {
-  format: "STANDARD" | "FIXED_PARTNER" | "POOL_PLAY";
+  // by-Court scoring weights (Frank formula, 2026-11-03)
+  courtGames: number
+  courtWaitMin: number
+  courtDuprClose: number
+  courtMinPlayed: number
+  courtDuprScore: number
+  courtDupLast: number
+  courtSitRatio: number
+  format: "STANDARD"  | "COURT" | "FIXED_PARTNER" | "POOL_PLAY";
   roundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL" | "TEAMS";
   /** Teams mode: playerId -> partnerId (MUTUAL). Latest pairing only. */
   pairMap?: Record<string, string>;

@@ -136,13 +136,14 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
             className="w-full px-2 py-1 border border-line rounded-md text-xs bg-muted-bg text-text"
           >
             <option value="STANDARD">by Round</option>
-            <option value="COURT" disabled>by Court (coming soon)</option>
+            <option value="COURT">by Court</option>
             <option value="POOL_PLAY" disabled>Pools / Finals (coming soon)</option>
           </select>
         </div>
 
         {config.format !== "POOL_PLAY" && (
           <>
+          {config.format !== "COURT" && (
           <div className="col-span-1">
             <label className="text-xs font-medium text-subtext mb-0.5 block">Matching</label>
             <select
@@ -156,6 +157,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               <option value="TEAMS3" disabled>3 Player Teams (coming soon)</option>
             </select>
           </div>
+          )}
           <div className="col-span-1">
             <label className="text-xs font-medium text-subtext mb-0.5 block">Courts</label>
             <input
@@ -172,8 +174,40 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
         )}
       </div>
 
+      {/* Court Settings - by-Court scoring (Frank formula, 2026-11-03) */}
+      {config.format === "COURT" && (
+        <details className="group mb-2" open>
+          <summary className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-subtext hover:text-text select-none list-none [&::-webkit-details-marker]:hidden">
+            <span className="transition-transform duration-150 group-open:rotate-90">▸</span>
+            Court Settings
+          </summary>
+          <div className="grid grid-cols-4 gap-1.5 mt-1.5 text-xs">
+            {[
+              ["courtGames", "Games", "0.5"],
+              ["courtWaitMin", "Wait", "0.5"],
+              ["courtDuprClose", "Dupr close", "1"],
+              ["courtMinPlayed", "Minutes", "0.05"],
+              ["courtDuprScore", "Dupr", "0.25"],
+              ["courtDupLast", "Dup last", "0.5"],
+              ["courtSitRatio", "Sit ratio", "0.05"],
+            ].map(([key, label, step]) => (
+              <div key={key}>
+                <label className="block text-subtext mb-0.5">{label}</label>
+                <input
+                  type="number"
+                  step={step}
+                  value={(config as any)[key as string] ?? 0}
+                  onChange={(e) => handleChange(key as any, (parseFloat(e.target.value) || 0) as any)}
+                  className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded-md text-xs text-text"
+                />
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+
       {/* Standard / Teams Settings */}
-      {config.format !== "POOL_PLAY" && (
+      {config.format === "STANDARD" && (
         <>
 
           {/* Seed Settings - standard specifics */}
