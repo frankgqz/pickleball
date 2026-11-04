@@ -18,6 +18,7 @@ export type CourtPlayer = {
   minutesPlayed: number
   waitSince: number // epoch ms — wanting-to-play state (paused while sitting)
   creditedCycles: number // sits + cycles missed before joining
+  scoreOffset: number // late-join credit = the pool average at join (Frank: ratio 1.0)
   lastGameFaces: string[] // the other players in their previous game
 }
 
@@ -40,6 +41,7 @@ export type ScoreWhy = {
   level: number
   close: number
   dupLast: number
+  offset: number
 }
 
 /** the cost curve Frank specified: 5m -> 8.75, 10m -> 10, 20m -> 12.5 */
@@ -68,8 +70,8 @@ export function scoreOf(
   }
   return {
     id: p.id,
-    score: played + wait + absence + level + close + dupLast,
-    played, wait, absence, level, close, dupLast,
+    score: (p.scoreOffset ?? 0) + played + wait + absence + level + close + dupLast,
+    played, wait, absence, level, close, dupLast, offset: p.scoreOffset,
   }
 }
 
@@ -78,6 +80,29 @@ export function scoreOf(
  * the forming average + accumulate dup-last. Pick 1 has no forming court,
  * so game 1 of the night sorts by level alone = the standard seeding look.
  */
+
+/**
+ * Late join: the joiner starts at the POOL'S CURRENT AVERAGE SCORE (Frank:
+ * ratio 1.0 of the pool's increment). Without it the joiner strands behind
+ * the evening's wait-drift (scores slide negative as waiting outpaces costs).
+ * Their wait clock starts at join (waitSince = joinedAt).
+ */
+export function joinOffset(
+  pool: CourtPlayer[],
+  now: number,
+  cfg: CourtConfig,
+  ctx: { courts: number }
+): number {
+  if (!pool.length) return 0
+  // the HISTORY terms only (played + wait + absence) — the joiner keeps their
+  // own level term; inheriting ratings would double-count (the sim caught it)
+  const history = pool.map((p) => {
+    const w = scoreOf(p, now, cfg, { ...ctx, activePlayers: pool.length, formingDuprAvg: null })
+    return w.played + w.wait + w.absence
+  })
+  return history.reduce((s, v) => s + v, 0) / history.length
+}
+
 export function pickCourt(
   players: CourtPlayer[],
   now: number,
