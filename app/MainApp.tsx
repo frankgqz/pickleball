@@ -8,6 +8,10 @@ import EventPool from "@/components/EventPool";
 import CourtsPanel from "@/components/CourtsPanel";
 import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
+import CourtRolling from "@/components/CourtRolling";
+import GameLog from "@/components/GameLog";
+import { emptyQueue, joinQueue, toggleSit, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
+import { CourtConfig } from "@/app/courtEngine";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
@@ -309,6 +313,70 @@ export default function Page() {
     setStandings([]);
   }, [clearEventPool, currentSession, setStandings]);
 
+  // ---- by-Court mode (Frank 2026-11-03): the rolling queue ----
+  const [courtQueue, setCourtQueue] = useState<QueueState>(emptyQueue());
+  const courtCfg = config as CourtConfig;
+
+  // pool <-> queue sync: joiners enter at the pool mean, leavers leave,
+  // sits mirror the pool's isSitting (the engine's clock freezes with them)
+  useEffect(() => {
+    if (config.format !== "COURT") return;
+    setCourtQueue((prev) => {
+      let next: QueueState = { ...prev, players: { ...prev.players }, sitting: { ...prev.sitting } };
+      let changed = false;
+      for (const p of eventPool as any[]) {
+        if (!next.players[p.id]) {
+          const dupr = p.duprScore ?? p.manualDuprScore ?? 3.0;
+          next = joinQueue(next, p.id, dupr, Date.now(), courtCfg, config.courts || 6);
+          changed = true;
+        }
+        const sitting = !!p.isSitting;
+        if (sitting !== (next.sitting[p.id] !== undefined)) {
+          next = toggleSit(next, p.id, Date.now());
+          changed = true;
+        }
+      }
+      for (const id of Object.keys(next.players)) {
+        if (!(eventPool as any[]).some((p) => p.id === id)) {
+          const players = { ...next.players }; delete players[id];
+          const sitting = { ...next.sitting }; delete sitting[id];
+          next = { ...next, players, sitting };
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [eventPool, config.format]);
+
+  const names: Record<string, string> = {};
+  for (const p of allPlayers as any[]) names[p.id] = p.name;
+  for (const p of eventPool as any[]) names[p.id] = p.name;
+
+  const handleCourtClaim = useCallback((court: number, ids: string[]) => {
+    setCourtQueue((q) => claimCourt(q, court, ids, Date.now()));
+  }, []);
+
+  const handleCourtSubmit = useCallback(async (court: number, team1: string[], team2: string[], s1: number, s2: number, durationMin: number) => {
+    const gameNumber = roundHistory.length + 1;
+    const match = { id: "game-" + gameNumber, court, team1, team2, team1Score: s1, team2Score: s2 };
+    if (!dbSessionId && userId) {
+      await startNewSession(userId, (eventPool as any[]).map((p) => p.id));
+      setSessionEnded(false);
+    }
+    processMatchResults([match] as any, gameNumber, config, eventPool);
+    const completedRound: CompletedRound = {
+      roundNumber: gameNumber,
+      date: new Date().toISOString(),
+      format: { type: "FIXED_14V23" },
+      matches: [match] as any,
+      sittingOut: (eventPool as any[]).filter((p) => p.isSitting).map((p) => p.id),
+      sessionId: currentSession.sessionId,
+    };
+    addRoundToHistory(completedRound);
+    setSessionRefreshKey((k: number) => k + 1);
+    setCourtQueue((q) => submitGame(q, court, durationMin, Date.now()));
+  }, [roundHistory, config, eventPool, currentSession, processMatchResults, addRoundToHistory, dbSessionId, userId, startNewSession]);
+
   const handleEditRound = useCallback((roundNumber: number, updatedMatches: CompletedRound["matches"]) => {
     updateRoundInHistory(roundNumber, updatedMatches);
     // After updateRoundInHistory, we need to use the updated history
@@ -482,6 +550,16 @@ export default function Page() {
           />
         </div>
 
+        {config.format === "COURT" ? (
+          <CourtRolling
+            queue={courtQueue}
+            names={names}
+            cfg={courtCfg}
+            venueCap={config.courts || 6}
+            onClaim={handleCourtClaim}
+            onSubmit={handleCourtSubmit}
+          />
+        ) : (
         <CourtsPanel
           roundState={roundState}
           eventPool={eventPool}
@@ -501,6 +579,7 @@ export default function Page() {
           onStartNextRound={startNextRound}
           submitted={roundState.submitted}
         />
+        )}
 
         <StandingsTable
             pairMap={config.pairMap || {}}
@@ -508,6 +587,19 @@ export default function Page() {
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
         />
 
+        {config.format === "COURT" ? (
+          <GameLog
+            roundHistory={roundHistory}
+            names={names}
+            sessionEnded={sessionEnded}
+            onEndSession={async () => {
+              if (dbSessionId) {
+                await endSession(dbSessionId);
+                setSessionEnded(true);
+              }
+            }}
+          />
+        ) : (
         <RoundHistoryPanel
           roundHistory={roundHistory}
           currentSessionId={currentSession.sessionId}
@@ -535,7 +627,7 @@ export default function Page() {
             setStandings([]);
           }}
           />
-      </div>
+        )}      </div>
     </div>
   );
 }
