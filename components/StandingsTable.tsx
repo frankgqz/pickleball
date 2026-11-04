@@ -28,9 +28,10 @@ export default function StandingsTable({
 }: Props) {
   // Internal fallback sort state when not externally controlled
   const [internalSortColumn, setInternalSortColumn] = useState<string>("seedTotal");
+  // court mode: sort by the visible Score column (verify pass 2026-11-04)
   const [internalSortDirection, setInternalSortDirection] = useState<"asc" | "desc">("asc");
 
-  const sortColumn = externalSortColumn ?? internalSortColumn;
+  const sortColumn = externalSortColumn ?? (mode === "court" && internalSortColumn === "seedTotal" ? "score" : internalSortColumn);
   const sortDirection = externalSortDirection ?? internalSortDirection;
 
   const headerClick = (col: string) => {

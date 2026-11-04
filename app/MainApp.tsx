@@ -300,13 +300,16 @@ export default function Page() {
     matchGenActions.generateStandardMatches(format);
   }, [config.roundFormat, matchGenActions, setStandings]);
 
+  const [courtQueue, setCourtQueue] = useState<QueueState>(emptyQueue());
+
   const handleRestartEvent = useCallback(() => {
     restartEvent();
+    setCourtQueue(emptyQueue()); // by-Court: a restart is a clean ledger (verify pass 2026-11-04)
     // The pool is kept on restart — rehydrate standings from it instead of
     // leaving the table empty (Frank 2026-10-08: "the standings disappear")
     setStandings(initializeSeeds(buildEntriesFromPlayers(eventPool), config.orderGap));
     setSessionEnded(false);
-  }, [restartEvent, setStandings, eventPool, config.orderGap]);
+  }, [restartEvent, setStandings, eventPool, config.orderGap, setCourtQueue]);
 
   const handleClearPool = useCallback(() => {
     clearEventPool(currentSession);
@@ -314,7 +317,6 @@ export default function Page() {
   }, [clearEventPool, currentSession, setStandings]);
 
   // ---- by-Court mode (Frank 2026-11-03): the rolling queue ----
-  const [courtQueue, setCourtQueue] = useState<QueueState>(emptyQueue());
   const courtCfg = config as CourtConfig;
 
   // pool <-> queue sync: joiners enter at the pool mean, leavers leave,
