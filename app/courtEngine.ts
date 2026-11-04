@@ -1,80 +1,101 @@
-// By-Court mode: rolling court-optimized matching (Frank 2026-11-03).
-// Pure functions only — the UI feeds state in, gets a pick + its reason out.
+// By-Court mode: the pick engine — Frank's scoring formula (2026-11-03).
+// Lower score = goes on court next. Penalties are +, advantages are -.
 
-export type CourtUnit = {
+export type CourtConfig = {
+  courtGames: number // per-game base cost (7.5)
+  courtWaitMin: number // per minute waited since last game (-1)
+  courtDuprClose: number // per DUPR point from the forming average (10)
+  courtMinPlayed: number // per minute played (0.25)
+  courtDuprScore: number // per DUPR point of level (-1)
+  courtDupLast: number // per shared face with a locked player (2)
+  courtSitRatio: number // sit/absence credit ratio (0.9)
+}
+
+export type CourtPlayer = {
   id: string
-  players: string[] // 1 = singles, 2 = doubles
-  rating: number // combined DUPR (or seed-derived stand-in)
-  waitingSince: number // epoch ms — entered the queue
-  lastPlayedAt: number | null // epoch ms — came off a court
+  dupr: number // DUPR or seed-derived (neutral 3.0 fallback)
+  gamesPlayed: number
+  minutesPlayed: number
+  waitSince: number // epoch ms — wanting-to-play state (paused while sitting)
+  creditedCycles: number // sits + cycles missed before joining
+  lastGameFaces: string[] // the other players in their previous game
 }
 
-export type PickWhy = {
-  waitedMin: number // how long the locked unit waited
-  opponentWaitedMin: number
-  ratingDelta: number // |combined ratings|
-  freshOff: boolean // opponent came off recently
-  rematch: boolean // same pairing as the locked unit's last game
+export const COURT_DEFAULTS: CourtConfig = {
+  courtGames: 7.5,
+  courtWaitMin: -1,
+  courtDuprClose: 10,
+  courtMinPlayed: 0.25,
+  courtDuprScore: -1,
+  courtDupLast: 2,
+  courtSitRatio: 0.9,
+}
+
+export type ScoreWhy = {
+  id: string
   score: number
+  played: number
+  wait: number
+  absence: number
+  level: number
+  close: number
+  dupLast: number
 }
 
-export type NextGame = {
-  units: [CourtUnit, CourtUnit]
-  why: PickWhy
+/** the cost curve Frank specified: 5m -> 8.75, 10m -> 10, 20m -> 12.5 */
+export function gameCost(cfg: CourtConfig, minutes: number): number {
+  return cfg.courtGames + cfg.courtMinPlayed * minutes
 }
 
 const MIN = 60_000
-const JUST_OFF_MIN = 8 // a just-off unit behaves like it has 8 extra wait-min
-const FAIR_K = 0.6 // per rating point of mismatch
-const REMATCH_PENALTY_MIN = 6
 
-/** virtual wait = real wait + (fresh-off units are pushed back) */
-function virtualWaitMin(u: CourtUnit, now: number): number {
-  const real = (now - u.waitingSince) / MIN
-  if (u.lastPlayedAt == null) return real
-  const sinceOff = (now - u.lastPlayedAt) / MIN
-  // just came off? shave the wait by the penalty, decaying over ~JUST_OFF_MIN
-  const freshness = Math.max(0, 1 - sinceOff / JUST_OFF_MIN)
-  return real - freshness * JUST_OFF_MIN
-}
-
-export function opponentScore(
-  locked: CourtUnit,
-  cand: CourtUnit,
+export function scoreOf(
+  p: CourtPlayer,
   now: number,
-  lastOpponentIds: Record<string, string> = {}
-): PickWhy {
-  const waitedMin = Math.max(0, Math.round((now - locked.waitingSince) / MIN))
-  const opponentWaitedMin = Math.max(0, Math.round((now - cand.waitingSince) / MIN))
-  const ratingDelta = Math.abs(locked.rating - cand.rating)
-  const sinceOff = cand.lastPlayedAt == null ? Infinity : (now - cand.lastPlayedAt) / MIN
-  const freshOff = sinceOff < JUST_OFF_MIN
-  const rematch = lastOpponentIds[locked.id] === cand.id
-  // higher = better pairing; wait of the candidate counts a little too
-  const score =
-    Math.min(virtualWaitMin(locked, now), virtualWaitMin(cand, now)) * 1.0 -
-    ratingDelta * FAIR_K -
-    (rematch ? REMATCH_PENALTY_MIN : 0)
-  return { waitedMin, opponentWaitedMin, ratingDelta, freshOff, rematch, score }
+  cfg: CourtConfig,
+  ctx: { courts: number; activePlayers: number; formingDuprAvg: number | null },
+  locked: CourtPlayer[] = []
+): ScoreWhy {
+  const played = p.gamesPlayed * cfg.courtGames + p.minutesPlayed * cfg.courtMinPlayed
+  const wait = ((now - p.waitSince) / MIN) * cfg.courtWaitMin
+  const perCycle = cfg.courtSitRatio * (ctx.courts / Math.max(1, ctx.activePlayers)) * cfg.courtGames
+  const absence = p.creditedCycles * perCycle
+  const level = p.dupr * cfg.courtDuprScore
+  const close = ctx.formingDuprAvg === null ? 0 : Math.abs(p.dupr - ctx.formingDuprAvg) * cfg.courtDuprClose
+  let dupLast = 0
+  for (const l of locked) {
+    if (l.lastGameFaces.includes(p.id) || p.lastGameFaces.includes(l.id)) dupLast += cfg.courtDupLast
+  }
+  return {
+    id: p.id,
+    score: played + wait + absence + level + close + dupLast,
+    played, wait, absence, level, close, dupLast,
+  }
 }
 
 /**
- * The pick: lock the longest-waiting unit in, choose its best opponent.
- * Returns null when fewer than 2 units are waiting.
+ * The lock-sequence pick: lowest score locks in, the rest re-score against
+ * the forming average + accumulate dup-last. Pick 1 has no forming court,
+ * so game 1 of the night sorts by level alone = the standard seeding look.
  */
-export function pickNextGame(
-  queue: CourtUnit[],
+export function pickCourt(
+  players: CourtPlayer[],
   now: number,
-  lastOpponentIds: Record<string, string> = {}
-): NextGame | null {
-  if (queue.length < 2) return null
-  const sorted = [...queue].sort((a, b) => virtualWaitMin(b, now) - virtualWaitMin(a, now))
-  const locked = sorted[0]
-  let best: { cand: CourtUnit; why: PickWhy } | null = null
-  for (const cand of sorted.slice(1)) {
-    const why = opponentScore(locked, cand, now, lastOpponentIds)
-    if (!best || why.score > best.why.score) best = { cand, why }
+  cfg: CourtConfig,
+  ctx: { courts: number }
+): ScoreWhy[][] {
+  const remaining = [...players]
+  const picked: CourtPlayer[] = []
+  const steps: ScoreWhy[][] = []
+  for (let i = 0; i < 4 && remaining.length; i++) {
+    const formingDuprAvg = picked.length ? picked.reduce((s, p) => s + p.dupr, 0) / picked.length : null
+    const scored = remaining
+      .map((c) => scoreOf(c, now, cfg, { ...ctx, activePlayers: players.length, formingDuprAvg }, picked))
+      .sort((a, b) => a.score - b.score)
+    steps.push(scored)
+    const winner = remaining.find((r) => r.id === scored[0].id)!
+    picked.push(winner)
+    remaining.splice(remaining.indexOf(winner), 1)
   }
-  if (!best) return null
-  return { units: [locked, best.cand], why: best.why }
+  return steps
 }
