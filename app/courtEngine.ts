@@ -106,15 +106,34 @@ export function joinOffset(
 }
 
 
-/** the standings column for by-Court mode: the queue score minus the
- *  pairwise terms (close/dupLast need specific court-mates to exist). */
+/** the standings column for by-Court mode: the STABLE ledger — event-driven
+ *  only (games, sits, joins, level). No live wait term (Frank: it is an
+ *  ongoing thing; the queue position already shows the wait) and no pairwise
+ *  terms (close/dupLast need specific court-mates to exist). */
 export function standingScore(
   p: CourtPlayer,
   now: number,
   cfg: CourtConfig,
   ctx: { courts: number; activePlayers: number }
 ): number {
-  return scoreOf(p, now, cfg, { ...ctx, formingDuprAvg: null }).score
+  const w = scoreOf(p, now, cfg, { ...ctx, formingDuprAvg: null })
+  return (p.scoreOffset ?? 0) + w.played + w.absence + w.level
+}
+
+/** the default team split of a picked four: sorted 1-4 by rating,
+ *  1+4 vs 2+3 (Frank) — players swap freely after. */
+export function splitTeams(four: CourtPlayer[]): [CourtPlayer[], CourtPlayer[]] {
+  const s = [...four].sort((a, b) => b.dupr - a.dupr)
+  return [[s[0], s[3]], [s[1], s[2]]]
+}
+
+/** the compact why-line: `14m · 3.8≈3.9 · Δ0.2` (wait · the two team
+ *  averages · parity gap) — no labels, no emoji. */
+export function whyLine(lockedWaitMin: number, teamA: CourtPlayer[], teamB: CourtPlayer[]): string {
+  const avg = (t: CourtPlayer[]) => t.reduce((s, p) => s + p.dupr, 0) / t.length
+  const a = avg(teamA), b = avg(teamB)
+  const f = (v: number) => (Math.round(v * 10) / 10).toFixed(1)
+  return `${Math.round(lockedWaitMin)}m · ${f(a)}\u2248${f(b)} · \u0394${f(Math.abs(a - b))}`
 }
 
 export function pickCourt(
