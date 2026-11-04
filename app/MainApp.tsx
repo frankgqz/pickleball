@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import CourtRolling from "@/components/CourtRolling";
 import GameLog from "@/components/GameLog";
 import { emptyQueue, joinQueue, toggleSit, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
-import { CourtConfig } from "@/app/courtEngine";
+import { CourtConfig, standingScore } from "@/app/courtEngine";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
@@ -352,6 +352,15 @@ export default function Page() {
   for (const p of allPlayers as any[]) names[p.id] = p.name;
   for (const p of eventPool as any[]) names[p.id] = p.name;
 
+  const courtScore: Record<string, number> = {};
+  if (config.format === "COURT") {
+    const busyIds = new Set(Object.values(courtQueue.onCourt).flatMap((c) => c.ids));
+    const activeCount = Object.keys(courtQueue.players).filter((id) => !courtQueue.sitting[id] && !busyIds.has(id)).length;
+    for (const p of Object.values(courtQueue.players)) {
+      courtScore[p.id] = standingScore(p, Date.now(), courtCfg, { courts: config.courts || 6, activePlayers: Math.max(1, activeCount) });
+    }
+  }
+
   const handleCourtClaim = useCallback((court: number, ids: string[]) => {
     setCourtQueue((q) => claimCourt(q, court, ids, Date.now()));
   }, []);
@@ -582,6 +591,8 @@ export default function Page() {
         )}
 
         <StandingsTable
+          mode={config.format === "COURT" ? "court" : "round"}
+          courtScore={courtScore}
             pairMap={config.pairMap || {}}
           standings={computedStandings}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}

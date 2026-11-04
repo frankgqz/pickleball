@@ -12,6 +12,8 @@ interface Props {
   sortColumn?: string;
   sortDirection?: "asc" | "desc";
   onSortChange?: (column: string) => void;
+  mode?: "round" | "court";
+  courtScore?: Record<string, number>;
 }
 
 export default function StandingsTable({
@@ -21,6 +23,8 @@ export default function StandingsTable({
   sortColumn: externalSortColumn,
   sortDirection: externalSortDirection,
   onSortChange,
+  mode = "round",
+  courtScore,
 }: Props) {
   // Internal fallback sort state when not externally controlled
   const [internalSortColumn, setInternalSortColumn] = useState<string>("seedTotal");
@@ -63,9 +67,9 @@ export default function StandingsTable({
       const matchesPlayed = (entry.wins || 0) + (entry.losses || 0);
       const winPct = matchesPlayed > 0 ? ((entry.wins || 0) / matchesPlayed) * 100 : 0;
 
-      return { ...entry, seedTotal, byeTotal, pointDiff, ptsPct, winPct };
+      return { ...entry, seedTotal, byeTotal, pointDiff, ptsPct, winPct, score: (courtScore || {})[entry.id] };
     });
-  }, [standings]);
+  }, [standings, courtScore]);
 
   const sorted = useMemo(() => {
     const list = [...computed];
@@ -81,6 +85,10 @@ export default function StandingsTable({
         case "seedTotal":
           aVal = a.seedTotal;
           bVal = b.seedTotal;
+          break;
+        case "score":
+          aVal = (a as any).score ?? 0;
+          bVal = (b as any).score ?? 0;
           break;
         case "wins":
           aVal = a.wins || 0;
@@ -194,6 +202,7 @@ export default function StandingsTable({
                   Pts%{getSortIcon("ptsPct")}
                 </th>
 
+                {mode !== "court" && (<>
                 <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("byeCount")}>
                   Byes{getSortIcon("byeCount")}
                 </th>
@@ -205,6 +214,12 @@ export default function StandingsTable({
                 <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("seedTotal")} title="Seed after wins and losses (initial + adjustments)">
                   Seed{getSortIcon("seedTotal")}
                 </th>
+                </>)}
+                {mode === "court" && (
+                <th className="px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-pointer hover:bg-hover-bg w-[1%] whitespace-nowrap" onClick={() => headerClick("score")} title="the queue score (stable: games, sits, level)">
+                  Score{getSortIcon("score")}
+                </th>
+                )}
               </tr>
             </thead>
 
@@ -235,11 +250,16 @@ export default function StandingsTable({
 
                     <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center"><span className={ptsPctVal >= 50 ? "text-green-600" : "text-subtext"}>{ptsPctVal.toFixed(0)}%</span></td>
 
+                    {mode !== "court" && (<>
                     <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center"><span className="accent-text">{entry.byeCount || 0}</span></td>
 
                     <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center ${partner ? "accent-text" : byeTotal >= 0 ? "text-blue-600" : "text-orange-600"}`} title={`bye breakdown:\nbase: ${(entry.byeBase || 0).toFixed(2)}\n+ ${entry.byeCount || 0} byes\n+ ${((entry.sitOutCount || 0) * 0.5).toFixed(2)} sitBonus\n+ ${(entry.byeMod || 0).toFixed(2)} Other`}>{byeTotal >= 0 ? "+" : ""}{byeTotal.toFixed(2)}</td>
 
                     <td className={`px-1 md:px-2 lg:px-3.5 py-1 text-center cursor-help ${partner ? "accent-text" : "text-blue-600"}`} title={`Seed history:\ninitial seed: ${(entry.seed || 0).toFixed(2)}\n${entry.orderHistory.length > 0 ? "Changes:" : "No changes yet"}\n${entry.orderHistory.map((h) => `R${h.round}: ${h.change >= 0 ? "+" : ""}${h.change.toFixed(2)} (${h.reason})`).join("\n")}\ncurrent adjustment: ${(entry.seedAdjustment || 0) >= 0 ? "+" : ""}${(entry.seedAdjustment || 0).toFixed(2)}`}>{seedTotal.toFixed(2)}</td>
+                    </>)}
+                    {mode === "court" && (
+                    <td className="px-1 md:px-2 lg:px-3.5 py-1 text-center text-text">{((entry as any).score ?? 0).toFixed(1)}</td>
+                    )}
                   </tr>
                 );
               })}
