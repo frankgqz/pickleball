@@ -29,7 +29,8 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   courtMinPlayed: 0.25,
   courtDuprScore: -1,
   courtDupLast: 2,
-  courtSitRatio: 0.9,
+  courtSitRatio: 1,
+  courtJoinRatio: 1,
 };
 
 // Format constants with proper literal types

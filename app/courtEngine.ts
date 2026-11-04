@@ -8,7 +8,8 @@ export type CourtConfig = {
   courtMinPlayed: number // per minute played (0.25)
   courtDuprScore: number // per DUPR point of level (-1)
   courtDupLast: number // per shared face with a locked player (2)
-  courtSitRatio: number // sit/absence credit ratio (0.9)
+  courtSitRatio: number // sit/absence credit ratio (1)
+  courtJoinRatio: number // late-join history-credit ratio (1)
 }
 
 export type CourtPlayer = {
@@ -29,7 +30,8 @@ export const COURT_DEFAULTS: CourtConfig = {
   courtMinPlayed: 0.25,
   courtDuprScore: -1,
   courtDupLast: 2,
-  courtSitRatio: 0.9,
+  courtSitRatio: 1,
+  courtJoinRatio: 1,
 }
 
 export type ScoreWhy = {
@@ -100,7 +102,19 @@ export function joinOffset(
     const w = scoreOf(p, now, cfg, { ...ctx, activePlayers: pool.length, formingDuprAvg: null })
     return w.played + w.wait + w.absence
   })
-  return history.reduce((s, v) => s + v, 0) / history.length
+  return (history.reduce((s, v) => s + v, 0) / history.length) * (cfg.courtJoinRatio ?? 1)
+}
+
+
+/** the standings column for by-Court mode: the queue score minus the
+ *  pairwise terms (close/dupLast need specific court-mates to exist). */
+export function standingScore(
+  p: CourtPlayer,
+  now: number,
+  cfg: CourtConfig,
+  ctx: { courts: number; activePlayers: number }
+): number {
+  return scoreOf(p, now, cfg, { ...ctx, formingDuprAvg: null }).score
 }
 
 export function pickCourt(

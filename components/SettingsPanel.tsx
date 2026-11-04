@@ -190,6 +190,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               ["courtDuprScore", "Dupr", "0.25"],
               ["courtDupLast", "Dup last", "0.5"],
               ["courtSitRatio", "Sit ratio", "0.05"],
+              ["courtJoinRatio", "Join ratio", "0.05"],
             ].map(([key, label, step]) => (
               <div key={key}>
                 <label className="block text-subtext mb-0.5">{label}</label>
