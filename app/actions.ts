@@ -350,11 +350,10 @@ async function fetchDuprRatingInner(playerId: string) {
         headers: {
           // DUPR_TOKEN (from the dupr-auth ritual) is a COOKIE-session token —
           // send it as the __Host-dupr_at cookie; login-flow tokens use Bearer.
-          // Send BOTH auth shapes (the proven probe mode): the ritual's token
-          // may be a login-flow accessToken (Bearer-kind) or a cookie-session
-          // token — DUPR 401s with "valid API key" when the shape mismatches.
+          // Cookie __Host-dupr_at is the ONLY accepted shape for the ritual's
+          // session token (Frank 2026-11-09 matrix: dupr_at= says "valid API
+          // key", Bearer says "Invalid token" — sending both POISONS the call).
           "Cookie": `__Host-dupr_at=${tok}`,
-          "Authorization": `Bearer ${tok}`,
           "Content-Type": "application/json",
         },
       });
