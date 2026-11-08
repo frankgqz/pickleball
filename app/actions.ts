@@ -379,9 +379,10 @@ async function fetchDuprRatingInner(playerId: string) {
     }
     const bodyText = await response.text().catch(() => "");
     const hint = response.status === 401
-      ? " - token rejected: the session expired (run the DUPR renewal) or DUPR now wants an API key here"
+      ? " - token rejected: session expired (renew) or DUPR wants an API key now"
       : "";
-    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})${hint}${bodyText ? " " + bodyText.slice(0, 140) : ""}` };
+    // DUPR's own body FIRST - it is the discriminator (Frank 2026-11-05)
+    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})${bodyText ? " " + bodyText.slice(0, 140) : ""}${hint}` };
   } catch (error) {
     console.error("Error fetching DUPR rating:", error);
     return { success: false, error: "Failed to fetch rating" };

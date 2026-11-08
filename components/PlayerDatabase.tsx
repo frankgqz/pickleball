@@ -224,7 +224,7 @@ export default function PlayerDatabase({
       return;
     }
     setFetchFeedback({ playerId: id, message: "Fetching...", success: true });
-    const clip = (s: string) => (s.length > 72 ? s.slice(0, 69) + "..." : s);
+    const clip = (s: string) => (s.length > 200 ? s.slice(0, 197) + "..." : s);
     try {
       const res = await onFetchDupr?.(id) as { player: Player | null; error: string | null } | void;
       // Use the FETCHED player — `players` here is the stale render-time copy
