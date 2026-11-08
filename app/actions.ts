@@ -284,7 +284,21 @@ export async function updatePlayer(playerId: string, formData: FormData) {
 }
 
 // Fetch and update player rating and avatar from DUPR
+// DUPR now allows only ~3 lookups at a time for OTHER people's ratings
+// (Frank, 2026-11-05). Keep at most ONE lookup in flight: rapid clicks queue
+// up instead of tripping the limit together.
+let duprChain: Promise<unknown> = Promise.resolve();
+function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+  const run = duprChain.then(fn, fn);
+  duprChain = run.then(() => undefined, () => undefined);
+  return run;
+}
+
 export async function fetchDuprRating(playerId: string) {
+  return enqueue(() => fetchDuprRatingInner(playerId));
+}
+
+async function fetchDuprRatingInner(playerId: string) {
   try {
     const player = await prisma.player.findUnique({
       where: { id: playerId },
@@ -348,7 +362,14 @@ export async function fetchDuprRating(playerId: string) {
         message: rating ? `Fetched: ${data.result.fullName} - ${rating}${imageUrl ? " ✓" : ""}` : "Player found but no rating (NR)"
       };
     }
-    return { success: false, error: "Could not fetch player from DUPR" };
+    if (response.status === 429 || response.status === 403) {
+      const body = await response.text().catch(() => "");
+      return {
+        success: false,
+        error: `DUPR limit reached (${response.status}) — their few-lookups rule. Wait a moment and try again.${body ? " (" + body.slice(0, 140) + ")" : ""}`,
+      };
+    }
+    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})` };
   } catch (error) {
     console.error("Error fetching DUPR rating:", error);
     return { success: false, error: "Failed to fetch rating" };
