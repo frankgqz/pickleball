@@ -69,7 +69,7 @@ async function saveTokensToDb(at: string, rt?: string) {
   }
 }
 
-function saveToken(token: string, rt?: string) {
+async function saveToken(token: string, rt?: string) {
   let env = fs.existsSync(ENV_PATH) ? fs.readFileSync(ENV_PATH, "utf8") : "";
   const line = `DUPR_TOKEN=${token}`;
   if (/^DUPR_TOKEN=.*$/m.test(env)) env = env.replace(/^DUPR_TOKEN=.*$/m, line);
@@ -81,7 +81,7 @@ function saveToken(token: string, rt?: string) {
   }
   fs.writeFileSync(ENV_PATH, env);
   console.log(`\n✓ DUPR_TOKEN saved to .env (…${token.slice(-4)}).`);
-  void saveTokensToDb(token, rt);
+  await saveTokensToDb(token, rt);
 }
 
 function daysLeftOnToken(token: string): number | null {
@@ -91,6 +91,26 @@ function daysLeftOnToken(token: string): number | null {
   } catch { return null; }
 }
 
+// The JWT exp claim can look fresh while DUPR's server has already killed the
+// session (Frank 2026-11-09: "Session expired" under a 30-day claim). Ask DUPR,
+// never the token's own opinion. Only 401/403 = dead; a network hiccup does
+// NOT trigger a renewal (login attempts are email-flood expensive).
+async function probeSession(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE}/player/v1.0/158995944`, {
+      method: "GET",
+      headers: {
+        "Cookie": `__Host-dupr_at=${token}`,
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return res.status !== 401 && res.status !== 403;
+  } catch {
+    return true;
+  }
+}
+
 async function login() {
   const env = loadEnv();
   // Cron mode: skip entirely while the token has plenty of life (≥ 7 days).
@@ -98,11 +118,12 @@ async function login() {
   const force = process.argv.includes("--force");
   if (current && !force) {
     const days = daysLeftOnToken(current);
-    if (days !== null && days >= 7) {
-      console.log(`Token still fresh (${days.toFixed(1)} days left) — nothing to do.`);
+    const alive = await probeSession(current);
+    if (alive) {
+      console.log(`Session verified ALIVE at DUPR (claim: ${days?.toFixed(1) ?? "?"} days) — nothing to do.`);
       return;
     }
-    console.log(`Token has ${days?.toFixed(1) ?? "?"} days left — renewing...`);
+    console.log(`Session DEAD at DUPR (claim said ${days?.toFixed(1) ?? "?"} days) — renewing...`);
   }
   if (!env.DUPR_EMAIL || !env.DUPR_PASSWORD) {
     console.log("DUPR_EMAIL / DUPR_PASSWORD missing in .env"); return;
@@ -113,7 +134,7 @@ async function login() {
   });
   const data: any = await res.json();
   if (data.status === "SUCCESS" && data.result?.accessToken) {
-    saveToken(data.result.accessToken);
+    await saveToken(data.result.accessToken);
     return;
   }
   if (data.errorCode === "2FA_CHALLENGE_REQUIRED" && data.requirements?.[0]?.challengeToken) {
@@ -143,7 +164,7 @@ async function login() {
         const rt = sc.match(/(?:__Host-)?dupr_rt=([^;\s,]+)/);
         if (at) {
           fs.unlinkSync(STATE_PATH);
-          saveToken(at[1], rt?.[1]);
+          await saveToken(at[1], rt?.[1]);
           return;
         }
         console.log(`  attempt ${off}: ${d.status ?? res.status} ${String(d.message ?? "").slice(0, 60)}`);
@@ -250,7 +271,7 @@ async function verifyCode(code: string) {
         const at = setCookie.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
         const rt = setCookie.match(/(?:__Host-)?dupr_rt=([^;\s,]+)/);
         if (at) {
-          saveToken(at[1], rt?.[1]);
+          await saveToken(at[1], rt?.[1]);
           return;
         }
         // Fallback: scan the whole response for a JWT (three dot-separated
