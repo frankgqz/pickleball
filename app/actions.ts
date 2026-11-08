@@ -325,14 +325,22 @@ async function fetchDuprRatingInner(playerId: string) {
     });
 
     if (response.ok) {
-      const data = await response.json();
-      let rating = data.result?.ratings?.doubles;
+      const data = await response.json().catch(() => null);
+      // A 200 with no player identity is NOT an answer (Frank 2026-11-05:
+      // "when used up -- no rating") — the quota/empty shape. It must never
+      // wipe a stored rating.
+      const r = data?.result;
+      const hasIdentity = !!(r && (r.id || r.duprId || r.fullName));
+      if (!hasIdentity) {
+        return { success: false, error: "DUPR returned no player - the daily lookups are likely used up (or the payload shape changed)" };
+      }
+      let rating = r.ratings?.doubles;
       if (rating === "NR" || !rating) {
         rating = null;
       } else {
         rating = parseFloat(rating);
       }
-      const imageUrl = data.result?.imageUrl || null;
+      const imageUrl = r.imageUrl || null;
 
       const updatedPlayer = await prisma.player.update({
         where: { id: playerId },

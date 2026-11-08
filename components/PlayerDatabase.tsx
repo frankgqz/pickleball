@@ -224,17 +224,20 @@ export default function PlayerDatabase({
       return;
     }
     setFetchFeedback({ playerId: id, message: "Fetching...", success: true });
+    const clip = (s: string) => (s.length > 72 ? s.slice(0, 69) + "..." : s);
     try {
-      const fetched = await onFetchDupr?.(id);
+      const res = await onFetchDupr?.(id) as { player: Player | null; error: string | null } | void;
       // Use the FETCHED player — `players` here is the stale render-time copy
       // (the fields visibly populate but the old snapshot said "No rating")
-      const updated = (fetched as Player | null) ?? players.find(p => p.id === id);
-      if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar", success: true });
+      const updated = res?.player ?? players.find(p => p.id === id);
+      const err = res?.error ?? null;
+      if (err) setFetchFeedback({ playerId: id, message: clip(err), success: false });
+      else if (updated?.imageUrl) setFetchFeedback({ playerId: id, message: "✓ Avatar", success: true });
       else if (updated?.duprScore) setFetchFeedback({ playerId: id, message: `✓ ${updated.duprScore}`, success: true });
-      else setFetchFeedback({ playerId: id, message: "No rating", success: false });
+      else setFetchFeedback({ playerId: id, message: "No rating (NR)", success: false });
     } catch (e) {
       console.error(e);
-      setFetchFeedback({ playerId: id, message: "Error", success: false });
+      setFetchFeedback({ playerId: id, message: `Error: ${e instanceof Error ? clip(e.message) : "request failed"}`, success: false });
     }
     void refreshLookups();
     setTimeout(() => setFetchFeedback(null), 3000);
