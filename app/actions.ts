@@ -93,6 +93,15 @@ function normalizeDuprNumericId(raw: string | null | undefined): string {
   const m = s.match(/(\d{5,})/);
   return m ? m[1] : s;
 }
+// Frank's URL landed in the duprId (star) field — normalize both shapes there
+function normalizeDuprId(raw: string | null | undefined): string {
+  const s = (raw || "").trim();
+  if (/dashboard\.dupr\.com|https?:|\//.test(s)) {
+    const m = s.match(/(\d{5,})/);
+    return m ? m[1] : s;
+  }
+  return s;
+}
 
 // ===== PLAYER ACTIONS (Global lookup) =====
 
@@ -173,7 +182,7 @@ export async function importLocalPlayers(
 // Add a new player to global database (with upsert/merge logic)
 export async function addPlayer(formData: FormData, userId?: string) {
   const name = formData.get("name") as string;
-  const duprId = formData.get("duprId") as string;
+  const duprId = normalizeDuprId(formData.get("duprId") as string);
   const duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
   const manualDuprScore = formData.get("manualDuprScore") as string;
 
@@ -278,7 +287,7 @@ export async function deletePlayer(id: string) {
 // Update a player in global database
 export async function updatePlayer(playerId: string, formData: FormData) {
   const name = formData.get("name") as string;
-  const duprId = formData.get("duprId") as string;
+  const duprId = normalizeDuprId(formData.get("duprId") as string);
   const duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
   const manualDuprScore = formData.get("manualDuprScore") as string;
 
@@ -351,12 +360,35 @@ async function fetchDuprRatingInner(playerId: string) {
       });
 
     let response = await callPlayer(token);
+    // DUPR ROTATES the session on use (Frank 2026-11-09: a fetch worked, the
+    // next one said "Invalid token") — follow the rotation and persist it.
+    const persistToken = async (tok: string) => {
+      cachedDuprToken = tok;
+      cachedTokenIsCookie = true;
+      duprTokenSource = "rotation";
+      duprTokenReadAt = Date.now();
+      try {
+        await prisma.authState.upsert({ where: { key: "dupr_at" }, update: { value: tok }, create: { key: "dupr_at", value: tok } });
+      } catch { /* persistence is best-effort */ }
+    };
+    const sc = response.headers.get("set-cookie") || "";
+    const rotated = sc.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
+    if (rotated && rotated[1] !== token) await persistToken(rotated[1]);
     if (response.status === 401) {
-      // stale in-process token — bust the cache, re-read (db beats env now),
-      // retry once with whatever is fresher
+      // dead token (rotation lost or expired) — bust the cache, re-read, and
+      // if that is the same dead token, MINT a fresh session via login
       cachedDuprToken = null;
-      const fresh = await getDuprToken();
-      if (fresh && fresh !== token) response = await callPlayer(fresh);
+      let fresh = await getDuprToken();
+      if (fresh === token) {
+        lastDuprLoginFailAt = 0;
+        fresh = await getDuprToken();
+      }
+      if (fresh && fresh !== token) {
+        response = await callPlayer(fresh);
+        const sc2 = response.headers.get("set-cookie") || "";
+        const rotated2 = sc2.match(/(?:__Host-)?dupr_at=([^;\s,]+)/);
+        if (rotated2) await persistToken(rotated2[1]);
+      }
     }
 
     if (response.ok) {

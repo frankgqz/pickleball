@@ -244,19 +244,14 @@ export default function PlayerDatabase({
   };
 
   const handleDelete = async (player: Player) => {
-    if (!confirm(`Remove ${player.name} from your roster?`)) return;
+    if (!confirm(`Delete ${player.name} from the database? (all rosters)`)) return;
     
     try {
       // Removing from the database also drops them from the event pool + standings
       onRemoveFromPool?.(player.id);
-      let res: any;
-      if (userId && onRemoveFromClubRoster) {
-        res = await onRemoveFromClubRoster(player.id);
-        onRefreshPlayers?.();
-      } else {
-        res = await onDeletePlayer?.(player.id);
-        onRefreshPlayers?.();
-      }
+      // Delete = delete (Frank 2026-11-09: the rated-keep policy kept rows he
+      // wanted gone) — the hook's delete also drops the row from the list
+      const res: any = await onDeletePlayer?.(player.id);
       // the row says what happened (Frank 2026-11-09: the button used to do
       // nothing visible either way)
       const ok = res?.success !== false;

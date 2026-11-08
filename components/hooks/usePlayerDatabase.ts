@@ -16,7 +16,7 @@ export interface PlayerDatabaseActions {
   loadPlayersFromDatabase: (userId?: string) => Promise<void>;
   addNewPlayer: (formData: FormData, userId?: string) => Promise<void>;
   updateExistingPlayer: (id: string, updates: Partial<Player>) => Promise<void>;
-  deleteExistingPlayer: (id: string) => Promise<void>;
+  deleteExistingPlayer: (id: string) => Promise<{ success: boolean; error?: string } | void>;
   fetchDuprForPlayer: (playerId: string) => Promise<{ player: Player | null; error: string | null }>;
   resetPlayers: () => void;
   setAllPlayers: (players: Player[]) => void;    // ← ADD — replaces roster on session load
@@ -149,6 +149,7 @@ export function usePlayerDatabase(
     } else {
       console.error("Failed to delete player:", result.error);
     }
+    return result;
   }, []);
 
   const fetchDuprForPlayer = useCallback(async (playerId: string) => {
