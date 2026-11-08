@@ -88,3 +88,13 @@ the pool inside generateStandardMatches).
   62cb376); regex audits of handlers miss the ones wired via onChange —
   check both paths; "swap" in the pairing UI = partner-slot trade semantics
   (not position swap).
+
+- DUPR few-lookups rule (Frank 2026-11-05): DUPR now allows only ~3 lookups
+ at a time for OTHER people's ratings. The lookup path is hardened
+ (0891218): fetchDuprRating queues serially (one in flight) and 429/403
+ refusals surface DUPR's own response body. Semantics (Frank):
+ a DAILY quota ~2-3 other-profile lookups/day on the website; every app
+ lookup spends from the app's single DUPR session = Frank's account. The
+ Player Database shows a 'DUPR n/3 today' counter (getDuprLookupsToday).
+ Monday's DUPR renewal cron = the API-change canary (auth endpoints may
+ have moved too).

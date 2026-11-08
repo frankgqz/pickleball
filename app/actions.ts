@@ -376,6 +376,20 @@ async function fetchDuprRatingInner(playerId: string) {
   }
 }
 
+// DUPR's daily budget (Frank 2026-11-05: ~2-3 other-profile lookups PER DAY,
+// and every app lookup spends from the app's single DUPR session = Frank's
+// account). Count = successful fetches in the last 24h — lastRefreshed is
+// stamped only by fetchDuprRating.
+export async function getDuprLookupsToday() {
+  try {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const count = await prisma.player.count({ where: { lastRefreshed: { gte: since } } });
+    return { success: true, count };
+  } catch (error) {
+    return { success: false, count: 0 };
+  }
+}
+
 // ===== CLUB PLAYER ACTIONS (User's roster) =====
 
 // Get user's roster (ClubPlayers for a specific user)

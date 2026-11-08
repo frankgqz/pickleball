@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
 import { Player } from "@/components/Types";
-import { findPlayerByDupr, getSessionList } from "@/app/actions";
+import { findPlayerByDupr, getSessionList, getDuprLookupsToday } from "@/app/actions";
 
 interface Props {
   players: Player[];
@@ -207,6 +207,15 @@ export default function PlayerDatabase({
     }
   };
 
+  // DUPR's daily budget (Frank 2026-11-05): ~3 other-profile lookups/day,
+  // all spent from one session — show the spend so it stays deliberate
+  const [lookupsToday, setLookupsToday] = useState<number | null>(null);
+  const refreshLookups = async () => {
+    const r = await getDuprLookupsToday();
+    if (r.success) setLookupsToday(r.count);
+  };
+  useEffect(() => { void refreshLookups(); }, []);
+
   const fetchDuprFor = async (id: string) => {
     const target = players.find(p => p.id === id);
     if (!target?.duprNumericId) {
@@ -227,6 +236,7 @@ export default function PlayerDatabase({
       console.error(e);
       setFetchFeedback({ playerId: id, message: "Error", success: false });
     }
+    void refreshLookups();
     setTimeout(() => setFetchFeedback(null), 3000);
   };
 
@@ -255,6 +265,9 @@ export default function PlayerDatabase({
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold whitespace-nowrap">🎾 Player Database</h2>
           <div className="text-xs text-subtext">{players.length}</div>
+          {lookupsToday !== null && (
+            <div className="text-xs text-subtext" title="DUPR allows ~3 lookups of other people's ratings per day. This counts the app's fetches in 24h — every lookup spends from one shared DUPR session">DUPR {lookupsToday}/3 today</div>
+          )}
           <div className="relative ml-auto flex items-center gap-1.5">
             <button
               type="button"
@@ -411,7 +424,7 @@ export default function PlayerDatabase({
                           <button aria-label="Add to pool" onClick={() => onAddToPool?.(player)} className="w-7 h-7 rounded-md role-quiet  border border-green-600  transition-colors text-base font-bold ml-10">+</button>
                         )}
                         <button onClick={() => startEditing(player)} className="px-1.5 py-0.5 bg-muted-bg border border-line rounded-md text-[9px] text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-colors">✏️</button>
-                        <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating"} className={`px-1.5 py-0.5 rounded-md text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-muted-bg border border-line text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>
+                        <button onClick={() => fetchDuprFor(player.id)} title={player.lastRefreshed ? `DUPR last fetched: ${new Date(player.lastRefreshed).toLocaleDateString()}` : "Fetch DUPR rating (spends 1 of ~3 daily)"} className={`px-1.5 py-0.5 rounded-md text-[9px] transition-colors ${hasNumericId && player.duprScore == null ? "bg-purple-200 border border-purple-400 text-purple-700 hover:bg-purple-300 hover:border-purple-500" : "bg-muted-bg border border-line text-purple-600 hover:bg-purple-100 hover:border-purple-300"}`}>🔍</button>
                         <button onClick={() => handleDelete(player)} className="px-1.5 py-0.5 bg-muted-bg border border-line rounded-md text-[9px] text-red-500 hover:bg-red-100 hover:border-red-300 transition-colors">🗑️</button>
                       </div>
                     </div>
