@@ -182,9 +182,13 @@ export async function importLocalPlayers(
 // Add a new player to global database (with upsert/merge logic)
 export async function addPlayer(formData: FormData, userId?: string) {
   const name = formData.get("name") as string;
-  const duprId = normalizeDuprId(formData.get("duprId") as string);
-  const duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
+  let duprId = normalizeDuprId(formData.get("duprId") as string);
+  let duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
   const manualDuprScore = formData.get("manualDuprScore") as string;
+  // A pasted URL/number is the NUMERIC id even when it landed in the star
+  // (duprId) field — route it (smoke test 2026-11-09: the mis-route created
+  // duplicate rows instead of merging)
+  if (/^\d{5,}$/.test(duprId) && !duprNumericId) { duprNumericId = duprId; duprId = ""; }
 
   if (!name?.trim()) {
     return { success: false, error: "Name is required" };
@@ -287,9 +291,13 @@ export async function deletePlayer(id: string) {
 // Update a player in global database
 export async function updatePlayer(playerId: string, formData: FormData) {
   const name = formData.get("name") as string;
-  const duprId = normalizeDuprId(formData.get("duprId") as string);
-  const duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
+  let duprId = normalizeDuprId(formData.get("duprId") as string);
+  let duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
   const manualDuprScore = formData.get("manualDuprScore") as string;
+  // A pasted URL/number is the NUMERIC id even when it landed in the star
+  // (duprId) field — route it (smoke test 2026-11-09: the mis-route created
+  // duplicate rows instead of merging)
+  if (/^\d{5,}$/.test(duprId) && !duprNumericId) { duprNumericId = duprId; duprId = ""; }
 
   try {
     const player = await prisma.player.update({
