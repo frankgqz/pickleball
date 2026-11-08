@@ -85,6 +85,15 @@ async function getDuprToken(): Promise<string | null> {
   }
 }
 
+// Frank pastes URLs ("dashboard.dupr.com/dashboard/player/6356550895") into
+// the ID field — accept both shapes (Frank 2026-11-09: the raw URL defeated
+// the duplicate check and made a second Peter).
+function normalizeDuprNumericId(raw: string | null | undefined): string {
+  const s = (raw || "").trim();
+  const m = s.match(/(\d{5,})/);
+  return m ? m[1] : s;
+}
+
 // ===== PLAYER ACTIONS (Global lookup) =====
 
 // Get all players from database (for autocomplete)
@@ -165,7 +174,7 @@ export async function importLocalPlayers(
 export async function addPlayer(formData: FormData, userId?: string) {
   const name = formData.get("name") as string;
   const duprId = formData.get("duprId") as string;
-  const duprNumericId = formData.get("duprNumericId") as string;
+  const duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
   const manualDuprScore = formData.get("manualDuprScore") as string;
 
   if (!name?.trim()) {
@@ -270,7 +279,7 @@ export async function deletePlayer(id: string) {
 export async function updatePlayer(playerId: string, formData: FormData) {
   const name = formData.get("name") as string;
   const duprId = formData.get("duprId") as string;
-  const duprNumericId = formData.get("duprNumericId") as string;
+  const duprNumericId = normalizeDuprNumericId(formData.get("duprNumericId") as string);
   const manualDuprScore = formData.get("manualDuprScore") as string;
 
   try {
@@ -327,14 +336,16 @@ async function fetchDuprRatingInner(playerId: string) {
     }
 
     const callPlayer = (tok: string) =>
-      fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
+      fetch(`${DUPR_API_BASE}/player/v1.0/${normalizeDuprNumericId(player.duprNumericId)}`, {
         method: "GET",
         headers: {
           // DUPR_TOKEN (from the dupr-auth ritual) is a COOKIE-session token —
           // send it as the __Host-dupr_at cookie; login-flow tokens use Bearer.
-          ...(cachedTokenIsCookie
-            ? { "Cookie": `__Host-dupr_at=${tok}` }
-            : { "Authorization": `Bearer ${tok}` }),
+          // Send BOTH auth shapes (the proven probe mode): the ritual's token
+          // may be a login-flow accessToken (Bearer-kind) or a cookie-session
+          // token — DUPR 401s with "valid API key" when the shape mismatches.
+          "Cookie": `__Host-dupr_at=${tok}`,
+          "Authorization": `Bearer ${tok}`,
           "Content-Type": "application/json",
         },
       });
