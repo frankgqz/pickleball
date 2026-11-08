@@ -249,16 +249,23 @@ export default function PlayerDatabase({
     try {
       // Removing from the database also drops them from the event pool + standings
       onRemoveFromPool?.(player.id);
+      let res: any;
       if (userId && onRemoveFromClubRoster) {
-        await onRemoveFromClubRoster(player.id);
-        onRefreshPlayers?.();  // ← Add this line
+        res = await onRemoveFromClubRoster(player.id);
+        onRefreshPlayers?.();
       } else {
-        await onDeletePlayer?.(player.id);
-        onRefreshPlayers?.();  // ← And this
+        res = await onDeletePlayer?.(player.id);
+        onRefreshPlayers?.();
       }
+      // the row says what happened (Frank 2026-11-09: the button used to do
+      // nothing visible either way)
+      const ok = res?.success !== false;
+      setFetchFeedback({ playerId: player.id, message: ok ? (res?.message || "removed") : (res?.error || "not removed"), success: ok });
     } catch (e) {
       console.error(e);
+      setFetchFeedback({ playerId: player.id, message: `Error: ${e instanceof Error ? e.message.slice(0, 90) : "failed"}`, success: false });
     }
+    setTimeout(() => setFetchFeedback(null), 4000);
   };
 
   return (
