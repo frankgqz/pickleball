@@ -377,7 +377,11 @@ async function fetchDuprRatingInner(playerId: string) {
         error: `DUPR limit reached (${response.status}) — their few-lookups rule. Wait a moment and try again.${body ? " (" + body.slice(0, 140) + ")" : ""}`,
       };
     }
-    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})` };
+    const bodyText = await response.text().catch(() => "");
+    const hint = response.status === 401
+      ? " - token rejected: the session expired (run the DUPR renewal) or DUPR now wants an API key here"
+      : "";
+    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})${hint}${bodyText ? " " + bodyText.slice(0, 140) : ""}` };
   } catch (error) {
     console.error("Error fetching DUPR rating:", error);
     return { success: false, error: "Failed to fetch rating" };
