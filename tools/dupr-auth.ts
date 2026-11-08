@@ -52,9 +52,14 @@ function loadEnv(): Record<string, string> {
     let v = m[2].trim();
     if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
     env[m[1]] = v;
+    // Also populate process.env (dotenv semantics): prisma/client.ts builds its
+    // pool from process.env.DATABASE_URL and the cron shell exports nothing —
+    // without this every DB save failed (Frank 2026-11-09).
+    if (process.env[m[1]] === undefined) process.env[m[1]] = v;
   }
   return env;
 }
+loadEnv(); // every flow (login, dupr:code, verify) needs the env populated
 
 async function saveTokensToDb(at: string, rt?: string) {
   try {
@@ -64,7 +69,7 @@ async function saveTokensToDb(at: string, rt?: string) {
     await prisma.$disconnect();
     console.log("  ✓ tokens saved to the database (production picks them up automatically)");
   } catch (e) {
-    console.log("  ✗ TOKEN RENEWED BUT DB SAVE FAILED (production reads the DB!):", String((e as Error).message).slice(0, 70));
+    console.log("  ✗ TOKEN RENEWED BUT DB SAVE FAILED (production reads the DB!):", String((e as Error).message).slice(0, 400));
     process.exitCode = 1; // watchdog: non-zero exit -> Telegram alert
   }
 }
@@ -120,7 +125,8 @@ async function login() {
     const days = daysLeftOnToken(current);
     const alive = await probeSession(current);
     if (alive) {
-      console.log(`Session verified ALIVE at DUPR (claim: ${days?.toFixed(1) ?? "?"} days) — nothing to do.`);
+      console.log(`Session verified ALIVE at DUPR (claim: ${days?.toFixed(1) ?? "?"} days) — syncing the DB.`);
+      await saveTokensToDb(current); // the DB must mirror the live token
       return;
     }
     console.log(`Session DEAD at DUPR (claim said ${days?.toFixed(1) ?? "?"} days) — renewing...`);

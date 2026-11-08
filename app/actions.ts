@@ -47,7 +47,7 @@ async function getDuprToken(): Promise<string | null> {
       duprTokenReadAt = Date.now();
       return row.value;
     }
-  } catch { /* no table yet — fall through */ }
+  } catch (e) { console.warn("authState read failed:", String((e as Error).message).slice(0, 200)); }
   // Static token from the dupr-auth ritual (tools/dupr-auth.ts) — skips login
   if (process.env.DUPR_TOKEN) {
     cachedDuprToken = process.env.DUPR_TOKEN;
