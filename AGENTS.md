@@ -93,8 +93,19 @@ the pool inside generateStandardMatches).
  at a time for OTHER people's ratings. The lookup path is hardened
  (0891218): fetchDuprRating queues serially (one in flight) and 429/403
  refusals surface DUPR's own response body. Semantics (Frank):
- a DAILY quota ~2-3 other-profile lookups/day on the website; every app
- lookup spends from the app's single DUPR session = Frank's account. The
- Player Database shows a 'DUPR n/3 today' counter (getDuprLookupsToday).
- Monday's DUPR renewal cron = the API-change canary (auth endpoints may
- have moved too).
+ the website UI reportedly shows ~2-3 other-profile
+ searches/day for regular users - but the API path has NO observed limit
+ (Frank kept querying fine, 2026-11-09; the earlier 'used up' failures were
+ the dead-session 401s in costume). All lookups still ride one DUPR session
+ = Frank's account. The Player Database shows a 'DUPR n today' spend
+ counter (getDuprLookupsToday).
+ RESOLVED 2026-11-09
+ (verified working): the API never broke - the changes were the quota +
+ short sessions (~5 days, was ~30). The 401 hunt found four green masks in
+ the renewal: JWT-claim gate (lied 'fresh'), void fire-and-forget DB save,
+ loadEnv never populating process.env (Prisma pool had no DATABASE_URL
+ under the cron shell), and 70-char sliced errors. Fixes: probe gate
+ (91b88d6), db-first token + 401 self-heal + [token: src Nm old] tag
+ (c22f594), env population + skip-syncs-DB + full errors (5bfe555).
+ Renewal cron = every 2nd day 6:10. Lesson: green signals that never touch
+ reality (exit-0 wrappers, self-reported freshness, sliced failures).

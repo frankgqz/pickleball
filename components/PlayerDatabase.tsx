@@ -269,7 +269,7 @@ export default function PlayerDatabase({
           <h2 className="text-base font-semibold whitespace-nowrap">🎾 Player Database</h2>
           <div className="text-xs text-subtext">{players.length}</div>
           {lookupsToday !== null && (
-            <div className="text-xs text-subtext" title="DUPR allows ~3 lookups of other people's ratings per day. This counts the app's fetches in 24h — every lookup spends from one shared DUPR session">DUPR {lookupsToday}/3 today</div>
+            <div className="text-xs text-subtext" title="the app's DUPR fetches in 24h (spend tracker — no hard limit observed 2026-11-09; the website UI may throttle its own searches)">DUPR {lookupsToday} today</div>
           )}
           <div className="relative ml-auto flex items-center gap-1.5">
             <button
