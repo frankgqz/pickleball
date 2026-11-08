@@ -29,21 +29,33 @@ interface DuprTokenResponse {
 let cachedDuprToken: string | null = null;
 let lastDuprLoginFailAt = 0;
 const DUPR_LOGIN_COOLDOWN_MS = 10 * 60 * 1000;
+let duprTokenSource: string | null = null;
+let duprTokenReadAt = 0;
 
 let cachedTokenIsCookie = false;
 async function getDuprToken(): Promise<string | null> {
   if (cachedDuprToken) return cachedDuprToken;
-  // Static token from the dupr-auth ritual (tools/dupr-auth.ts) — skips login
-  if (process.env.DUPR_TOKEN) { cachedTokenIsCookie = true; return process.env.DUPR_TOKEN; }
-  // Database token (kept fresh by the cron ritual) — production reads this
+  // Database token FIRST (kept fresh by the dupr-renew cron). The static env
+  // token used to shadow it and silently go stale — Frank's post-renewal
+  // "Session expired" was exactly that (2026-11-09).
   try {
     const row = await prisma.authState.findUnique({ where: { key: "dupr_at" } });
     if (row && row.value) {
       cachedDuprToken = row.value;
       cachedTokenIsCookie = true;
+      duprTokenSource = "db";
+      duprTokenReadAt = Date.now();
       return row.value;
     }
   } catch { /* no table yet — fall through */ }
+  // Static token from the dupr-auth ritual (tools/dupr-auth.ts) — skips login
+  if (process.env.DUPR_TOKEN) {
+    cachedDuprToken = process.env.DUPR_TOKEN;
+    cachedTokenIsCookie = true;
+    duprTokenSource = "env";
+    duprTokenReadAt = Date.now();
+    return cachedDuprToken;
+  }
   if (Date.now() - lastDuprLoginFailAt < DUPR_LOGIN_COOLDOWN_MS) return null;
   const email = process.env.DUPR_EMAIL;
   const password = process.env.DUPR_PASSWORD;
@@ -60,6 +72,8 @@ async function getDuprToken(): Promise<string | null> {
     const data: DuprTokenResponse = await response.json();
     if (data.status === "SUCCESS" && data.result?.accessToken) {
       cachedDuprToken = data.result.accessToken;
+      duprTokenSource = "login";
+      duprTokenReadAt = Date.now();
       return cachedDuprToken;
     }
     lastDuprLoginFailAt = Date.now();
@@ -312,17 +326,27 @@ async function fetchDuprRatingInner(playerId: string) {
       return { success: false, error: "Failed to login to DUPR" };
     }
 
-    const response = await fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
-      method: "GET",
-      headers: {
-        // DUPR_TOKEN (from the dupr-auth ritual) is a COOKIE-session token —
-        // send it as the __Host-dupr_at cookie; login-flow tokens use Bearer.
-        ...(cachedTokenIsCookie
-          ? { "Cookie": `__Host-dupr_at=${token}` }
-          : { "Authorization": `Bearer ${token}` }),
-        "Content-Type": "application/json",
-      },
-    });
+    const callPlayer = (tok: string) =>
+      fetch(`${DUPR_API_BASE}/player/v1.0/${player.duprNumericId}`, {
+        method: "GET",
+        headers: {
+          // DUPR_TOKEN (from the dupr-auth ritual) is a COOKIE-session token —
+          // send it as the __Host-dupr_at cookie; login-flow tokens use Bearer.
+          ...(cachedTokenIsCookie
+            ? { "Cookie": `__Host-dupr_at=${tok}` }
+            : { "Authorization": `Bearer ${tok}` }),
+          "Content-Type": "application/json",
+        },
+      });
+
+    let response = await callPlayer(token);
+    if (response.status === 401) {
+      // stale in-process token — bust the cache, re-read (db beats env now),
+      // retry once with whatever is fresher
+      cachedDuprToken = null;
+      const fresh = await getDuprToken();
+      if (fresh && fresh !== token) response = await callPlayer(fresh);
+    }
 
     if (response.ok) {
       const data = await response.json().catch(() => null);
@@ -379,10 +403,10 @@ async function fetchDuprRatingInner(playerId: string) {
     }
     const bodyText = await response.text().catch(() => "");
     const hint = response.status === 401
-      ? " - token rejected: session expired (renew) or DUPR wants an API key now"
+      ? " - session expired (renew) or API key now required"
       : "";
-    // DUPR's own body FIRST - it is the discriminator (Frank 2026-11-05)
-    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})${bodyText ? " " + bodyText.slice(0, 140) : ""}${hint}` };
+    const src = ` [token: ${duprTokenSource ?? "?"}${duprTokenReadAt ? " " + Math.round((Date.now() - duprTokenReadAt) / 60000) + "m old" : ""}]`;
+    return { success: false, error: `Could not fetch player from DUPR (HTTP ${response.status})${src}${bodyText ? " " + bodyText.slice(0, 110) : ""}${hint}` };
   } catch (error) {
     console.error("Error fetching DUPR rating:", error);
     return { success: false, error: "Failed to fetch rating" };
