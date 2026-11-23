@@ -109,3 +109,14 @@ the pool inside generateStandardMatches).
  (c22f594), env population + skip-syncs-DB + full errors (5bfe555).
  Renewal cron = every 2nd day 6:10. Lesson: green signals that never touch
  reality (exit-0 wrappers, self-reported freshness, sliced failures).
+ DUPR addendum (2026-11-09 night, all verified by smoke): the auth shape
+ matrix — Cookie __Host-dupr_at is the ONLY accepted shape (dupr_at= says
+ "valid API key", Bearer says "Invalid token", both-together POISONS).
+ Sessions die on use/TTL (the 30d JWT claim is decorative) = self-heal ladder
+ in fetchDuprRating (0f11461: cache-bust re-read, login mint on 401,
+ set-cookie rotation follow). PARTIAL profile responses only withhold
+ shortAddress/hand (the "profile-view" feature = Frank's 2-3/day website
+ rule) — ratings always flow. IDs: duprId = the CODE (7NM0OM), duprNumericId
+ = the dashboard URL number; URL/number pastes route to the numeric field
+ (7ace4c3). Smoke suite = _scratch/smoke.cjs (drives the real actions:
+ merge / delete / fetch ladder; 9/9 PASS, exits non-zero on failure).
