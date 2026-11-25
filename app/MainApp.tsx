@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import CourtRolling from "@/components/CourtRolling";
 import WaitingPanel from "@/components/WaitingPanel";
 import GameLog from "@/components/GameLog";
-import { emptyQueue, joinQueue, toggleSit, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
+import { emptyQueue, joinQueue, toggleSit, isSitting, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
 import { CourtConfig, COURT_DEFAULTS, standingScore } from "@/app/courtEngine";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
@@ -348,7 +348,7 @@ export default function Page() {
           changed = true;
         }
         const sitting = !!p.isSitting;
-        if (sitting !== (next.sitting[p.id] !== undefined)) {
+        if (sitting !== isSitting(next, p.id)) {
           next = toggleSit(next, p.id, Date.now());
           changed = true;
         }
@@ -372,7 +372,7 @@ export default function Page() {
   const courtScore: Record<string, number> = {};
   if (config.format === "COURT") {
     const busyIds = new Set(Object.values(courtQueue.onCourt).flatMap((c) => c.ids));
-    const activeCount = Object.keys(courtQueue.players).filter((id) => !courtQueue.sitting[id] && !busyIds.has(id)).length;
+    const activeCount = Object.keys(courtQueue.players).filter((id) => !isSitting(courtQueue, id) && !busyIds.has(id)).length;
     for (const p of Object.values(courtQueue.players)) {
       courtScore[p.id] = standingScore(p, Date.now(), courtCfg, { courts: config.courts || 6, activePlayers: Math.max(1, activeCount) });
     }

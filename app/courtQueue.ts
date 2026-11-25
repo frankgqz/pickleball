@@ -21,10 +21,18 @@ export function emptyQueue(): QueueState {
 }
 
 const activePlayers = (s: QueueState) =>
-  Object.keys(s.players).filter((id) => !s.sitting[id] && !Object.values(s.onCourt).some((c) => c.ids.includes(id)))
+  Object.keys(s.players).filter((id) => !isSitting(s, id) && !Object.values(s.onCourt).some((c) => c.ids.includes(id)))
 
 /** a joiner enters at the pool's history mean (Frank: ratio 1.0); their
  *  wait clock starts at join. */
+/** sitting = the KEY is present in the map; the value is the frozen bank
+ *  of wait-milliseconds and 0 is a legal value - so NEVER test truthiness,
+ *  test PRESENCE. (A sitter with no banked wait - right after a join or a
+ *  game - stores 0 and sailed through every `!sitting[id]` check.) */
+export function isSitting(s: QueueState, id: string): boolean {
+  return s.sitting[id] !== undefined
+}
+
 export function joinQueue(s: QueueState, id: string, dupr: number, now: number, cfg: CourtConfig, courts: number): QueueState {
   const pool = activePlayers(s).map((pid) => s.players[pid])
   const offset = joinOffset(pool, now, cfg, { courts })
@@ -47,7 +55,7 @@ export function joinQueue(s: QueueState, id: string, dupr: number, now: number, 
 export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
   const busy = new Set(Object.values(state.onCourt).flatMap((c) => c.ids));
   const pool = Object.values(state.players).filter(
-    (p) => !state.sitting[p.id] && !busy.has(p.id)
+    (p) => !isSitting(state, p.id) && !busy.has(p.id)
   );
   return pool
     .map((p) => ({
@@ -67,7 +75,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
 export function toggleSit(s: QueueState, id: string, now: number): QueueState {
   const p = s.players[id]
   if (!p) return s
-  if (s.sitting[id] !== undefined) {
+  if (isSitting(s, id)) {
     const frozen = s.sitting[id]
     const sitting = { ...s.sitting }
     delete sitting[id]

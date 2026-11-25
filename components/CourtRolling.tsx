@@ -3,7 +3,7 @@
 // the moment they free up; every pick carries its why; grey = thin pool.
 import { useState } from "react"
 import { CourtConfig, CourtPlayer, ScoreWhy, pickCourt, splitTeams, whyLine } from "@/app/courtEngine"
-import { QueueState } from "@/app/courtQueue"
+import { QueueState , isSitting } from "@/app/courtQueue"
 
 type Props = {
   queue: QueueState
@@ -23,10 +23,10 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
 
   // the free pool: not sitting, not claimed
   const busy = new Set(Object.values(claimed).flatMap((c) => c.ids))
-  const pool = Object.values(queue.players).filter((p) => !queue.sitting[p.id] && !busy.has(p.id))
+  const pool = Object.values(queue.players).filter((p) => !isSitting(queue, p.id) && !busy.has(p.id))
 
   // courts = floor(not-sitting / 4), capped at the venue, never fewer than the claimed
-  const notSitting = Object.keys(queue.players).filter((id) => !queue.sitting[id]).length
+  const notSitting = Object.keys(queue.players).filter((id) => !isSitting(queue, id)).length
   const courtCount = Math.min(venueCap, Math.max(Object.keys(claimed).length, Math.floor(notSitting / 4)))
 
   // sequential picks: each free court takes the best of what remains
