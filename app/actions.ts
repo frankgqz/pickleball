@@ -157,8 +157,8 @@ export async function addPlayer(formData: FormData, userId?: string) {
   // duplicate rows instead of merging)
   if (/^\d{5,}$/.test(duprId) && !duprNumericId) { duprNumericId = duprId; duprId = ""; }
 
-  if (!name?.trim() && !duprNumericId?.trim()) {
-    return { success: false, error: "Name or dURL# is required" };
+  if (!(duprNumericId?.trim() || (name?.trim() && (duprId?.trim() || manualDuprScore?.trim())))) {
+    return { success: false, error: "Provide a dURL# or a Name + DuprID/Rating" };
   }
 
   try {

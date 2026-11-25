@@ -146,10 +146,10 @@ export default function PlayerDatabase({
     const hasNum = duprNumericId.trim();
     const hasScore = duprScore.trim();
 
-    // either Name or dURL# (Frank 2026-11-24: dURL# alone is fine — the
-    // DUPR fetch fills the name and everything else)
-    if (!trimmed && !hasNum) {
-      setValidationError("Provide a Name or dURL#.");
+    // Frank 2026-11-24: a dURL# alone is fine (it fetches name + everything),
+    // or a Name together with a DuprID/Rating
+    if (!(hasNum || (trimmed && (hasDuprId || hasScore)))) {
+      setValidationError("Provide a dURL# or a Name + DuprID/Rating.");
       return;
     }
 
@@ -307,7 +307,7 @@ export default function PlayerDatabase({
         />
         <input 
           className={`px-2 py-1.5 border rounded-md text-sm text-text placeholder-text/50 flex-1 min-w-0 ${numericIdExists ? 'border-blue-500 bg-blue-50' : 'border-line bg-muted-bg'}`}
-          placeholder="dURL#*" 
+          placeholder="dURL#" 
           value={duprNumericId} 
           onChange={e => { setDuprNumericId(e.target.value); setNumericIdExists(false); }} 
         />
@@ -359,7 +359,7 @@ export default function PlayerDatabase({
                     <input 
                       value={editDuprNumericId} 
                       onChange={e => setEditDuprNumericId(e.target.value)} 
-                      placeholder="dURL#*" 
+                      placeholder="dURL#" 
                       className="px-2 py-1 bg-muted-bg border border-line rounded-md text-xs text-text placeholder-text/50 w-18" 
                     />
                     <input 
