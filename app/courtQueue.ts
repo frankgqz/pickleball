@@ -57,19 +57,59 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
   const pool = Object.values(state.players).filter(
     (p) => !isSitting(state, p.id) && !busy.has(p.id)
   );
-  return pool
+  const ctx = {
+    courts: Object.keys(state.onCourt).length,
+    activePlayers: pool.length,
+    formingDuprAvg: null,
+  };
+  type WaitRow = {
+    id: string
+    score: number
+    waitMin: number
+    games: number
+    dupr: number
+    fit: number | null
+  }
+  const rows: WaitRow[] = pool
     .map((p) => ({
       id: p.id,
       // the pick's own slot-1 score, negated: bigger = sooner on court
-      score: -scoreOf(p, now, cfg, {
-        courts: Object.keys(state.onCourt).length,
-        activePlayers: pool.length,
-        formingDuprAvg: null,
-      }).score,
+      score: -scoreOf(p, now, cfg, ctx).score,
       waitMin: Math.max(0, Math.floor((now - p.waitSince) / 60000)),
       games: p.gamesPlayed,
+      dupr: p.dupr,
+      fit: null,
     }))
     .sort((a, b) => b.score - a.score);
+
+  // FIT (Frank 2026-11-25): the score that actually picks the OTHER THREE -
+  // the slot-2 cost with the anchor locked in, so the level (DUPR), parity
+  // (their distance from the anchor's average) and fresh-faces terms join
+  // the queue base. Negated too: bigger = pairs with the anchor sooner.
+  const anchor = rows[0] ? state.players[rows[0].id] : null;
+  for (const row of rows) {
+    if (anchor && row.id !== anchor.id) {
+      row.fit = -scoreOf(
+        state.players[row.id],
+        now,
+        cfg,
+        { ...ctx, formingDuprAvg: anchor.dupr },
+        [anchor]
+      ).score;
+    }
+  }
+  return rows;
+}
+
+/** the quartet the engine will actually send to the next free court: slot 1
+ *  is the queue head, slots 2-4 are the fit picks around them. */
+export function nextQuartet(state: QueueState, cfg: CourtConfig, now: number): string[] {
+  const busy = new Set(Object.values(state.onCourt).flatMap((c) => c.ids));
+  const pool = Object.values(state.players).filter(
+    (p) => !isSitting(state, p.id) && !busy.has(p.id)
+  );
+  const steps = suggest(state, now, cfg, Object.keys(state.onCourt).length);
+  return steps.map((s) => s[0].id);
 }
 
 export function toggleSit(s: QueueState, id: string, now: number): QueueState {
