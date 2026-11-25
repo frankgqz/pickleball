@@ -81,9 +81,6 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
           >
             <span className="text-xs text-subtext w-5 text-right">#{i + 1}</span>
             <span className="flex-1 font-medium text-text truncate">{names[row.id] || row.id}</span>
-            <span className="text-xs tabular-nums text-subtext/80 w-8 text-right" title="DUPR rating (the level and parity terms)">
-              {row.dupr.toFixed(1)}
-            </span>
             {i === 0 && (
               <span className="px-2 py-0.5 role-tint rounded-lg text-xs font-semibold">
                 next on court
@@ -94,6 +91,9 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
                 pairs in
               </span>
             )}
+            <span className="text-xs tabular-nums text-subtext/80 w-8 text-right" title="DUPR rating (the level and parity terms)">
+              {row.dupr.toFixed(1)}
+            </span>
             <span className="text-xs tabular-nums text-subtext/60 w-14 text-right">
               {row.games}g · {row.waitMin}m
             </span>
