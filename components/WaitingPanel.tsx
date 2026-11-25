@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { QueueState } from "@/app/courtQueue";
 import { waitingList, nextQuartet } from "@/app/courtQueue";
-import type { CourtConfig } from "@/app/courtEngine";
+import type { CourtConfig, ScoreWhy } from "@/app/courtEngine";
 
 interface Props {
   queue: QueueState;
@@ -15,6 +15,25 @@ interface Props {
 // waiting player with a LIVE score. The ladder order is the pick's own
 // priority - the top score goes on court next, and the quartet is built
 // around that person - so the list re-reads every 30s as the waits tick.
+// the mouseover arithmetic (Frank 2026-11-25): the engine's own terms,
+// display-signed (bigger = sooner), so the number shows its work
+function breakdown(why: ScoreWhy, fitWhy: ScoreWhy | null): string {
+  const parts: string[] = [];
+  const add = (label: string, v: number) => {
+    if (Math.abs(v) >= 0.05) parts.push(`${label} ${v > 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`);
+  };
+  add("wait", -why.wait);
+  add("games+min", -why.played);
+  add("level", -why.level);
+  add("cycles", -why.absence);
+  add("join", -why.offset);
+  if (fitWhy) {
+    add("parity", -fitWhy.close);
+    add("faces", -fitWhy.dupLast);
+  }
+  return parts.join(" · ");
+}
+
 export default function WaitingPanel({ queue, cfg, names }: Props) {
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -26,6 +45,17 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
   const rows = waitingList(queue, cfg, now);
   const quartet = new Set(nextQuartet(queue, cfg, now));
   if (rows.length === 0) return null;
+
+  // the formula with the LIVE Court Settings values (Frank: "the current
+  // variables from court settings") - display signs: bigger = sooner
+  const cycleRate = cfg.courtSitRatio * (Math.max(1, Object.keys(queue.onCourt).length) / Math.max(1, rows.length)) * cfg.courtGames;
+  const term = (label: string, v: number) =>
+    `${v < 0 ? "−" : "+"} ${label}×${Math.abs(v).toFixed(2).replace(/\.?0+$/, "")}`;
+  const formula =
+    `score = ${term("wait", -cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
+    `${term("games", -cfg.courtGames)} ${term("min", -cfg.courtMinPlayed)} ${term("dupr", -cfg.courtDuprScore)} ` +
+    `${term("cycles", -cycleRate)} − join · ` +
+    `fit = score ${term("Δdupr", -cfg.courtDuprClose)} ${term("faces", -cfg.courtDupLast)}`;
 
   return (
     <section className="mt-6 bg-panel rounded-2xl shadow-xl px-4 py-3">
@@ -51,6 +81,9 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
           >
             <span className="text-xs text-subtext w-5 text-right">#{i + 1}</span>
             <span className="flex-1 font-medium text-text truncate">{names[row.id] || row.id}</span>
+            <span className="text-xs tabular-nums text-subtext/80 w-8 text-right" title="DUPR rating (the level and parity terms)">
+              {row.dupr.toFixed(1)}
+            </span>
             {i === 0 && (
               <span className="px-2 py-0.5 role-tint rounded-lg text-xs font-semibold">
                 next on court
@@ -61,22 +94,27 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
                 pairs in
               </span>
             )}
-            {i >= 4 && !quartet.has(row.id) && (
-              <span className="text-xs text-subtext/60">{row.waitMin}m · {row.games}g</span>
-            )}
-            <span className="font-semibold tabular-nums text-text w-12 text-right">{row.score.toFixed(1)}</span>
-            <span className="tabular-nums text-subtext w-12 text-right">
+            <span className="text-xs tabular-nums text-subtext/60 w-14 text-right">
+              {row.games}g · {row.waitMin}m
+            </span>
+            <span
+              className="font-semibold tabular-nums text-text w-12 text-right cursor-help"
+              title={`${breakdown(row.why, row.fitWhy)} = ${row.score.toFixed(1)}`}
+            >
+              {row.score.toFixed(1)}
+            </span>
+            <span
+              className="tabular-nums text-subtext w-12 text-right cursor-help"
+              title={row.fit === null ? "the anchor — the reference point" : `${breakdown(row.fitWhy!, row.fitWhy!)} = ${row.fit.toFixed(1)}`}
+            >
               {row.fit === null ? "—" : row.fit.toFixed(1)}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="mt-2 flex items-baseline justify-between text-xs text-subtext/70">
-        <span>
-          fit picks the other three: level (DUPR) + parity with {rows[0] ? names[rows[0].id] || "the anchor" : "the anchor"} + fresh faces
-        </span>
-        <span>score · fit</span>
+      <div className="mt-2 text-xs text-subtext/70 leading-relaxed">
+        {formula}
       </div>
     </section>
   );

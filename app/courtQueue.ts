@@ -69,17 +69,24 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
     games: number
     dupr: number
     fit: number | null
+    why: ScoreWhy
+    fitWhy: ScoreWhy | null
   }
   const rows: WaitRow[] = pool
-    .map((p) => ({
-      id: p.id,
-      // the pick's own slot-1 score, negated: bigger = sooner on court
-      score: -scoreOf(p, now, cfg, ctx).score,
-      waitMin: Math.max(0, Math.floor((now - p.waitSince) / 60000)),
-      games: p.gamesPlayed,
-      dupr: p.dupr,
-      fit: null,
-    }))
+    .map((p) => {
+      const why = scoreOf(p, now, cfg, ctx);
+      return {
+        id: p.id,
+        // the pick's own slot-1 score, negated: bigger = sooner on court
+        score: -why.score,
+        waitMin: Math.max(0, Math.floor((now - p.waitSince) / 60000)),
+        games: p.gamesPlayed,
+        dupr: p.dupr,
+        fit: null,
+        why,
+        fitWhy: null,
+      };
+    })
     .sort((a, b) => b.score - a.score);
 
   // FIT (Frank 2026-11-25): the score that actually picks the OTHER THREE -
@@ -89,13 +96,14 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
   const anchor = rows[0] ? state.players[rows[0].id] : null;
   for (const row of rows) {
     if (anchor && row.id !== anchor.id) {
-      row.fit = -scoreOf(
+      row.fitWhy = scoreOf(
         state.players[row.id],
         now,
         cfg,
         { ...ctx, formingDuprAvg: anchor.dupr },
         [anchor]
-      ).score;
+      );
+      row.fit = -row.fitWhy.score;
     }
   }
   return rows;
