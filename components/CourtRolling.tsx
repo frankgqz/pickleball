@@ -92,7 +92,7 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
                   </div>
                   <span />
                   <div className="col-start-2 flex items-center gap-2 mt-1.5">
-                    <span className="text-xs text-subtext flex-1 truncate">{elapsed}m</span>
+                    <span className="text-xs text-subtext flex-1 truncate">{whyLine(elapsed, teamA, teamB)}</span>
                     <button
                       onClick={() => onSubmit(court, teamA.map((x) => x.id), teamB.map((x) => x.id), parseInt(s1) || 0, parseInt(s2) || 0, elapsed)}
                       disabled={s1 === "" || s2 === ""}
@@ -137,7 +137,7 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
                 <span />
                 <div className="col-start-2 flex items-center gap-2 mt-1.5">
                   <span className="text-xs text-subtext flex-1 truncate">
-                    {whyLine(waitMin, teamA, teamB)}
+                    {whyLine(waitMin, teamA, teamB)} · built on {nameOf(locked.id)}
                     {forced ? " · only 1 pairing — send it" : thin ? ` · thin pool — ${sug.available} choosing` : ""}
                   </span>
                   <button onClick={() => {
