@@ -40,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             var saved = m ? decodeURIComponent(m[1]) : null;
             var sysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             if (saved === 'dark') saved = 'night';
+            if (saved === 'ink') saved = 'onigiri';
             if (saved === 'sky') saved = 'bubble';
             var theme = saved || (sysDark ? 'night' : 'wood');
             document.documentElement.setAttribute('data-theme', theme);
