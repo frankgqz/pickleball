@@ -72,7 +72,7 @@ export default function EventPool({ eventPool, onToggleSitting, onRemoveFromPool
   };
 
   return (
-    <section className="bg-panel rounded-2xl shadow p-4">
+    <section className="bg-panel rounded-2xl shadow-xl p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-3 pt-1">
         <div className="flex items-center gap-2">
