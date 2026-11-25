@@ -21,7 +21,7 @@ export interface MatchGenerationActions {
   generateStandardMatches: (format: MatchFormat) => Match[];
   generatePoolPlayMatches: (poolsCount: number) => Match[];
   updateMatchScore: (matchId: string, score: number, team: "team1" | "team2") => void;
-  swapPlayerTeam: (matchId: string, playerId: string) => void;
+  swapPlayers: (a: { matchId: string; playerId: string }, b: { matchId: string; playerId: string }) => void;
   cancelRound: () => void;
 }
 
@@ -339,39 +339,44 @@ export function useMatchGeneration(
     }));
   }, [setRoundState]);
 
-  // Swap a player from team2 to team1 (partner swap)
-  const swapPlayerTeam = useCallback((matchId: string, playerId: string) => {
-    setRoundState(prev => ({
-      ...prev,
-      matches: prev.matches.map(m => {
-        if (m.id !== matchId) return m;
-
-        const picker = m.team1[0];
-        const partner = m.team1[1];
-        const team2Arr = Array.isArray(m.team2) ? m.team2 : [m.team2].filter(Boolean);
-
-        // The picker (t1/p1) is fixed; every click trades into the partner slot (t1/p2)
-        if (playerId === picker || playerId === partner) return m;
-
-        // t2 player -> partner slot; partner lands in the clicked player's position
-        if (team2Arr.includes(playerId)) {
-          const idx = team2Arr.indexOf(playerId);
-          const newTeam2 = [...team2Arr];
-          newTeam2[idx] = partner;
-          return {
-            ...m,
-            team1: [picker, playerId] as [string, string],
-            team2: newTeam2 as [string, string]
-          };
+  // Select-then-swap (Frank 2026-11-24: "anyone is able to be moved
+  // anywhere"): exchange any two players' positions - across teams AND
+  // across matches. If one side is an unselected (available) player, they
+  // take the other's slot and the other becomes available.
+  const swapPlayers = useCallback((a: { matchId: string; playerId: string }, b: { matchId: string; playerId: string }) => {
+    if (a.playerId === b.playerId) return;
+    setRoundState((prev) => {
+      type Pos = { team: 1 | 2; i: number };
+      const locate = (ref: { matchId: string; playerId: string }): Pos | null => {
+        for (const m of prev.matches) {
+          if (m.id !== ref.matchId) continue;
+          const t1 = m.team1 as string[];
+          const t2 = (Array.isArray(m.team2) ? m.team2 : [m.team2].filter(Boolean)) as string[];
+          const i = t1.indexOf(ref.playerId);
+          if (i >= 0) return { team: 1, i };
+          const j = t2.indexOf(ref.playerId);
+          if (j >= 0) return { team: 2, i: j };
         }
-
-        // Available (unselected) player -> takes the partner slot
-        return {
-          ...m,
-          team1: [picker, playerId] as [string, string],
-        };
-      })
-    }));
+        return null;
+      };
+      const la = locate(a);
+      const lb = locate(b);
+      if (!la && !lb) return prev;
+      const put = (m: Match, pos: Pos | null, id: string): Match => {
+        if (!pos) return m;
+        const t1 = [...(m.team1 as string[])];
+        const t2 = [...(Array.isArray(m.team2) ? m.team2 : [m.team2].filter(Boolean)) as string[]];
+        if (pos.team === 1) t1[pos.i] = id; else t2[pos.i] = id;
+        return { ...m, team1: [t1[0], t1[1]] as [string, string], team2: [t2[0], t2[1]] as [string, string] };
+      };
+      const matches = prev.matches.map((m) => {
+        let out = m;
+        if (m.id === a.matchId) out = put(out, la, b.playerId);
+        if (m.id === b.matchId) out = put(out, lb, a.playerId);
+        return out;
+      });
+      return { ...prev, matches };
+    });
   }, [setRoundState]);
 
   // Cancel the current round
@@ -397,7 +402,7 @@ export function useMatchGeneration(
     generateStandardMatches,
     generatePoolPlayMatches,
     updateMatchScore,
-    swapPlayerTeam,
+    swapPlayers,
     cancelRound,
   };
 

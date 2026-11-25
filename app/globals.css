@@ -54,6 +54,7 @@ code, kbd, pre, .font-mono {
 .team-1 { border-color: color-mix(in srgb, var(--theme-accent) 50%, transparent); background: color-mix(in srgb, var(--theme-accent) 18%, transparent); }
 .team-2 { border-color: color-mix(in srgb, var(--theme-accent-2) 50%, transparent); background: color-mix(in srgb, var(--theme-accent-2) 18%, transparent); }
 .edge-quiet { border-color: var(--theme-border); }
+.chip-selected { border-color: var(--theme-sparkle); box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-sparkle) 55%, transparent); }
 .edge-tint { border-color: color-mix(in srgb, var(--c6) 45%, transparent); }
 .edge-warn { border-color: color-mix(in srgb, var(--theme-error) 45%, transparent); }
 .tint-text { color: var(--c6); }

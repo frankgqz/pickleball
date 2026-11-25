@@ -13,7 +13,7 @@ interface Props {
   onStartFixed14v23: () => void;
   onRegenerateByes: () => void;
   onUpdateMatchScore: (matchId: string, score: number, team: "team1" | "team2") => void;
-  onSwapPlayerTeam: (matchId: string, playerId: string) => void;
+  onSwapPlayers: (a: { matchId: string; playerId: string }, b: { matchId: string; playerId: string }) => void;
   onSubmitRound: () => void;
   sessionEnded?: boolean;
   onContinueSession?: () => void;
@@ -33,7 +33,7 @@ export default function CourtsPanel({
   onStartFixed14v23,
   onRegenerateByes,
   onUpdateMatchScore,
-  onSwapPlayerTeam,
+  onSwapPlayers,
   onSubmitRound,
   sessionEnded,
   onContinueSession,
@@ -150,6 +150,16 @@ export default function CourtsPanel({
     setConfirmOverride(null);
   };
 
+  // Select-then-swap (Frank 2026-11-24): first click selects, the second
+  // swaps the two players anywhere - teams, matches, or an available slot.
+  const [swapSel, setSwapSel] = useState<{ matchId: string; playerId: string } | null>(null);
+  const chipClick = (matchId: string, playerId: string) => {
+    if (!swapSel) { setSwapSel({ matchId, playerId }); return; }
+    if (swapSel.matchId === matchId && swapSel.playerId === playerId) { setSwapSel(null); return; }
+    onSwapPlayers(swapSel, { matchId, playerId });
+    setSwapSel(null);
+  };
+
   const renderMatchCard = (match: Match) => {
     const team1Players = match.team1.map(id => findPlayer(id)).filter(Boolean) as Player[];
     const team2Players = match.team2.map(id => findPlayer(id)).filter(Boolean) as Player[];
@@ -173,12 +183,12 @@ export default function CourtsPanel({
             {/* Team 1 row — picker fixed */}
             <div className="flex items-center gap-1 min-w-0">
               <div className="flex items-center gap-1 flex-1 min-w-0">
-                {team1Players.map((p, i) => (
+                {team1Players.map((p) => (
                   <button
                     key={p.id}
-                    onClick={i === 0 ? undefined : () => onSwapPlayerTeam(match.id, p.id)}
-                    title={i === 0 ? "Picker (fixed)" : "Click to swap"}
-                    className={`flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 team-1 text-text text-sm font-medium ${i === 0 ? "cursor-default" : "hover:bg-hover-bg"}`}
+                    onClick={() => chipClick(match.id, p.id)}
+                    title="Click to select - click another to swap"
+                    className={`flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 team-1 text-text text-sm font-medium hover:bg-hover-bg ${swapSel && swapSel.playerId === p.id ? "chip-selected" : ""}`}
                   >
                     {p.name}
                   </button>
@@ -200,9 +210,9 @@ export default function CourtsPanel({
                 {team2Players.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                    title="Click to swap into Team 1"
-                    className="flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 team-2 text-text text-sm font-medium hover:bg-hover-bg"
+                    onClick={() => chipClick(match.id, p.id)}
+                    title="Click to select - click another to swap"
+                    className={`flex-1 min-w-0 h-8 truncate text-left rounded-lg px-2 bg-muted-bg border-2 team-2 text-text text-sm font-medium hover:bg-hover-bg ${swapSel && swapSel.playerId === p.id ? "chip-selected" : ""}`}
                   >
                     {p.name}
                   </button>
@@ -225,8 +235,8 @@ export default function CourtsPanel({
                   {unselectedPlayers.slice(0, 6).map(p => (
                     <button
                       key={p.id}
-                      onClick={() => onSwapPlayerTeam(match.id, p.id)}
-                      title="Click to take the partner slot"
+                      onClick={() => chipClick(match.id, p.id)}
+                      title="Click to select - click another to swap"
                       className="px-2 py-0.5 bg-muted-bg text-subtext rounded-md text-xs hover:bg-hover-bg transition-colors border-2 border-line"
                     >
                       {p.name}

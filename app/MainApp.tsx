@@ -595,7 +595,7 @@ export default function Page() {
           onStartFixed14v23={() => startStandardRound(resolveRoundFormat())}
           onRegenerateByes={() => regenerateByes(config.byeTopProtection, config.byeBonusTop)}
           onUpdateMatchScore={matchGenActions.updateMatchScore}
-          onSwapPlayerTeam={matchGenActions.swapPlayerTeam}
+          onSwapPlayers={matchGenActions.swapPlayers}
           onSubmitRound={submitRoundResults}
           sessionEnded={sessionEnded}
           onContinueSession={() => dbSessionId && handleContinueSession(dbSessionId)}
