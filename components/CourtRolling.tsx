@@ -19,6 +19,7 @@ type Props = {
   cfg: CourtConfig
   venueCap: number
   onClaim: (court: number, ids: string[]) => void
+  onUndoClaim?: (court: number) => void
   onSubmit: (court: number, team1: string[], team2: string[], s1: number, s2: number, durationMin: number) => void
   onPairingsSeen?: (seen: PairingSeen[]) => void
 }
@@ -32,7 +33,7 @@ function usePairingCapture(key: string, seen: PairingSeen[], onPairingsSeen?: (s
   }, [key]);
 }
 
-export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onSubmit, onPairingsSeen }: Props) {
+export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onUndoClaim, onSubmit, onPairingsSeen }: Props) {
   const [scores, setScores] = useState<Record<string, string>>({})
   const now = Date.now()
   const claimed = queue.onCourt
@@ -138,6 +139,21 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
                   <span />
                   <div className="col-start-2 flex items-center gap-2 mt-1.5">
                     <span className="text-xs text-subtext flex-1 truncate">{whyLine(elapsed, teamA, teamB)}</span>
+                    {onUndoClaim && (
+                      <button
+                        onClick={() => {
+                          setScores((prev) => {
+                            const next = { ...prev };
+                            delete next[court + "-1"];
+                            delete next[court + "-2"];
+                            return next;
+                          });
+                          onUndoClaim(court);
+                        }}
+                        title="the four go back to the waiting ladder - nothing was recorded"
+                        className="role-quiet px-3 h-7 text-xs font-semibold shrink-0"
+                      >undo</button>
+                    )}
                     <button
                       onClick={() => onSubmit(court, teamA.map((x) => x.id), teamB.map((x) => x.id), parseInt(s1) || 0, parseInt(s2) || 0, elapsed)}
                       disabled={s1 === "" || s2 === ""}

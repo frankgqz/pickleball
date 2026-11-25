@@ -155,6 +155,15 @@ export function claimCourt(s: QueueState, court: number, ids: string[], now: num
   return { ...s, onCourt: { ...s.onCourt, [court]: { ids, startedAt: now } } }
 }
 
+/** the undo of a claim (Frank 2026-11-26): exactly invertible - a claim
+ *  touches no ledger, the four's scores and waits are untouched, so
+ *  releasing puts them back with their waits still counting. */
+export function unclaimCourt(s: QueueState, court: number): QueueState {
+  const onCourt = { ...s.onCourt }
+  delete onCourt[court]
+  return { ...s, onCourt }
+}
+
 /** a submitted game: the four re-enter wanting to play, histories update,
  *  and everyone sitting earns one credited cycle (they sat through it). */
 export function submitGame(

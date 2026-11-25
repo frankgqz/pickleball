@@ -13,7 +13,7 @@ import WaitingPanel from "@/components/WaitingPanel";
 import PairingStrip, { PairingEntry } from "@/components/PairingStrip";
 import type { PairingSeen } from "@/components/CourtRolling";
 import GameLog from "@/components/GameLog";
-import { emptyQueue, joinQueue, toggleSit, isSitting, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
+import { emptyQueue, joinQueue, toggleSit, isSitting, claimCourt, unclaimCourt, submitGame, QueueState } from "@/app/courtQueue";
 import { CourtConfig, COURT_DEFAULTS, standingScore } from "@/app/courtEngine";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
@@ -603,6 +603,7 @@ export default function Page() {
             cfg={courtCfg}
             venueCap={config.courts || 6}
             onClaim={handleCourtClaim}
+            onUndoClaim={(court) => setCourtQueue((q) => unclaimCourt(q, court))}
             onSubmit={handleCourtSubmit}
             onPairingsSeen={handlePairingsSeen}
           />
