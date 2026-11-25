@@ -11,7 +11,7 @@ import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import CourtRolling from "@/components/CourtRolling";
 import GameLog from "@/components/GameLog";
 import { emptyQueue, joinQueue, toggleSit, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
-import { CourtConfig, standingScore } from "@/app/courtEngine";
+import { CourtConfig, COURT_DEFAULTS, standingScore } from "@/app/courtEngine";
 import { CompletedRound, MatchFormat, Player, StandingsEntry } from "@/components/Types";
 import { signIn, signOut } from "next-auth/react";
 import { AuthHeader } from "@/components/AuthHeader";
@@ -331,7 +331,7 @@ export default function Page() {
   }, [clearEventPool, currentSession, setStandings]);
 
   // ---- by-Court mode (Frank 2026-11-03): the rolling queue ----
-  const courtCfg = config as CourtConfig;
+  const courtCfg = { ...COURT_DEFAULTS, ...(config as CourtConfig) };
 
   // pool <-> queue sync: joiners enter at the pool mean, leavers leave,
   // sits mirror the pool's isSitting (the engine's clock freezes with them)

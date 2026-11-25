@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { COURT_DEFAULTS } from "@/app/courtEngine";
 import { TournamentConfig } from "./Types";
 
 interface Props {
@@ -197,7 +198,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
                 <input
                   type="number"
                   step={step}
-                  value={(config as any)[key as string] ?? 0}
+                  value={(config as any)[key as string] ?? (COURT_DEFAULTS as any)[key as string]}
                   onChange={(e) => handleChange(key as any, (parseFloat(e.target.value) || 0) as any)}
                   className="w-full px-1.5 py-0.5 bg-muted-bg border border-line rounded-md text-xs text-text"
                 />
