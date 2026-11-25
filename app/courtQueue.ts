@@ -74,6 +74,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
     why: ScoreWhy
     fitWhy: ScoreWhy | null
     fitNote: string
+    fitAvg: number | null
   }
   const rows: WaitRow[] = pool
     .map((p) => {
@@ -91,6 +92,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
         why,
         fitWhy: null,
         fitNote: "",
+        fitAvg: null,
       };
     })
     .sort((a, b) => b.score - a.score);
@@ -103,14 +105,25 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
   const steps = suggest(state, now, cfg, Object.keys(state.onCourt).length);
   const byId = new Map(rows.map((r) => [r.id, r]));
   const place = ["anchor", "2nd", "3rd", "4th"];
+  // the forming court's average at each step (Frank 2026-11-26: the fit is
+  // the DUPR-dependent number - the parity pulls toward THIS average, which
+  // grows as the court fills, not just the anchor's rating)
+  const lockedDuprs: number[] = [];
+  let lastAvg: number | null = null;
   steps.forEach((step, i) => {
     const winner = step[0];
     const row = byId.get(winner.id);
+    const avg = lockedDuprs.length
+      ? lockedDuprs.reduce((a, b) => a + b, 0) / lockedDuprs.length
+      : null;
+    if (i === steps.length - 1) lastAvg = avg;
     if (row && i > 0) {
       row.fitWhy = winner;
       row.fit = -winner.score;
       row.fitNote = `picked ${place[i]}`;
+      row.fitAvg = avg;
     }
+    lockedDuprs.push(state.players[winner.id].dupr);
   });
   const last = steps[steps.length - 1] ?? [];
   for (const cand of last) {
@@ -119,6 +132,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
       row.fitWhy = cand;
       row.fit = -cand.score;
       row.fitNote = "the last step";
+      row.fitAvg = lastAvg;
     }
   }
   return rows;

@@ -19,7 +19,7 @@ interface Props {
 // the score is derived"): every factor × its live rate, display-signed
 // (bigger = sooner), summing to the number on the row
 function derivation(
-  row: { waitMin: number; games: number; minutesPlayed: number; cycles: number; dupr: number; score: number; fit: number | null },
+  row: { waitMin: number; games: number; minutesPlayed: number; cycles: number; dupr: number; score: number; fit: number | null; fitAvg: number | null },
   anchorDupr: number,
   why: ScoreWhy,
   fitWhy: ScoreWhy | null,
@@ -30,19 +30,19 @@ function derivation(
   const f = (v: number) => Math.abs(v).toFixed(2).replace(/\.?0+$/, "");
   const s = (v: number) => (v > 0 ? "+" : "−") + f(v);
   const lines: string[] = [];
-  lines.push(`wait: ${row.waitMin}m × ${f(cfg.courtWaitMin)} = ${s(-why.wait)}`);
+  lines.push(`current wait (since last game): ${row.waitMin}m × ${f(cfg.courtWaitMin)} = ${s(-why.wait)}`);
   lines.push(`games: ${row.games} × ${f(cfg.courtGames)} = ${s(-row.games * cfg.courtGames)}`);
   lines.push(`on court: ${row.minutesPlayed}m × ${f(cfg.courtMinPlayed)} = ${s(-row.minutesPlayed * cfg.courtMinPlayed)}`);
   lines.push(`level: ${row.dupr} × ${f(cfg.courtDuprScore)} = ${s(-why.level)}`);
-  lines.push(`cycles: ${row.cycles} × ${f(cycleRate)} = ${s(-why.absence)}`);
+  lines.push(`sit cycles (games sat out): ${row.cycles} × ${f(cycleRate)} = ${s(-why.absence)}`);
   lines.push(`join credit = ${s(-why.offset)}`);
   lines.push(`────────────────────────────────`);
   lines.push(`score = ${s(row.score)}`);
   if (withFit && fitWhy) {
-    const parity = Math.abs(row.dupr - anchorDupr);
+    const avg = row.fitAvg ?? anchorDupr;
     const faces = cfg.courtDupLast !== 0 ? Math.round(fitWhy.dupLast / cfg.courtDupLast) : 0;
-    lines.push(`fit adds:`);
-    lines.push(`parity: |${row.dupr}−${anchorDupr}| × ${f(cfg.courtDuprClose)} = ${s(-fitWhy.close)}`);
+    lines.push(`fit adds (the DUPR pull):`);
+    lines.push(`DUPR gap to the forming court: |${row.dupr} − ${avg.toFixed(2)}| × ${f(cfg.courtDuprClose)} = ${s(-fitWhy.close)}`);
     lines.push(`faces: ${faces} × ${f(cfg.courtDupLast)} = ${s(-fitWhy.dupLast)}`);
     lines.push(`────────────────────────────────`);
     lines.push(`fit = ${s(row.fit ?? 0)}`);
@@ -68,10 +68,10 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
   const term = (label: string, v: number) =>
     `${v < 0 ? "−" : "+"} ${label}×${Math.abs(v).toFixed(2).replace(/\.?0+$/, "")}`;
   const formula =
-    `score = ${term("wait", -cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
+    `score = ${term("current wait", -cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
     `${term("games", -cfg.courtGames)} ${term("min", -cfg.courtMinPlayed)} ${term("dupr", -cfg.courtDuprScore)} ` +
-    `${term("cycles", -cycleRate)} − join · ` +
-    `fit = score ${term("Δdupr", -cfg.courtDuprClose)} ${term("faces", -cfg.courtDupLast)}`;
+    `${term("sit cycles", -cycleRate)} − join · ` +
+    `fit = score ${term("DUPR gap", -cfg.courtDuprClose)} ${term("faces", -cfg.courtDupLast)}`;
 
   return (
     <section className="mt-6 bg-panel rounded-2xl shadow-xl px-4 py-3">
