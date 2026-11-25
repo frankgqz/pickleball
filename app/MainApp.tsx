@@ -10,6 +10,8 @@ import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import CourtRolling from "@/components/CourtRolling";
 import WaitingPanel from "@/components/WaitingPanel";
+import PairingStrip, { PairingEntry } from "@/components/PairingStrip";
+import type { PairingSeen } from "@/components/CourtRolling";
 import GameLog from "@/components/GameLog";
 import { emptyQueue, joinQueue, toggleSit, isSitting, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
 import { CourtConfig, COURT_DEFAULTS, standingScore } from "@/app/courtEngine";
@@ -317,6 +319,20 @@ export default function Page() {
 
   const [courtQueue, setCourtQueue] = useState<QueueState>(emptyQueue());
 
+  // the recent-pairings strip (Frank 2026-11-26): the submit stands, the
+  // pairing comes back - the last few proposed quartets stay claimable
+  const [pairingStrip, setPairingStrip] = useState<PairingEntry[]>([]);
+  const handlePairingsSeen = useCallback((seen: PairingSeen[]) => {
+    setPairingStrip((prev) => {
+      const next = [...seen.map((s) => ({ ...s, key: [...s.ids].sort().join(",") })), ...prev];
+      const byKey = new Map<string, PairingEntry>();
+      for (const entry of next) {
+        if (!byKey.has(entry.key)) byKey.set(entry.key, entry);
+      }
+      return [...byKey.values()].slice(0, 8);
+    });
+  }, []);
+
   const handleRestartEvent = useCallback(() => {
     restartEvent();
     setCourtQueue(emptyQueue()); // by-Court: a restart is a clean ledger (verify pass 2026-11-04)
@@ -588,6 +604,7 @@ export default function Page() {
             venueCap={config.courts || 6}
             onClaim={handleCourtClaim}
             onSubmit={handleCourtSubmit}
+            onPairingsSeen={handlePairingsSeen}
           />
         ) : (
         <CourtsPanel
@@ -609,6 +626,25 @@ export default function Page() {
           onStartNextRound={startNextRound}
           submitted={roundState.submitted}
         />
+        )}
+
+        {config.format === "COURT" && (
+          <PairingStrip
+            strip={pairingStrip}
+            names={names}
+            busyIds={
+              new Set([
+                ...Object.values(courtQueue.onCourt).flatMap((c) => c.ids),
+                ...Object.keys(courtQueue.sitting),
+              ])
+            }
+            freeCourt={
+              Array.from({ length: config.courts || 6 }, (_, i) => i + 1).find(
+                (c) => !courtQueue.onCourt[c]
+              ) ?? null
+            }
+            onClaim={handleCourtClaim}
+          />
         )}
 
         {config.format === "COURT" && (

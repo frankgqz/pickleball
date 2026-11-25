@@ -1,9 +1,17 @@
 "use client"
 // The by-Court rolling surface (Frank 2026-11-03): courts fill from the queue
 // the moment they free up; every pick carries its why; grey = thin pool.
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CourtConfig, CourtPlayer, ScoreWhy, pickCourt, splitTeams, whyLine } from "@/app/courtEngine"
 import { QueueState , isSitting } from "@/app/courtQueue"
+
+export type PairingSeen = {
+  court: number
+  ids: string[]
+  why: string
+  anchorId: string
+  at: number
+}
 
 type Props = {
   queue: QueueState
@@ -12,11 +20,19 @@ type Props = {
   venueCap: number
   onClaim: (court: number, ids: string[]) => void
   onSubmit: (court: number, team1: string[], team2: string[], s1: number, s2: number, durationMin: number) => void
+  onPairingsSeen?: (seen: PairingSeen[]) => void
 }
 
 type Suggestion = { four: CourtPlayer[]; steps: ScoreWhy[][]; available: number }
 
-export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onSubmit }: Props) {
+function usePairingCapture(key: string, seen: PairingSeen[], onPairingsSeen?: (seen: PairingSeen[]) => void) {
+  useEffect(() => {
+    if (key && onPairingsSeen) onPairingsSeen(seen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+}
+
+export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onSubmit, onPairingsSeen }: Props) {
   const [scores, setScores] = useState<Record<string, string>>({})
   const now = Date.now()
   const claimed = queue.onCourt
@@ -28,6 +44,35 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
   // courts = floor(not-sitting / 4), capped at the venue, never fewer than the claimed
   const notSitting = Object.keys(queue.players).filter((id) => !isSitting(queue, id)).length
   const courtCount = Math.min(venueCap, Math.max(Object.keys(claimed).length, Math.floor(notSitting / 4)))
+
+  // the recent-pairings capture (Frank 2026-11-26): every quartet the cards
+  // PROPOSE goes to the strip - the pairing that flashes by when a submit
+  // lands stays claimable. Runs as an effect keyed on the quartet sets (the
+  // parent owns the dedupe and the window).
+  const busyNow = new Set(Object.values(claimed).flatMap((c) => c.ids))
+  const freePool = Object.values(queue.players).filter((p) => !isSitting(queue, p.id) && !busyNow.has(p.id))
+  const seen: PairingSeen[] = []
+  {
+    const rem = [...freePool]
+    for (let court = 1; court <= courtCount && rem.length >= 4; court++) {
+      if (claimed[court]) continue
+      const steps = pickCourt(rem, now, cfg, { courts: Math.max(1, courtCount) })
+      const four = steps.slice(0, 4).map((s) => rem.find((p) => p.id === s[0].id)!)
+      const anchor = four.find((p) => p.id === steps[0][0].id)!
+      const [teamA, teamB] = splitTeams(four)
+      const waitMin = (now - anchor.waitSince) / 60000
+      seen.push({
+        court,
+        ids: four.map((p) => p.id),
+        why: whyLine(waitMin, teamA, teamB),
+        anchorId: anchor.id,
+        at: now,
+      })
+      for (const p of four) rem.splice(rem.indexOf(p), 1)
+    }
+  }
+  const seenKey = seen.map((s) => [...s.ids].sort().join(",")).join("|")
+  usePairingCapture(seenKey, seen, onPairingsSeen)
 
   // sequential picks: each free court takes the best of what remains
   const suggestions: Record<number, Suggestion> = {}
