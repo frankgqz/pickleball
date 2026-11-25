@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState, useEffect } from "react";
 import { Player } from "@/components/Types";
-import { findPlayerByDupr, getSessionList, getDuprLookupsToday } from "@/app/actions";
+import { findPlayerByDupr, getSessionList } from "@/app/actions";
 
 interface Props {
   players: Player[];
@@ -207,15 +207,6 @@ export default function PlayerDatabase({
     }
   };
 
-  // DUPR's daily budget (Frank 2026-11-05): ~3 other-profile lookups/day,
-  // all spent from one session — show the spend so it stays deliberate
-  const [lookupsToday, setLookupsToday] = useState<number | null>(null);
-  const refreshLookups = async () => {
-    const r = await getDuprLookupsToday();
-    if (r.success) setLookupsToday(r.count);
-  };
-  useEffect(() => { void refreshLookups(); }, []);
-
   const fetchDuprFor = async (id: string) => {
     const target = players.find(p => p.id === id);
     if (!target?.duprNumericId) {
@@ -239,7 +230,6 @@ export default function PlayerDatabase({
       console.error(e);
       setFetchFeedback({ playerId: id, message: `Error: ${e instanceof Error ? clip(e.message) : "request failed"}`, success: false });
     }
-    void refreshLookups();
     setTimeout(() => setFetchFeedback(null), 3000);
   };
 
@@ -270,9 +260,6 @@ export default function PlayerDatabase({
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold whitespace-nowrap">🎾 Player Database</h2>
           <div className="text-xs text-subtext">{players.length}</div>
-          {lookupsToday !== null && (
-            <div className="text-xs text-subtext" title="the app's DUPR fetches in 24h (spend tracker — no hard limit observed 2026-11-09; the website UI may throttle its own searches)">DUPR {lookupsToday} today</div>
-          )}
           <div className="relative ml-auto flex items-center gap-1.5">
             <button
               type="button"

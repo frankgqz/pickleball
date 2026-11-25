@@ -97,8 +97,9 @@ the pool inside generateStandardMatches).
  searches/day for regular users - but the API path has NO observed limit
  (Frank kept querying fine, 2026-11-09; the earlier 'used up' failures were
  the dead-session 401s in costume). All lookups still ride one DUPR session
- = Frank's account. The Player Database shows a 'DUPR n today' spend
- counter (getDuprLookupsToday).
+ = Frank's account. The 'DUPR n today' spend counter was
+ removed (Frank 2026-11-24: no limit with our method) — lastRefreshed stays
+ as player data, just no counter UI.
  RESOLVED 2026-11-09
  (verified working): the API never broke - the changes were the quota +
  short sessions (~5 days, was ~30). The 401 hunt found four green masks in
