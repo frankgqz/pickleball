@@ -62,7 +62,7 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
       <div className="flex items-baseline justify-between mb-1">
         <h3 className="font-semibold text-subtext text-sm">⏱ Waiting</h3>
         <p className="text-xs text-subtext/70">
-          {rows[0] ? `score = next on court · fit = who pairs with ${names[rows[0].id] || "them"}` : "the live score"}
+          {rows[0] ? `score = next on court · fit = the score at each pick's step` : "the live score"}
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
             </span>
             <span
               className="tabular-nums text-subtext w-12 text-right cursor-help"
-              title={row.fit === null ? "the anchor — the reference point" : `${breakdown(row.fitWhy!, row.fitWhy!)} = ${row.fit.toFixed(1)}`}
+              title={row.fit === null ? "the anchor — the reference point" : `${row.fitNote} · ${breakdown(row.fitWhy!, row.fitWhy!)} = ${row.fit.toFixed(1)}`}
             >
               {row.fit === null ? "—" : row.fit.toFixed(1)}
             </span>

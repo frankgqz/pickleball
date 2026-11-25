@@ -71,6 +71,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
     fit: number | null
     why: ScoreWhy
     fitWhy: ScoreWhy | null
+    fitNote: string
   }
   const rows: WaitRow[] = pool
     .map((p) => {
@@ -85,25 +86,35 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
         fit: null,
         why,
         fitWhy: null,
+        fitNote: "",
       };
     })
     .sort((a, b) => b.score - a.score);
 
-  // FIT (Frank 2026-11-25): the score that actually picks the OTHER THREE -
-  // the slot-2 cost with the anchor locked in, so the level (DUPR), parity
-  // (their distance from the anchor's average) and fresh-faces terms join
-  // the queue base. Negated too: bigger = pairs with the anchor sooner.
-  const anchor = rows[0] ? state.players[rows[0].id] : null;
-  for (const row of rows) {
-    if (anchor && row.id !== anchor.id) {
-      row.fitWhy = scoreOf(
-        state.players[row.id],
-        now,
-        cfg,
-        { ...ctx, formingDuprAvg: anchor.dupr },
-        [anchor]
-      );
-      row.fit = -row.fitWhy.score;
+  // FIT (Frank 2026-11-25): the score AT THE STEP THAT DECIDED them - the
+  // pick is a lock-sequence (slot 2 vs the anchor alone, slot 3 vs the
+  // two-player average, slot 4 vs three), so the anchor-only view could
+  // disagree with the pick. Each row shows the number from its own decisive
+  // step: the picked three their entry score, the rest the final step.
+  const steps = suggest(state, now, cfg, Object.keys(state.onCourt).length);
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const place = ["anchor", "2nd", "3rd", "4th"];
+  steps.forEach((step, i) => {
+    const winner = step[0];
+    const row = byId.get(winner.id);
+    if (row && i > 0) {
+      row.fitWhy = winner;
+      row.fit = -winner.score;
+      row.fitNote = `picked ${place[i]}`;
+    }
+  });
+  const last = steps[steps.length - 1] ?? [];
+  for (const cand of last) {
+    const row = byId.get(cand.id);
+    if (row && row.fitWhy === null) {
+      row.fitWhy = cand;
+      row.fit = -cand.score;
+      row.fitNote = "the last step";
     }
   }
   return rows;
