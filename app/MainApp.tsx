@@ -95,6 +95,20 @@ export default function Page() {
     computedStandings, 
     setStandings 
   } = standingsState;
+
+  // Every pool player owns a standings row. The by-court submit and by-round
+  // processing WRITE INTO rows, so a pool with no rows showed "Add players
+  // to see standings" forever (Frank's test pass, 2026-11-24). Add-only:
+  // removal keeps its own action (removePlayerStandingsEntry).
+  useEffect(() => {
+    if (loading) return;
+    setStandings((prev) => {
+      const have = new Set(prev.map((e) => e.id));
+      const missing = eventPool.filter((p: Player) => !have.has(p.id));
+      if (missing.length === 0) return prev;
+      return [...prev, ...missing.map((p: Player, i: number) => createStandingsEntry(p, prev.length + i, 1, 0))];
+    });
+  }, [eventPool, loading]);
   const { 
     toggleSortColumn, 
     recalculateStandingsFromHistory, 
