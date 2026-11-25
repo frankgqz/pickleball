@@ -67,17 +67,10 @@ export function usePlayerDatabase(
         const result = await getClubPlayers(userId);
         if (result.success && result.clubPlayers && result.clubPlayers.length > 0) {
           const dbPlayers = result.clubPlayers.map(cp => cp.player);
-          // Migrate players created while logged OUT up to the DB (their local
-          // ids are kept, so pool/standings/rounds references stay valid)
-          try {
-            const { importLocalPlayers } = await import("@/app/actions");
-            const samePerson = (a: Player, b: Player) =>
-            (!!a.duprId && a.duprId === b.duprId) ||
-            (!!a.duprNumericId && a.duprNumericId === b.duprNumericId);
-          const localOnly = (await new Promise<Player[]>(res => setAllPlayers(prev => { res(prev); return prev; })))
-              .filter(p => !dbPlayers.some(d => d.id === p.id || samePerson(d, p)));
-            if (localOnly.length > 0) await importLocalPlayers(localOnly, userId);
-          } catch (e) { console.warn("Local-player migration skipped:", e); }
+          // (the logged-out migration shim lived here — deleted 2026-11-24:
+          // on every load it re-created deleted players and auto-added any
+          // local-not-on-roster player to the roster. Adds go through
+          // addPlayer = the DB already, so nothing was left to migrate.)
           // MERGE on login, never replace: players added while logged out live
           // only locally — replace used to drop them from the list AND overwrite
           // them out of localStorage (mid-session login = data loss)

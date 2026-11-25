@@ -34,9 +34,9 @@ next-auth Google OAuth · server actions `app/actions.ts` · state hooks
   api.dupr.gg); CSV export D / SIDEOUT / YYYY-MM-DD, all 4 players named.
 - Yellow nameplate = missing DUPR ID / webNumericID (blocks export matching)
   — deliberate, keep.
-- Backlog `roadmap.md` at the repo root (Frank's async task queue — he edits
-  it directly from his phone; re-read it at session start, patch never
-  rewrite) · history: `git log`.
+- Backlog = `⌁ docs/projects/pickleball.md` (Frank's async task surface —
+ READ-ONLY; the old repo `roadmap.md` was retired into it, 2026-10-09)
+ · history: `git log`.
 - ✓ Session rename UI wired in SettingsPanel (updateSession + refreshKey);
   app named "Pickle Sessions"; all form fields themed — 2026-10-07.
 - -> Next on roadmap: best-of-3 score logic, pool-play formats, mobile
@@ -120,3 +120,11 @@ the pool inside generateStandardMatches).
  = the dashboard URL number; URL/number pastes route to the numeric field
  (7ace4c3). Smoke suite = _scratch/smoke.cjs (drives the real actions:
  merge / delete / fetch ladder; 9/9 PASS, exits non-zero on failure).
+
+- Deleted players STAY deleted (2026-11-24): the logged-out "migration" shim
+ in usePlayerDatabase resurrected deleted rows AND auto-added any local-not-
+ on-roster player to the roster on every load (the filter compared against
+ the ROSTER, not the global table). The shim is deleted — adds go through
+ addPlayer = the DB already, so nothing needed migrating. Stale
+ localStorage copies on OTHER devices need one manual delete each;
+ after that, never again.
