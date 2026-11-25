@@ -383,7 +383,7 @@ async function fetchDuprRatingInner(playerId: string) {
       }
       const imageUrl = r.imageUrl || null;
 
-      const updatedPlayer = await prisma.player.update({
+      let updatedPlayer = await prisma.player.update({
         where: { id: playerId },
         data: {
           name: data.result?.fullName
@@ -405,10 +405,50 @@ async function fetchDuprRatingInner(playerId: string) {
         });
       }
 
+      // FOLD identity twins (Frank 2026-11-24: a player known by duprID
+      // added again via dURL# = two rows; the fetch is the moment BOTH ids
+      // land in one row, so this is where two rows become provably one
+      // person). The fetched row wins on identity/name/score; the twin keeps
+      // whatever it alone had (e.g. a manual score).
+      let foldedId: string | null = null;
+      const twinOrs: Array<Record<string, string>> = [];
+      if (updatedPlayer.duprId) twinOrs.push({ duprId: updatedPlayer.duprId });
+      if (updatedPlayer.duprNumericId) twinOrs.push({ duprNumericId: updatedPlayer.duprNumericId });
+      const twin = twinOrs.length
+        ? await prisma.player.findFirst({
+            where: { id: { not: playerId }, OR: twinOrs },
+          })
+        : null;
+      if (twin) {
+        updatedPlayer = await prisma.player.update({
+          where: { id: playerId },
+          data: {
+            manualDuprScore: updatedPlayer.manualDuprScore ?? twin.manualDuprScore,
+            duprId: updatedPlayer.duprId || twin.duprId,
+            duprNumericId: updatedPlayer.duprNumericId || twin.duprNumericId,
+          },
+        });
+        // move the roster links across (unique(userId, playerId) may collide,
+        // so upsert the winner's link and drop the twin's)
+        const twinLinks = await prisma.clubPlayer.findMany({ where: { playerId: twin.id } });
+        for (const link of twinLinks) {
+          await prisma.clubPlayer.deleteMany({ where: { id: link.id } });
+          await prisma.clubPlayer.upsert({
+            where: { userId_playerId: { userId: link.userId, playerId } },
+            update: { playerName: updatedPlayer.name },
+            create: { userId: link.userId, playerId, playerName: updatedPlayer.name },
+          });
+        }
+        await prisma.clubPlayer.deleteMany({ where: { playerId: twin.id } });
+        await prisma.player.delete({ where: { id: twin.id } });
+        foldedId = twin.id;
+      }
+
       return {
         success: true,
         player: updatedPlayer,
-        message: rating ? `Fetched: ${data.result.fullName} - ${rating}${imageUrl ? " ✓" : ""}` : "Player found but no rating (NR)"
+        foldedId,
+        message: (rating ? `Fetched: ${data.result.fullName} - ${rating}${imageUrl ? " ✓" : ""}` : "Player found but no rating (NR)") + (foldedId ? " · folded the duplicate" : "")
       };
     }
     if (response.status === 429 || response.status === 403) {

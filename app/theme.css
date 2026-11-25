@@ -1,5 +1,5 @@
 /* keep this URL identical to googleFontsUrl in theme.ts */
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Bellota:wght@300;400;700&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Bellota:wght@300;400;700&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap");
 
 
 /* src/theme.css — tiered palette
@@ -29,8 +29,8 @@
   --theme-wash: var(--theme-accent);
   --theme-halo: color-mix(in srgb, var(--theme-sparkle) 75%, transparent);
   --theme-role-primary-bg: linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 85%, #fff) 0%, var(--theme-accent) 52%, color-mix(in srgb, var(--theme-accent) 72%, var(--theme-accent-2)) 100%);
-  --theme-role-primary-shadow: inset 0 1px 0 #ffffff59, inset 0 -2px 0 #0003, 0 1px 2px #0006, 0 8px 24px -6px var(--theme-halo);
-  --theme-role-primary-pressed: inset 0 1px 0 #ffffff30, inset 0 -1px 0 #0002, 0 0 2px #0005, 0 3px 10px -6px var(--theme-halo);
+  --theme-role-primary-shadow: inset 0 1px 0 #ffffff30, inset 0 -1px 0 #0002, 0 1px 2px #0004, 0 4px 12px -6px var(--theme-halo);
+  --theme-role-primary-pressed: inset 0 1px 0 #ffffff1e, inset 0 -1px 0 #0001, 0 0 2px #0003, 0 2px 6px -6px var(--theme-halo);
   --theme-role-quiet-bg: color-mix(in srgb, var(--theme-wash) 14%, transparent);
   --theme-role-quiet-bg-hover: color-mix(in srgb, var(--theme-wash) 20%, transparent);
   --theme-role-quiet-border: color-mix(in srgb, var(--theme-wash) 32%, transparent);
@@ -52,6 +52,7 @@
   --theme-accent: #e59b4e;
   --theme-accent-2: #8ab264;
   --theme-sparkle: #f7d268;
+  --theme-on-accent: #f5e6d3;
   --c1: var(--theme-bg);
   --c2: var(--theme-panel);
   --c3: var(--theme-text);
@@ -72,9 +73,10 @@
   --theme-panel: #1C1F24;
   --theme-text: #f1f4f8;
   --theme-subtext: #959AA3;
-  --theme-accent: #35C4FF;
+  --theme-accent: hsl(225, 70%, 48%); /* city blue (Frank): the sky blue read too close to bubble baby blue */
   --theme-accent-2: #FF6A1F;
   --theme-sparkle: #2EE66B;
+  --theme-on-accent: #f1f4f8;
   --c1: var(--theme-bg);
   --c2: var(--theme-panel);
   --c3: var(--theme-text);
@@ -97,6 +99,7 @@
   --theme-accent: #8ED0FF;
   --theme-accent-2: #FF7A9E;
   --theme-sparkle: #C5B6F5;
+  --theme-on-accent: #2E4A6B;
   --c1: var(--theme-bg);
   --c2: var(--theme-panel);
   --c3: var(--theme-text);
@@ -120,6 +123,7 @@
   --theme-accent: hsl(161, 58%, 45%);
   --theme-accent-2: hsl(230, 64%, 74%);
   --theme-sparkle: hsl(184, 70%, 67%);
+  --theme-on-accent: hsl(152, 12%, 15%);
   --theme-wash: var(--theme-sparkle); /* onsen washes with its spring mist */
   --c1: var(--theme-bg);
   --c2: var(--theme-panel);
@@ -171,25 +175,25 @@ body {
 
 /* wood — the verb is an amber glow (accent-2 = the maple light) */
 [data-theme='wood'] {
-  --theme-hover-brightness: 1.14;
-  --theme-hover-saturate: 1.18;
+  --theme-hover-brightness: 1.09;
+  --theme-hover-saturate: 1.11;
   --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
   --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
 
 /* night — the verb is neon (accent-2 = the cyberpunk green), never murky */
 [data-theme='night'] {
-  --theme-hover-brightness: 1.18;
-  --theme-hover-saturate: 1.25;
+  --theme-hover-brightness: 1.11;
+  --theme-hover-saturate: 1.15;
   --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
   --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
 
 /* bubble — the verb is float (the pink-into-sky gradient layer intact) */
 [data-theme='bubble'] {
-  --theme-hover-lift: 3px;
+  --theme-hover-lift: 2px;
   --theme-hover-brightness: 1.03;
-  --theme-hover-saturate: 1.1;
+  --theme-hover-saturate: 1.08;
   --theme-hover-shadow: 0 0 20px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
   --theme-focus-shadow: 0 0 0 2px var(--theme-bg), 0 0 0 5px var(--theme-sparkle), 0 0 18px color-mix(in srgb, var(--theme-sparkle) 55%, transparent);
 }
@@ -262,4 +266,26 @@ body {
   :where(button, [role='button'], .btn, [data-interactive]):active {
     transform: none;
   }
+}
+
+/* INK — black & white (the serious one); mirrors theme.ts primitives */
+[data-theme='onigiri'], [data-theme='ink'] {  /* ink = the legacy alias */
+  --theme-bg: #FFFFFF;
+  --theme-panel: #F5F5F7;
+  --theme-text: #3A3A3C;
+  --theme-subtext: #8E8E93;
+  --theme-accent: #48484A;
+  --theme-accent-2: #A1A1A6;
+  --theme-sparkle: #2C2C2E;
+  --theme-on-accent: #FFFFFF;
+  --c1: var(--theme-bg);
+  --c2: var(--theme-panel);
+  --c3: var(--theme-text);
+  --c4: var(--theme-subtext);
+  --c5: var(--theme-accent);
+  --c6: var(--theme-accent-2);
+  --c7: var(--theme-sparkle);
+  --theme-radius-button: 12px;
+  --theme-radius-card: 16px;
+  --theme-radius-input: 8px;
 }

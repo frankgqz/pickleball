@@ -1,4 +1,4 @@
-export type Theme = 'wood' | 'night' | 'bubble' | 'onsen'
+export type Theme = 'wood' | 'night' | 'bubble' | 'onsen' | 'onigiri'
 
 // ============================================
 // Tier 1 — PRIMITIVES: the only typed colors.
@@ -28,6 +28,7 @@ export interface ThemeColors {
   glow: string
   buttonStart: string
   buttonEnd: string
+  buttonText: string // the label ON the fill (contrast-derived)
   buttonShadow: string
   buttonShadowPressed: string
   // Tier 3 — interactive ladder (mirror of theme.css; per-theme voices live in CSS)
@@ -70,13 +71,39 @@ const FRAUNCES = '"Fraunces", Georgia, serif'
 const DMSANS = '"DM Sans", ui-sans-serif, system-ui, sans-serif'
 const BELLOTA = '"Bellota", ui-rounded, sans-serif'
 const SHANTELL = '"Shantell Sans", ui-rounded, cursive'
+const SOURCESANS3 = '"Source Sans 3", ui-sans-serif, system-ui, sans-serif'
 
 // Single source of truth for the font FILE loading. The font names below are
 // just strings — the browser needs the files too. Consumers render this as a
 // <link> in their layout head (Turbopack strips the theme.css @import — see
 // AGENTS.md); theme.css keeps the same URL as its @import for vite consumers.
-export const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Bellota:wght@300;400;700&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&display=swap'
+export const googleFontsUrl = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fredericka+the+Great&family=Bellota:wght@300;400;700&family=Shantell+Sans:ital,wght@0,300..800;1,300..800&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap'
 const SERIF = '"Fraunces", Georgia, "Times New Roman", serif'
+
+// relative luminance (the on-accent label law: a dark fill takes the
+// LIGHTER of text/bg as its label, a light fill the darker — Frank
+// 2026-11-24: ink's dark pill ate the dark label = "fix the we're on button")
+function relLum(color: string): number {
+  let r = 0, g = 0, b = 0
+  if (color.startsWith('hsl')) {
+    const m = color.match(/hsla?\(\s*([-.\d]+)\s*,\s*([-.\d]+)%\s*,\s*([-.\d]+)%/)
+    if (m) {
+      const hue = ((+m[1] % 360) + 360) % 360, sat = +m[2] / 100, lig = +m[3] / 100
+      const c = (1 - Math.abs(2 * lig - 1)) * sat
+      const x = c * (1 - Math.abs(((hue / 60) % 2) - 1))
+      const base = lig - c / 2
+      const t2 = hue / 60
+      const rgb = t2 < 1 ? [c, x, 0] : t2 < 2 ? [x, c, 0] : t2 < 3 ? [0, c, x] : t2 < 4 ? [0, x, c] : t2 < 5 ? [x, 0, c] : [c, 0, x]
+      r = rgb[0] + base; g = rgb[1] + base; b = rgb[2] + base
+    }
+  } else {
+    const h = color.replace('#', '')
+    r = parseInt(h.slice(0, 2), 16) / 255
+    g = parseInt(h.slice(2, 4), 16) / 255
+    b = parseInt(h.slice(4, 6), 16) / 255
+  }
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
 
 function hexA(color: string, alpha: number): string {
   if (color.startsWith('hsl')) {
@@ -128,16 +155,19 @@ function make(t: ThemeSpec): ThemeColors {
     glow: `radial-gradient(circle, ${hexA(p.sparkle, 0.14)} 0%, transparent 70%)`,
     buttonStart: p.accent,
     buttonEnd: p.accent2,
-    buttonShadow: hexA(p.accent, 0.45),
-    buttonShadowPressed: hexA(p.accent2, 0.3),
+    buttonText: relLum(p.accent) < 0.45
+      ? (relLum(p.text) > relLum(p.bg) ? p.text : p.bg)
+      : p.text,
+    buttonShadow: hexA(p.accent, 0.28),
+    buttonShadowPressed: hexA(p.accent2, 0.18),
     // interactive ladder (generic derivations; theme.css carries the voices)
     motionFast: '150ms',
     motionBase: '220ms',
     motionEase: 'cubic-bezier(0.2, 0, 0, 1)',
     error: '#c4453c',
     disabledOpacity: 0.45,
-    focusRing: `0 0 0 2px ${hexA(p.bg, 0.9)}, 0 0 0 5px ${p.accent}`,
-    hoverShadow: `0 0 18px ${hexA(p.sparkle, 0.4)}`,
+    focusRing: `0 0 0 2px ${hexA(p.bg, 0.9)}, 0 0 0 5px ${p.sparkle}, 0 0 18px ${hexA(p.sparkle, 0.55)}`,
+    hoverShadow: `0 0 20px ${hexA(p.sparkle, 0.55)}`,
     particleHues: t.particleHues,
     // typography
     fontFamily: body,
@@ -194,7 +224,7 @@ export const themes: Record<Theme, ThemeColors> = {
       panel: '#1C1F24',
       text: '#f1f4f8',
       subtext: '#959AA3',
-      accent: '#35C4FF',
+      accent: 'hsl(225, 70%, 48%)',
       accent2: '#FF6A1F',
       sparkle: '#2EE66B',
     },
@@ -261,6 +291,32 @@ export const themes: Record<Theme, ThemeColors> = {
     radiusInput: '6px',
     shadowStrength: 0.12,
   }),
+  // ONIGIRI — black & white, the serious one (the rice ball 🍙; key
+  // renamed from ink at Frank's call 2026-11-24) ("apple themey kinda", Frank
+  // 2026-11-24): pure white ground, near-black text, zero hue. The highlight
+  // law INVERTS on a light ground — sparkle = pure ink = the glow/focus
+  // burns black against the white. Source Sans 3 (Frank's pick 2026-11-24;
+  // was Libre Franklin "for now" — swapping = one edit here + the URL).
+  onigiri: make({
+    primitives: {
+      bg: '#FFFFFF',
+      panel: '#F5F5F7',
+      text: '#3A3A3C',
+      subtext: '#8E8E93',
+      accent: '#48484A',
+      accent2: '#A1A1A6',
+      sparkle: '#2C2C2E',
+    },
+    particleHues: [
+      { hue: [0, 0], sat: [0, 0] },   // mono: no hue, all value
+    ],
+    fontFamily: SOURCESANS3,
+    fontFamilyHeading: SOURCESANS3,
+    radiusButton: '12px',
+    radiusCard: '16px',
+    radiusInput: '8px',
+    shadowStrength: 0.08,
+  }),
 }
 
-export const themeOrder: Theme[] = ['wood', 'night', 'bubble', 'onsen']
+export const themeOrder: Theme[] = ['wood', 'night', 'bubble', 'onsen', 'onigiri']

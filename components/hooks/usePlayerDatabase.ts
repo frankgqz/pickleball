@@ -150,8 +150,10 @@ export function usePlayerDatabase(
     const result = await fetchDuprRating(playerId);
     console.log("fetchDuprForPlayer result:", result);
     if (result.success && result.player) {
-      setAllPlayers(prev => prev.map(p => p.id === playerId ? result.player! : p));
-      setEventPool(prev => prev.map(p => p.id === playerId ? result.player! : p));
+      // a folded twin leaves the list the moment the server folds it
+      const foldedId = (result as { foldedId?: string | null }).foldedId;
+      setAllPlayers(prev => prev.filter(p => p.id !== foldedId).map(p => p.id === playerId ? result.player! : p));
+      setEventPool(prev => prev.filter(p => p.id !== foldedId).map(p => p.id === playerId ? result.player! : p));
       return { player: result.player, error: null };
     }
     return { player: null, error: (result as any).error || "fetch failed" };

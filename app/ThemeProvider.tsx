@@ -25,6 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--theme-glow', colors.glow)
     root.style.setProperty('--theme-btn-start', colors.buttonStart)
     root.style.setProperty('--theme-btn-end', colors.buttonEnd)
+    root.style.setProperty('--theme-on-accent', colors.buttonText)
     root.style.setProperty('--theme-btn-shadow', colors.buttonShadow)
     root.style.setProperty('--theme-btn-shadow-pressed', colors.buttonShadowPressed)
     root.style.setProperty('--theme-panel', colors.panel)
