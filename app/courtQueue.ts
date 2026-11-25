@@ -67,6 +67,8 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
     score: number
     waitMin: number
     games: number
+    minutesPlayed: number
+    cycles: number
     dupr: number
     fit: number | null
     why: ScoreWhy
@@ -82,6 +84,8 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
         score: -why.score,
         waitMin: Math.max(0, Math.floor((now - p.waitSince) / 60000)),
         games: p.gamesPlayed,
+        minutesPlayed: p.minutesPlayed,
+        cycles: p.creditedCycles,
         dupr: p.dupr,
         fit: null,
         why,

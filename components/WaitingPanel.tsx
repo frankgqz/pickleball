@@ -15,23 +15,39 @@ interface Props {
 // waiting player with a LIVE score. The ladder order is the pick's own
 // priority - the top score goes on court next, and the quartet is built
 // around that person - so the list re-reads every 30s as the waits tick.
-// the mouseover arithmetic (Frank 2026-11-25): the engine's own terms,
-// display-signed (bigger = sooner), so the number shows its work
-function breakdown(why: ScoreWhy, fitWhy: ScoreWhy | null): string {
-  const parts: string[] = [];
-  const add = (label: string, v: number) => {
-    if (Math.abs(v) >= 0.05) parts.push(`${label} ${v > 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`);
-  };
-  add("wait", -why.wait);
-  add("games+min", -why.played);
-  add("level", -why.level);
-  add("cycles", -why.absence);
-  add("join", -why.offset);
-  if (fitWhy) {
-    add("parity", -fitWhy.close);
-    add("faces", -fitWhy.dupLast);
+// the mouseover mathematics (Frank 2026-11-26: "more mathematics of how
+// the score is derived"): every factor × its live rate, display-signed
+// (bigger = sooner), summing to the number on the row
+function derivation(
+  row: { waitMin: number; games: number; minutesPlayed: number; cycles: number; dupr: number; score: number; fit: number | null },
+  anchorDupr: number,
+  why: ScoreWhy,
+  fitWhy: ScoreWhy | null,
+  cfg: CourtConfig,
+  cycleRate: number,
+  withFit: boolean
+): string {
+  const f = (v: number) => Math.abs(v).toFixed(2).replace(/\.?0+$/, "");
+  const s = (v: number) => (v > 0 ? "+" : "−") + f(v);
+  const lines: string[] = [];
+  lines.push(`wait: ${row.waitMin}m × ${f(cfg.courtWaitMin)} = ${s(-why.wait)}`);
+  lines.push(`games: ${row.games} × ${f(cfg.courtGames)} = ${s(-row.games * cfg.courtGames)}`);
+  lines.push(`on court: ${row.minutesPlayed}m × ${f(cfg.courtMinPlayed)} = ${s(-row.minutesPlayed * cfg.courtMinPlayed)}`);
+  lines.push(`level: ${row.dupr} × ${f(cfg.courtDuprScore)} = ${s(-why.level)}`);
+  lines.push(`cycles: ${row.cycles} × ${f(cycleRate)} = ${s(-why.absence)}`);
+  lines.push(`join credit = ${s(-why.offset)}`);
+  lines.push(`────────────────────────────────`);
+  lines.push(`score = ${s(row.score)}`);
+  if (withFit && fitWhy) {
+    const parity = Math.abs(row.dupr - anchorDupr);
+    const faces = cfg.courtDupLast !== 0 ? Math.round(fitWhy.dupLast / cfg.courtDupLast) : 0;
+    lines.push(`fit adds:`);
+    lines.push(`parity: |${row.dupr}−${anchorDupr}| × ${f(cfg.courtDuprClose)} = ${s(-fitWhy.close)}`);
+    lines.push(`faces: ${faces} × ${f(cfg.courtDupLast)} = ${s(-fitWhy.dupLast)}`);
+    lines.push(`────────────────────────────────`);
+    lines.push(`fit = ${s(row.fit ?? 0)}`);
   }
-  return parts.join(" · ");
+  return lines.join("\n");
 }
 
 export default function WaitingPanel({ queue, cfg, names }: Props) {
@@ -44,11 +60,11 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
   const now = Date.now();
   const rows = waitingList(queue, cfg, now);
   const quartet = new Set(nextQuartet(queue, cfg, now));
+  const cycleRate = cfg.courtSitRatio * (Math.max(1, Object.keys(queue.onCourt).length) / Math.max(1, rows.length)) * cfg.courtGames;
   if (rows.length === 0) return null;
 
   // the formula with the LIVE Court Settings values (Frank: "the current
   // variables from court settings") - display signs: bigger = sooner
-  const cycleRate = cfg.courtSitRatio * (Math.max(1, Object.keys(queue.onCourt).length) / Math.max(1, rows.length)) * cfg.courtGames;
   const term = (label: string, v: number) =>
     `${v < 0 ? "−" : "+"} ${label}×${Math.abs(v).toFixed(2).replace(/\.?0+$/, "")}`;
   const formula =
@@ -99,13 +115,13 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
             </span>
             <span
               className="font-semibold tabular-nums text-text w-11 sm:w-12 text-right cursor-help shrink-0"
-              title={`${breakdown(row.why, row.fitWhy)} = ${row.score.toFixed(1)}`}
+              title={derivation(row, rows[0].dupr, row.why, row.fitWhy, cfg, cycleRate, false)}
             >
               {row.score.toFixed(1)}
             </span>
             <span
               className="tabular-nums text-subtext w-11 sm:w-12 text-right cursor-help shrink-0"
-              title={row.fit === null ? "the anchor — the reference point" : `${row.fitNote} · ${breakdown(row.fitWhy!, row.fitWhy!)} = ${row.fit.toFixed(1)}`}
+              title={row.fit === null ? "the anchor — the reference point" : `${row.fitNote}\n${derivation(row, rows[0].dupr, row.why, row.fitWhy, cfg, cycleRate, true)}`}
             >
               {row.fit === null ? "—" : row.fit.toFixed(1)}
             </span>

@@ -31,10 +31,12 @@ export default function PairingStrip({ strip, names, busyIds, freeCourt, onClaim
   };
 
   return (
-    <section className="mt-6 bg-panel rounded-2xl shadow-xl px-4 py-3">
+    // grouped INSIDE the Courts panel (Frank 2026-11-26): the strip shares
+    // the cards' mechanic - send = we're on, undo = the same undo
+    <div className="mt-3 border-t border-line pt-2.5">
       <div className="flex items-baseline justify-between mb-1">
-        <h3 className="font-semibold text-subtext text-sm">⏱ Recent pairings</h3>
-        <p className="text-xs text-subtext/70">the ones that flashed by - send any of them</p>
+        <h3 className="font-semibold text-subtext text-xs">⏱ Recent pairings</h3>
+        <p className="text-[11px] text-subtext/70">the ones that flashed by - send any of them</p>
       </div>
 
       <div className="mt-2 flex flex-wrap gap-2">
@@ -69,6 +71,6 @@ export default function PairingStrip({ strip, names, busyIds, freeCourt, onClaim
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }

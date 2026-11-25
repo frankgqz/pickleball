@@ -10,7 +10,7 @@ import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import CourtRolling from "@/components/CourtRolling";
 import WaitingPanel from "@/components/WaitingPanel";
-import PairingStrip, { PairingEntry } from "@/components/PairingStrip";
+import type { PairingEntry } from "@/components/PairingStrip";
 import type { PairingSeen } from "@/components/CourtRolling";
 import GameLog from "@/components/GameLog";
 import { emptyQueue, joinQueue, toggleSit, isSitting, claimCourt, unclaimCourt, submitGame, QueueState } from "@/app/courtQueue";
@@ -602,6 +602,7 @@ export default function Page() {
             names={names}
             cfg={courtCfg}
             venueCap={config.courts || 6}
+            strip={pairingStrip}
             onClaim={handleCourtClaim}
             onUndoClaim={(court) => setCourtQueue((q) => unclaimCourt(q, court))}
             onSubmit={handleCourtSubmit}
@@ -627,25 +628,6 @@ export default function Page() {
           onStartNextRound={startNextRound}
           submitted={roundState.submitted}
         />
-        )}
-
-        {config.format === "COURT" && (
-          <PairingStrip
-            strip={pairingStrip}
-            names={names}
-            busyIds={
-              new Set([
-                ...Object.values(courtQueue.onCourt).flatMap((c) => c.ids),
-                ...Object.keys(courtQueue.sitting),
-              ])
-            }
-            freeCourt={
-              Array.from({ length: config.courts || 6 }, (_, i) => i + 1).find(
-                (c) => !courtQueue.onCourt[c]
-              ) ?? null
-            }
-            onClaim={handleCourtClaim}
-          />
         )}
 
         {config.format === "COURT" && (

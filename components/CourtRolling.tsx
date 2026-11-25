@@ -2,6 +2,7 @@
 // The by-Court rolling surface (Frank 2026-11-03): courts fill from the queue
 // the moment they free up; every pick carries its why; grey = thin pool.
 import { useEffect, useState } from "react"
+import PairingStrip, { PairingEntry } from "@/components/PairingStrip"
 import { CourtConfig, CourtPlayer, ScoreWhy, pickCourt, splitTeams, whyLine } from "@/app/courtEngine"
 import { QueueState , isSitting } from "@/app/courtQueue"
 
@@ -18,6 +19,7 @@ type Props = {
   names: Record<string, string>
   cfg: CourtConfig
   venueCap: number
+  strip?: PairingEntry[]
   onClaim: (court: number, ids: string[]) => void
   onUndoClaim?: (court: number) => void
   onSubmit: (court: number, team1: string[], team2: string[], s1: number, s2: number, durationMin: number) => void
@@ -33,7 +35,7 @@ function usePairingCapture(key: string, seen: PairingSeen[], onPairingsSeen?: (s
   }, [key]);
 }
 
-export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onUndoClaim, onSubmit, onPairingsSeen }: Props) {
+export default function CourtRolling({ queue, names, cfg, venueCap, strip, onClaim, onUndoClaim, onSubmit, onPairingsSeen }: Props) {
   const [scores, setScores] = useState<Record<string, string>>({})
   const now = Date.now()
   const claimed = queue.onCourt
@@ -217,6 +219,18 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onU
             )
           })}
         </div>
+      )}
+
+      {strip && strip.length > 0 && (
+        <PairingStrip
+          strip={strip}
+          names={names}
+          busyIds={busy}
+          freeCourt={
+            Array.from({ length: venueCap }, (_, i) => i + 1).find((c) => !claimed[c]) ?? null
+          }
+          onClaim={onClaim}
+        />
       )}
     </section>
   )
