@@ -530,9 +530,10 @@ export default function Page() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <header className="mb-6 px-2 max-w-6xl mx-auto">
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="relative flex items-center justify-center mb-4">
           <h1 className="text-2xl md:text-3xl font-bold">🏓 Pickleball</h1>
-          <ThemeToggle />
+          {/* pinned right — the toggle never moves with the title (Frank) */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2"><ThemeToggle /></div>
         </div>
         <div className="flex items-center justify-between gap-4">
           <a
