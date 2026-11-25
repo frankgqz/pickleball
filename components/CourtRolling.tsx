@@ -67,30 +67,38 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
               const elapsed = Math.max(1, Math.round((now - claim.startedAt) / 60000))
               const setScore = (k: string, v: string) => setScores((prev) => ({ ...prev, [k]: v }))
               return (
-                <div key={court} className="border-2 border-line rounded-lg p-2.5">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-semibold text-text">Court {court}</span>
-                    <span className="text-xs text-subtext">{elapsed}m</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-1.5">
-                    {teamA.map((x) => (
-                      <span key={x.id} className="flex-1 min-w-0 truncate text-xs px-1.5 h-7 flex items-center rounded-lg border-2 team-1">{nameOf(x.id)}</span>
-                    ))}
+                // the by-round panel shape (Frank 2026-11-25): court# in the
+                // gutter, the two team rows, one bottom row for the action
+                <div key={court} className="border-2 border-line rounded-lg p-2.5 grid grid-cols-[0.9rem_minmax(0,1fr)] gap-x-0.5">
+                  <span className="self-start pt-2.5 text-[11px] text-subtext leading-none">{court}</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      {teamA.map((x) => (
+                        <span key={x.id} className="flex-1 min-w-0 h-8 truncate flex items-center rounded-lg px-2 border-2 team-1 bg-muted-bg text-text text-sm font-medium">{nameOf(x.id)}</span>
+                      ))}
+                    </div>
                     <input type="number" value={s1} onChange={(e) => setScore(court + "-1", e.target.value)} placeholder="0"
-                      className="w-11 h-7 px-1 text-center text-xs rounded-lg border-2 team-1 bg-muted-bg text-text no-spin" />
+                      className="w-11 shrink-0 h-8 px-1 text-center text-sm rounded-lg border-2 team-1 bg-muted-bg text-text no-spin" />
                   </div>
-                  <div className="flex items-center gap-1 mt-1">
-                    {teamB.map((x) => (
-                      <span key={x.id} className="flex-1 min-w-0 truncate text-xs px-1.5 h-7 flex items-center rounded-lg border-2 team-2">{nameOf(x.id)}</span>
-                    ))}
+                  <span className="self-center mt-1 -ml-1 text-[11px] text-subtext leading-none">vs</span>
+                  <div className="flex items-center gap-1 mt-1 min-w-0">
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      {teamB.map((x) => (
+                        <span key={x.id} className="flex-1 min-w-0 h-8 truncate flex items-center rounded-lg px-2 border-2 team-2 bg-muted-bg text-text text-sm font-medium">{nameOf(x.id)}</span>
+                      ))}
+                    </div>
                     <input type="number" value={s2} onChange={(e) => setScore(court + "-2", e.target.value)} placeholder="0"
-                      className="w-11 h-7 px-1 text-center text-xs rounded-lg border-2 team-2 bg-muted-bg text-text no-spin" />
+                      className="w-11 shrink-0 h-8 px-1 text-center text-sm rounded-lg border-2 team-2 bg-muted-bg text-text no-spin" />
                   </div>
-                  <button
-                    onClick={() => onSubmit(court, teamA.map((x) => x.id), teamB.map((x) => x.id), parseInt(s1) || 0, parseInt(s2) || 0, elapsed)}
-                    disabled={s1 === "" || s2 === ""}
-                    className="w-full mt-2 role-primary disabled:opacity-45"
-                  >submit</button>
+                  <span />
+                  <div className="col-start-2 flex items-center gap-2 mt-1.5">
+                    <span className="text-xs text-subtext flex-1 truncate">{elapsed}m</span>
+                    <button
+                      onClick={() => onSubmit(court, teamA.map((x) => x.id), teamB.map((x) => x.id), parseInt(s1) || 0, parseInt(s2) || 0, elapsed)}
+                      disabled={s1 === "" || s2 === ""}
+                      className="role-primary px-4 h-7 text-xs font-semibold shrink-0 disabled:opacity-45"
+                    >submit</button>
+                  </div>
                 </div>
               )
             }
@@ -110,35 +118,40 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
             const forced = sug.available === 4
             const thin = sug.available < 6
             return (
+              // the by-round panel shape (Frank 2026-11-25): court# in the
+              // gutter, the two team rows, one bottom row = whyLine + we're on
               <div key={court}
-                className={"rounded-lg p-2.5 border-2 " + (forced ? "border-line bg-panel opacity-70" : "border-line bg-muted-bg")}>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-xs font-semibold text-text">Court {court}</span>
-                  <span className="text-xs text-subtext">{whyLine(waitMin, teamA, teamB)}</span>
-                </div>
-                <div className="flex items-center gap-1 mt-1.5">
+                className={"rounded-lg p-2.5 border-2 grid grid-cols-[0.9rem_minmax(0,1fr)] gap-x-0.5 " + (forced ? "border-line bg-panel opacity-70" : "border-line bg-muted-bg")}>
+                <span className="self-start pt-2.5 text-[11px] text-subtext leading-none">{court}</span>
+                <div className="flex items-center gap-1 min-w-0">
                   {teamA.map((x) => (
-                    <span key={x.id} className="flex-1 min-w-0 truncate text-xs px-1.5 h-7 flex items-center rounded-lg border-2 team-1">{nameOf(x.id)}</span>
+                    <span key={x.id} className="flex-1 min-w-0 h-8 truncate flex items-center rounded-lg px-2 border-2 team-1 bg-muted-bg text-text text-sm font-medium">{nameOf(x.id)}</span>
                   ))}
                 </div>
-                <div className="flex items-center gap-1 mt-1">
+                <span className="self-center mt-1 -ml-1 text-[11px] text-subtext leading-none">vs</span>
+                <div className="flex items-center gap-1 mt-1 min-w-0">
                   {teamB.map((x) => (
-                    <span key={x.id} className="flex-1 min-w-0 truncate text-xs px-1.5 h-7 flex items-center rounded-lg border-2 team-2">{nameOf(x.id)}</span>
+                    <span key={x.id} className="flex-1 min-w-0 h-8 truncate flex items-center rounded-lg px-2 border-2 team-2 bg-muted-bg text-text text-sm font-medium">{nameOf(x.id)}</span>
                   ))}
                 </div>
-                <button onClick={() => {
-                  // a fresh claim starts with empty score cells (Frank:
-                  // the previous game's scores lingered in them)
-                  setScores((prev) => {
-                    const next = { ...prev };
-                    delete next[court + "-1"];
-                    delete next[court + "-2"];
-                    return next;
-                  });
-                  onClaim(court, sug.four.map((x) => x.id));
-                }} className="w-full mt-2 role-primary">we're on</button>
-                {forced && <div className="text-xs text-subtext mt-1.5">only 1 pairing — send it</div>}
-                {!forced && thin && <div className="text-xs text-subtext mt-1.5">thin pool — {sug.available} choosing</div>}
+                <span />
+                <div className="col-start-2 flex items-center gap-2 mt-1.5">
+                  <span className="text-xs text-subtext flex-1 truncate">
+                    {whyLine(waitMin, teamA, teamB)}
+                    {forced ? " · only 1 pairing — send it" : thin ? ` · thin pool — ${sug.available} choosing` : ""}
+                  </span>
+                  <button onClick={() => {
+                    // a fresh claim starts with empty score cells (Frank:
+                    // the previous game's scores lingered in them)
+                    setScores((prev) => {
+                      const next = { ...prev };
+                      delete next[court + "-1"];
+                      delete next[court + "-2"];
+                      return next;
+                    });
+                    onClaim(court, sug.four.map((x) => x.id));
+                  }} className="role-primary px-4 h-7 text-xs font-semibold shrink-0">we're on</button>
+                </div>
               </div>
             )
           })}

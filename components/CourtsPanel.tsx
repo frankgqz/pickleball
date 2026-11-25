@@ -227,29 +227,6 @@ export default function CourtsPanel({
               />
             </div>
 
-            {/* Unselected players available to pick */}
-            {unselectedPlayers.length > 0 && (
-              <div className="col-span-2 mt-1.5 pt-1.5 border-t border-line">
-                <div className="flex flex-wrap gap-1 items-center">
-                  <span className="text-xs text-subtext">Available:</span>
-                  {unselectedPlayers.slice(0, 6).map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => chipClick(match.id, p.id)}
-                      title="Click to select - click another to swap"
-                      className="px-2 py-0.5 bg-muted-bg text-subtext rounded-md text-xs hover:bg-hover-bg transition-colors border-2 border-line"
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                  {unselectedPlayers.length > 6 && (
-                    <span className="text-xs text-subtext px-1">
-                      +{unselectedPlayers.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -352,6 +329,26 @@ export default function CourtsPanel({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Available people in ONE panel (Frank 2026-11-25: not all of
+              them under each court) - the same select-then-swap chips */}
+          {unselectedPlayers.length > 0 && (
+            <div className="mt-4 bg-muted-bg rounded-xl p-4 border border-line">
+              <h4 className="font-semibold text-subtext mb-3 text-sm">Available</h4>
+              <div className="flex flex-wrap gap-2">
+                {unselectedPlayers.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => chipClick(swapSel ? swapSel.matchId : "", p.id)}
+                    title="Click to select - click another to swap"
+                    className="px-2 py-0.5 bg-muted-bg text-subtext rounded-md text-xs hover:bg-hover-bg transition-colors border-2 border-line"
+                  >
+                    {p.name}
+                  </button>
+                ))}
               </div>
             </div>
           )}
