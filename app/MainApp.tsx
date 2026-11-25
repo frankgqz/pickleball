@@ -9,6 +9,7 @@ import CourtsPanel from "@/components/CourtsPanel";
 import StandingsTable from "@/components/StandingsTable";
 import RoundHistoryPanel from "@/components/RoundHistoryPanel";
 import CourtRolling from "@/components/CourtRolling";
+import WaitingPanel from "@/components/WaitingPanel";
 import GameLog from "@/components/GameLog";
 import { emptyQueue, joinQueue, toggleSit, claimCourt, submitGame, QueueState } from "@/app/courtQueue";
 import { CourtConfig, COURT_DEFAULTS, standingScore } from "@/app/courtEngine";
@@ -487,7 +488,10 @@ export default function Page() {
         const derivedPool = derivedIds.map(id => ({ id, name: id, isSitting: false })) as unknown as Player[];
         const computed = initializeSeeds(calculateStandingsFromRounds([], loadedRounds, derivedPool, config), config.orderGap);
         setStandings(computed);
-        setEventPool(computed.map(e => ({ id: e.id, name: e.name, duprId: e.duprId, duprScore: e.duprScore })) as unknown as Player[]);
+        // the sit flags ride the last round's sittingOut - without them a
+        // refresh queued the seated players back onto the courts (Frank 2026-11-25)
+        const sittingIds = new Set<string>((loadedRounds[loadedRounds.length - 1]?.sittingOut ?? []) as string[]);
+        setEventPool(computed.map(e => ({ id: e.id, name: e.name, duprId: e.duprId, duprScore: e.duprScore, isSitting: sittingIds.has(e.id) })) as unknown as Player[]);
       }
     }
   }, [config, updateConfig, addRoundToHistory, setStandings, setEventPool, setCurrentSession, setDbSessionId, setRoundHistory, setRoundState]);
@@ -605,6 +609,10 @@ export default function Page() {
           onStartNextRound={startNextRound}
           submitted={roundState.submitted}
         />
+        )}
+
+        {config.format === "COURT" && (
+          <WaitingPanel queue={courtQueue} cfg={courtCfg} names={names} />
         )}
 
         <StandingsTable

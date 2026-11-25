@@ -7,6 +7,7 @@ import {
   joinOffset,
   pickCourt,
   standingScore,
+  scoreOf,
 } from "./courtEngine"
 
 export type QueueState = {
@@ -38,6 +39,31 @@ export function joinQueue(s: QueueState, id: string, dupr: number, now: number, 
 
 /** sit = the clock freezes at its current value; back = it resumes where it
  *  stopped (the pre-sit wait is banked, not lost). */
+// The waiting ladder (Frank 2026-11-25): every free player's live queue
+// score, next-on-court first. It is the pick's own sort key shown negated,
+// so bigger = sooner at a glance, and it ticks with the clock (the waited
+// minutes carry the strongest per-minute weight). The pick builds the
+// quartet around whoever tops this ladder.
+export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
+  const busy = new Set(Object.values(state.onCourt).flatMap((c) => c.ids));
+  const pool = Object.values(state.players).filter(
+    (p) => !state.sitting[p.id] && !busy.has(p.id)
+  );
+  return pool
+    .map((p) => ({
+      id: p.id,
+      // the pick's own slot-1 score, negated: bigger = sooner on court
+      score: -scoreOf(p, now, cfg, {
+        courts: Object.keys(state.onCourt).length,
+        activePlayers: pool.length,
+        formingDuprAvg: null,
+      }).score,
+      waitMin: Math.max(0, Math.floor((now - p.waitSince) / 60000)),
+      games: p.gamesPlayed,
+    }))
+    .sort((a, b) => b.score - a.score);
+}
+
 export function toggleSit(s: QueueState, id: string, now: number): QueueState {
   const p = s.players[id]
   if (!p) return s
