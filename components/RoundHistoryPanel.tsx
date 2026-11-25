@@ -288,7 +288,7 @@ export default function RoundHistoryPanel({
   };
 
   return (
-    <section className="bg-panel rounded-2xl border border-line px-4 py-3">
+    <section className="bg-panel rounded-2xl shadow-xl px-4 py-3">
       {/* Header - Mobile-friendly layout */}
       <div className="mb-3">
         {/* Row 1: Title + Export */}

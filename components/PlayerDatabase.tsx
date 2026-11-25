@@ -254,7 +254,7 @@ export default function PlayerDatabase({
   };
 
   return (
-    <section className="bg-panel rounded-2xl shadow p-4">
+    <section className="bg-panel rounded-2xl shadow-xl p-4">
       {/* Header */}
       <div className="flex flex-col gap-2 mb-2 pt-1">
         <div className="flex items-center gap-2">

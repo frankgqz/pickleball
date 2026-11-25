@@ -43,7 +43,7 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
   const nameOf = (id: string) => names[id] || id.slice(0, 6)
 
   return (
-    <section className="bg-muted-bg border border-line rounded-xl p-3">
+    <section className="bg-panel rounded-2xl shadow-xl p-3">
       <div className="flex items-baseline justify-between mb-2">
         <h2 className="text-sm font-semibold text-text">Courts</h2>
         <span className="text-xs text-subtext">{pool.length} choosing</span>

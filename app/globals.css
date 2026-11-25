@@ -68,7 +68,7 @@ code, kbd, pre, .font-mono {
   appearance: none;
   border: 0;
   cursor: pointer;
-  color: var(--theme-text);
+  color: var(--theme-on-accent, var(--theme-text));
   background: var(--theme-role-primary-bg);
   box-shadow: var(--theme-role-primary-shadow);
 }
