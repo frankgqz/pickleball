@@ -157,8 +157,8 @@ export async function addPlayer(formData: FormData, userId?: string) {
   // duplicate rows instead of merging)
   if (/^\d{5,}$/.test(duprId) && !duprNumericId) { duprNumericId = duprId; duprId = ""; }
 
-  if (!name?.trim()) {
-    return { success: false, error: "Name is required" };
+  if (!name?.trim() && !duprNumericId?.trim()) {
+    return { success: false, error: "Name or dURL# is required" };
   }
 
   try {
@@ -185,7 +185,7 @@ export async function addPlayer(formData: FormData, userId?: string) {
       player = await prisma.player.update({
         where: { id: existingPlayer.id },
         data: {
-          name: name.trim(),
+          name: name.trim() || existingPlayer.name,
           // Only update duprId if provided and existing is null
           duprId: existingPlayer.duprId ?? (duprId?.trim() || null),
           // Only update duprNumericId if provided and existing is null
@@ -199,13 +199,13 @@ export async function addPlayer(formData: FormData, userId?: string) {
       // Sync playerName to all ClubPlayer entries
       await prisma.clubPlayer.updateMany({
         where: { playerId: player.id },
-        data: { playerName: name.trim() },
+        data: { playerName: name.trim() || player.name },
       });
     } else {
       // Create new player
       player = await prisma.player.create({
         data: {
-          name: name.trim(),
+          name: name.trim() || duprNumericId?.trim() || duprId?.trim() || "unnamed",
           duprId: duprId?.trim() || null,
           duprNumericId: duprNumericId?.trim() || null,
           manualDuprScore: manualDuprScore ? parseFloat(manualDuprScore) : null,
