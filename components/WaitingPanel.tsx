@@ -82,29 +82,29 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
             <span className="text-xs text-subtext w-5 text-right">#{i + 1}</span>
             <span className="flex-1 font-medium text-text truncate">{names[row.id] || row.id}</span>
             {i === 0 && (
-              <span className="px-2 py-0.5 role-tint rounded-lg text-xs font-semibold">
-                next on court
+              <span className="px-1.5 sm:px-2 py-0.5 role-tint rounded-lg text-[10px] sm:text-xs font-semibold whitespace-nowrap">
+                next<span className="hidden sm:inline"> on court</span>
               </span>
             )}
             {i > 0 && quartet.has(row.id) && (
-              <span className="px-2 py-0.5 bg-accent-soft text-accent rounded-lg text-xs font-semibold">
-                pairs in
+              <span className="px-1.5 sm:px-2 py-0.5 bg-accent-soft text-accent rounded-lg text-[10px] sm:text-xs font-semibold whitespace-nowrap">
+                pairs<span className="hidden sm:inline"> in</span>
               </span>
             )}
-            <span className="text-xs tabular-nums text-subtext/80 w-8 text-right" title="DUPR rating (the level and parity terms)">
+            <span className="text-xs tabular-nums text-subtext/80 w-7 sm:w-8 text-right shrink-0" title="DUPR rating (the level and parity terms)">
               {row.dupr.toFixed(1)}
             </span>
-            <span className="text-xs tabular-nums text-subtext/60 w-14 text-right">
+            <span className="hidden sm:block text-xs tabular-nums text-subtext/60 w-14 text-right">
               {row.games}g · {row.waitMin}m
             </span>
             <span
-              className="font-semibold tabular-nums text-text w-12 text-right cursor-help"
+              className="font-semibold tabular-nums text-text w-11 sm:w-12 text-right cursor-help shrink-0"
               title={`${breakdown(row.why, row.fitWhy)} = ${row.score.toFixed(1)}`}
             >
               {row.score.toFixed(1)}
             </span>
             <span
-              className="tabular-nums text-subtext w-12 text-right cursor-help"
+              className="tabular-nums text-subtext w-11 sm:w-12 text-right cursor-help shrink-0"
               title={row.fit === null ? "the anchor — the reference point" : `${row.fitNote} · ${breakdown(row.fitWhy!, row.fitWhy!)} = ${row.fit.toFixed(1)}`}
             >
               {row.fit === null ? "—" : row.fit.toFixed(1)}
