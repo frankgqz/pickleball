@@ -60,13 +60,14 @@ code, kbd, pre, .font-mono {
 .tint-text { color: var(--c6); }
 .accent-text { color: var(--c5); }
 .tint-bg { background: color-mix(in srgb, var(--c6) 10%, var(--theme-muted-bg)); }
-.role-quiet { background: var(--theme-role-quiet-bg); border: 1px solid var(--theme-role-quiet-border); color: var(--theme-text); }
+.role-quiet { border-radius: var(--theme-radius-button); background: var(--theme-role-quiet-bg); border: 1px solid var(--theme-role-quiet-border); color: var(--theme-text); }
 .role-quiet:hover { background: var(--theme-role-quiet-bg-hover); border-color: var(--theme-role-quiet-border-hover); }
-.role-tint { background: var(--theme-role-tint-bg); border: 1px solid var(--theme-role-tint-border); color: var(--theme-text); }
+.role-tint { border-radius: var(--theme-radius-button); background: var(--theme-role-tint-bg); border: 1px solid var(--theme-role-tint-border); color: var(--theme-text); }
 .role-tint:hover { background: var(--theme-role-tint-bg-hover); }
 .role-primary {
   appearance: none;
   border: 0;
+  border-radius: var(--theme-radius-button);
   cursor: pointer;
   color: var(--theme-on-accent, var(--theme-text));
   background: var(--theme-role-primary-bg);
@@ -81,6 +82,7 @@ code, kbd, pre, .font-mono {
 .role-danger {
   appearance: none;
   border: 0;
+  border-radius: var(--theme-radius-button);
   cursor: pointer;
   background: var(--theme-error);
   color: #fff;

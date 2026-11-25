@@ -126,7 +126,17 @@ export default function CourtRolling({ queue, names, cfg, venueCap, onClaim, onS
                     <span key={x.id} className="flex-1 min-w-0 truncate text-xs px-1.5 h-7 flex items-center rounded-lg border-2 team-2">{nameOf(x.id)}</span>
                   ))}
                 </div>
-                <button onClick={() => onClaim(court, sug.four.map((x) => x.id))} className="w-full mt-2 role-primary">we're on</button>
+                <button onClick={() => {
+                  // a fresh claim starts with empty score cells (Frank:
+                  // the previous game's scores lingered in them)
+                  setScores((prev) => {
+                    const next = { ...prev };
+                    delete next[court + "-1"];
+                    delete next[court + "-2"];
+                    return next;
+                  });
+                  onClaim(court, sug.four.map((x) => x.id));
+                }} className="w-full mt-2 role-primary">we're on</button>
                 {forced && <div className="text-xs text-subtext mt-1.5">only 1 pairing — send it</div>}
                 {!forced && thin && <div className="text-xs text-subtext mt-1.5">thin pool — {sug.available} choosing</div>}
               </div>
