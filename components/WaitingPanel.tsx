@@ -32,11 +32,11 @@ function derivation(
   const s = (v: number) => (v > 0 ? "+" : "−") + f(v);
   const coef = (v: number) => (v < 0 ? "−" : "+") + f(v);
   const lines: string[] = [];
-  lines.push(`current wait (since last game): ${row.waitMin}m × ${coef(cfg.courtWaitMin)} = ${s(why.wait)}`);
+  lines.push(`current wait: ${row.waitMin}m × ${coef(cfg.courtWaitMin)} = ${s(why.wait)}`);
   lines.push(`games: ${row.games} × ${coef(cfg.courtGames)} = ${s(why.played - row.minutesPlayed * cfg.courtMinPlayed)}`);
   lines.push(`on court: ${row.minutesPlayed}m × ${coef(cfg.courtMinPlayed)} = ${s(row.minutesPlayed * cfg.courtMinPlayed)}`);
-  lines.push(`level: ${row.dupr} × ${coef(cfg.courtDuprScore)} = ${s(why.level)}`);
-  lines.push(`sits/missed (each game on a court): ${row.cycles} × ${coef(-cycleRate)} = ${s(why.absence)}`);
+  lines.push(`dupr: ${row.dupr} × ${coef(cfg.courtDuprScore)} = ${s(why.level)}`);
+  lines.push(`sits missed games: ${row.cycles} × ${coef(-cycleRate)} = ${s(why.absence)}`);
   lines.push(`join credit = ${s(why.offset)}`);
   lines.push(`────────────────────────────────`);
   lines.push(`score = ${s(row.score)}`);
@@ -72,7 +72,7 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
   const formula =
     `score = ${term("current wait", cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
     `${term("games", cfg.courtGames)} ${term("min", cfg.courtMinPlayed)} ${term("dupr", cfg.courtDuprScore)} ` +
-    `${term("sits/missed", -cycleRate)} + join credit · ` +
+    `${term("sits missed games", -cycleRate)} + join credit · ` +
     `fit = score ${term("DUPR gap", cfg.courtDuprClose)} ${term("faces", cfg.courtDupLast)}`;
 
   return (

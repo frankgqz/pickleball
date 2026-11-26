@@ -189,7 +189,7 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               ["courtDuprClose", "Dupr close", "1"],
               ["courtMinPlayed", "Minutes", "0.05"],
               ["courtDuprScore", "Dupr", "0.25"],
-              ["courtDupLast", "Dup last", "0.5"],
+              ["courtDupLast", "Faces", "0.5"],
               ["courtSitRatio", "Sit ratio", "0.05"],
               ["courtJoinRatio", "Join ratio", "0.05"],
             ].map(([key, label, step]) => (
