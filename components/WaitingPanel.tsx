@@ -44,8 +44,8 @@ function derivation(
     const avg = row.fitAvg ?? anchorDupr;
     const faces = cfg.courtDupLast !== 0 ? Math.round(fitWhy.dupLast / cfg.courtDupLast) : 0;
     lines.push(`fit adds (the DUPR pull):`);
-    lines.push(`DUPR gap to the forming court: |${row.dupr} − ${avg.toFixed(2)}| × ${coef(cfg.courtDuprClose)} = ${s(fitWhy.close)}`);
-    lines.push(`faces: ${faces} × ${coef(cfg.courtDupLast)} = ${s(fitWhy.dupLast)}`);
+    lines.push(`dupr matching (vs the forming court): |${row.dupr} − ${avg.toFixed(2)}| × ${coef(cfg.courtDuprClose)} = ${s(fitWhy.close)}`);
+    lines.push(`dedupe: ${faces} × ${coef(cfg.courtDupLast)} = ${s(fitWhy.dupLast)}`);
     lines.push(`────────────────────────────────`);
     lines.push(`fit = ${s(row.fit ?? 0)}`);
   }
@@ -73,7 +73,7 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
     `score = ${term("current wait", cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
     `${term("games", cfg.courtGames)} ${term("min", cfg.courtMinPlayed)} ${term("dupr", cfg.courtDuprScore)} ` +
     `${term("sits missed games", -cycleRate)} + join credit · ` +
-    `fit = score ${term("DUPR gap", cfg.courtDuprClose)} ${term("faces", cfg.courtDupLast)}`;
+    `fit = score ${term("dupr matching", cfg.courtDuprClose)} ${term("dedupe", cfg.courtDupLast)}`;
 
   return (
     <section className="mt-6 bg-panel rounded-2xl shadow-xl px-4 py-3">

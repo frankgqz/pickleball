@@ -184,12 +184,12 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
           </summary>
           <div className="grid grid-cols-4 gap-1.5 mt-1.5 text-xs">
             {[
-              ["courtGames", "Games", "0.5"],
-              ["courtWaitMin", "Wait", "0.5"],
-              ["courtDuprClose", "Dupr close", "1"],
-              ["courtMinPlayed", "Minutes", "0.05"],
+              ["courtGames", "Per game", "0.5"],
+              ["courtWaitMin", "Current wait", "0.5"],
+              ["courtDuprClose", "Dupr matching", "1"],
+              ["courtMinPlayed", "Minutes played", "0.05"],
               ["courtDuprScore", "Dupr", "0.25"],
-              ["courtDupLast", "Faces", "0.5"],
+              ["courtDupLast", "Dedupe", "0.5"],
               ["courtSitRatio", "Sit ratio", "0.05"],
               ["courtJoinBonus", "Join bonus", "0.5"],
             ].map(([key, label, step]) => (
