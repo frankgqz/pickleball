@@ -1,14 +1,16 @@
 // By-Court mode: the pick engine — Frank's scoring formula (2026-11-03).
-// Lower score = goes on court next. Penalties are +, advantages are -.
+// Higher score = goes on court next. THE SCORE IS THE PANEL'S NUMBER (Frank
+// 2026-11-26: one convention throughout): waits and level add, games,
+// minutes, sits and the pairwise terms subtract.
 
 export type CourtConfig = {
-  courtGames: number // per-game base cost (7.5)
-  courtWaitMin: number // per minute waited since last game (-1)
-  courtDuprClose: number // per DUPR point from the forming average (10)
-  courtMinPlayed: number // per minute played (0.25)
-  courtDuprScore: number // per DUPR point of level (-1)
-  courtDupLast: number // per shared face with a locked player (2)
-  courtSitRatio: number // sit/absence credit ratio (1)
+  courtGames: number // per game played (−7.5)
+  courtWaitMin: number // per minute waited since last game (1)
+  courtDuprClose: number // per DUPR point from the forming average (−10)
+  courtMinPlayed: number // per minute played (−0.25)
+  courtDuprScore: number // per DUPR point of level (1)
+  courtDupLast: number // per shared face with a locked player (−2)
+  courtSitRatio: number // sits/missed multiplier (1 — the slight catch-up)
   courtJoinRatio: number // late-join history-credit ratio (1)
 }
 
@@ -24,12 +26,12 @@ export type CourtPlayer = {
 }
 
 export const COURT_DEFAULTS: CourtConfig = {
-  courtGames: 7.5,
-  courtWaitMin: -1,
-  courtDuprClose: 10,
-  courtMinPlayed: 0.25,
-  courtDuprScore: -1,
-  courtDupLast: 2,
+  courtGames: -7.5,
+  courtWaitMin: 1,
+  courtDuprClose: -10,
+  courtMinPlayed: -0.25,
+  courtDuprScore: 1,
+  courtDupLast: -2,
   courtSitRatio: 1,
   courtJoinRatio: 1,
 }
@@ -48,10 +50,23 @@ export type ScoreWhy = {
 
 /** the cost curve Frank specified: 5m -> 8.75, 10m -> 10, 20m -> 12.5 */
 export function gameCost(cfg: CourtConfig, minutes: number): number {
-  return cfg.courtGames + cfg.courtMinPlayed * minutes
+  // the positive COST curve (5m -> 8.75, 20m -> 12.5) — the knobs are
+  // display-signed, so the curve is their negation
+  return -(cfg.courtGames + cfg.courtMinPlayed * minutes)
 }
 
 const MIN = 60_000
+
+/** The sits/missed rate (Frank 2026-11-26): one count per game on a court.
+ *  Charge = the fair-share games per cycle (4 per court / players) × the
+ *  game-cost equivalent gameBase × multiplier - the multiplier (1.25)
+ *  accounts for the minutes part a base cost lacks, so a sit lands just
+ *  under a real game (~9.4 vs ~12 average with minutes): "sitsPayLess"
+ *  but in line with how many games are played - a sitter can't vault to
+ *  1st just by having played nothing. */
+export function sitRate(cfg: CourtConfig, courts: number, players: number): number {
+  return cfg.courtSitRatio * ((courts * 4) / Math.max(1, players)) * cfg.courtGames
+}
 
 export function scoreOf(
   p: CourtPlayer,
@@ -62,8 +77,8 @@ export function scoreOf(
 ): ScoreWhy {
   const played = p.gamesPlayed * cfg.courtGames + p.minutesPlayed * cfg.courtMinPlayed
   const wait = ((now - p.waitSince) / MIN) * cfg.courtWaitMin
-  const perCycle = cfg.courtSitRatio * (ctx.courts / Math.max(1, ctx.activePlayers)) * cfg.courtGames
-  const absence = p.creditedCycles * perCycle
+  const perCycle = sitRate(cfg, ctx.courts, ctx.activePlayers)
+  const absence = -(p.creditedCycles * perCycle)
   const level = p.dupr * cfg.courtDuprScore
   const close = ctx.formingDuprAvg === null ? 0 : Math.abs(p.dupr - ctx.formingDuprAvg) * cfg.courtDuprClose
   let dupLast = 0
@@ -78,7 +93,7 @@ export function scoreOf(
 }
 
 /**
- * The lock-sequence pick: lowest score locks in, the rest re-score against
+ * The lock-sequence pick: highest score locks in, the rest re-score against
  * the forming average + accumulate dup-last. Pick 1 has no forming court,
  * so game 1 of the night sorts by level alone = the standard seeding look.
  */
@@ -149,7 +164,7 @@ export function pickCourt(
     const formingDuprAvg = picked.length ? picked.reduce((s, p) => s + p.dupr, 0) / picked.length : null
     const scored = remaining
       .map((c) => scoreOf(c, now, cfg, { ...ctx, activePlayers: players.length, formingDuprAvg }, picked))
-      .sort((a, b) => a.score - b.score)
+      .sort((a, b) => b.score - a.score)
     steps.push(scored)
     const winner = remaining.find((r) => r.id === scored[0].id)!
     picked.push(winner)

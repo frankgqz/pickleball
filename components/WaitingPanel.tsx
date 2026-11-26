@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { QueueState } from "@/app/courtQueue";
 import { waitingList, nextQuartet } from "@/app/courtQueue";
 import type { CourtConfig, ScoreWhy } from "@/app/courtEngine";
+import { sitRate } from "@/app/courtEngine";
 
 interface Props {
   queue: QueueState;
@@ -29,21 +30,22 @@ function derivation(
 ): string {
   const f = (v: number) => Math.abs(v).toFixed(2).replace(/\.?0+$/, "");
   const s = (v: number) => (v > 0 ? "+" : "−") + f(v);
+  const coef = (v: number) => (v < 0 ? "−" : "+") + f(v);
   const lines: string[] = [];
-  lines.push(`current wait (since last game): ${row.waitMin}m × ${f(cfg.courtWaitMin)} = ${s(-why.wait)}`);
-  lines.push(`games: ${row.games} × ${f(cfg.courtGames)} = ${s(-row.games * cfg.courtGames)}`);
-  lines.push(`on court: ${row.minutesPlayed}m × ${f(cfg.courtMinPlayed)} = ${s(-row.minutesPlayed * cfg.courtMinPlayed)}`);
-  lines.push(`level: ${row.dupr} × ${f(cfg.courtDuprScore)} = ${s(-why.level)}`);
-  lines.push(`sit cycles (games sat out): ${row.cycles} × ${f(cycleRate)} = ${s(-why.absence)}`);
-  lines.push(`join credit = ${s(-why.offset)}`);
+  lines.push(`current wait (since last game): ${row.waitMin}m × ${coef(cfg.courtWaitMin)} = ${s(why.wait)}`);
+  lines.push(`games: ${row.games} × ${coef(cfg.courtGames)} = ${s(why.played - row.minutesPlayed * cfg.courtMinPlayed)}`);
+  lines.push(`on court: ${row.minutesPlayed}m × ${coef(cfg.courtMinPlayed)} = ${s(row.minutesPlayed * cfg.courtMinPlayed)}`);
+  lines.push(`level: ${row.dupr} × ${coef(cfg.courtDuprScore)} = ${s(why.level)}`);
+  lines.push(`sits/missed (each game on a court): ${row.cycles} × ${coef(-cycleRate)} = ${s(why.absence)}`);
+  lines.push(`join credit = ${s(why.offset)}`);
   lines.push(`────────────────────────────────`);
   lines.push(`score = ${s(row.score)}`);
   if (withFit && fitWhy) {
     const avg = row.fitAvg ?? anchorDupr;
     const faces = cfg.courtDupLast !== 0 ? Math.round(fitWhy.dupLast / cfg.courtDupLast) : 0;
     lines.push(`fit adds (the DUPR pull):`);
-    lines.push(`DUPR gap to the forming court: |${row.dupr} − ${avg.toFixed(2)}| × ${f(cfg.courtDuprClose)} = ${s(-fitWhy.close)}`);
-    lines.push(`faces: ${faces} × ${f(cfg.courtDupLast)} = ${s(-fitWhy.dupLast)}`);
+    lines.push(`DUPR gap to the forming court: |${row.dupr} − ${avg.toFixed(2)}| × ${coef(cfg.courtDuprClose)} = ${s(fitWhy.close)}`);
+    lines.push(`faces: ${faces} × ${coef(cfg.courtDupLast)} = ${s(fitWhy.dupLast)}`);
     lines.push(`────────────────────────────────`);
     lines.push(`fit = ${s(row.fit ?? 0)}`);
   }
@@ -60,7 +62,7 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
   const now = Date.now();
   const rows = waitingList(queue, cfg, now);
   const quartet = new Set(nextQuartet(queue, cfg, now));
-  const cycleRate = cfg.courtSitRatio * (Math.max(1, Object.keys(queue.onCourt).length) / Math.max(1, rows.length)) * cfg.courtGames;
+  const cycleRate = sitRate(cfg, Object.keys(queue.onCourt).length, rows.length);
   if (rows.length === 0) return null;
 
   // the formula with the LIVE Court Settings values (Frank: "the current
@@ -68,10 +70,10 @@ export default function WaitingPanel({ queue, cfg, names }: Props) {
   const term = (label: string, v: number) =>
     `${v < 0 ? "−" : "+"} ${label}×${Math.abs(v).toFixed(2).replace(/\.?0+$/, "")}`;
   const formula =
-    `score = ${term("current wait", -cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
-    `${term("games", -cfg.courtGames)} ${term("min", -cfg.courtMinPlayed)} ${term("dupr", -cfg.courtDuprScore)} ` +
-    `${term("sit cycles", -cycleRate)} − join · ` +
-    `fit = score ${term("DUPR gap", -cfg.courtDuprClose)} ${term("faces", -cfg.courtDupLast)}`;
+    `score = ${term("current wait", cfg.courtWaitMin).replace(/^[+−] /, "")} ` +
+    `${term("games", cfg.courtGames)} ${term("min", cfg.courtMinPlayed)} ${term("dupr", cfg.courtDuprScore)} ` +
+    `${term("sits/missed", -cycleRate)} + join credit · ` +
+    `fit = score ${term("DUPR gap", cfg.courtDuprClose)} ${term("faces", cfg.courtDupLast)}`;
 
   return (
     <section className="mt-6 bg-panel rounded-2xl shadow-xl px-4 py-3">

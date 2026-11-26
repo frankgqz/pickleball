@@ -81,8 +81,9 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
       const why = scoreOf(p, now, cfg, ctx);
       return {
         id: p.id,
-        // the pick's own slot-1 score, negated: bigger = sooner on court
-        score: -why.score,
+        // the pick's own slot-1 score — the engine speaks the panel's
+        // direction now: bigger = sooner on court
+        score: why.score,
         waitMin: Math.max(0, Math.floor((now - p.waitSince) / 60000)),
         games: p.gamesPlayed,
         minutesPlayed: p.minutesPlayed,
@@ -119,7 +120,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
     if (i === steps.length - 1) lastAvg = avg;
     if (row && i > 0) {
       row.fitWhy = winner;
-      row.fit = -winner.score;
+      row.fit = winner.score;
       row.fitNote = `picked ${place[i]}`;
       row.fitAvg = avg;
     }
@@ -130,7 +131,7 @@ export function waitingList(state: QueueState, cfg: CourtConfig, now: number) {
     const row = byId.get(cand.id);
     if (row && row.fitWhy === null) {
       row.fitWhy = cand;
-      row.fit = -cand.score;
+      row.fit = cand.score;
       row.fitNote = "the last step";
       row.fitAvg = lastAvg;
     }

@@ -220,3 +220,18 @@ A joiner's pre-join time = sit time: they enter with CREDITED CYCLES
 0.9 * (courts/players) * gameBase per cycle. CreditedCycles = sits +
 missed-cycles = ONE variable in the score. After ~5 cycles they arrive ~1
 game behind the pool = play once, then level.
+
+
+## v8 — the sit rate + one language (2026-11-26, Frank)
+- sits/missed = ONE count per game on a court (was "cycles"). Charge =
+  gameBase * (4 * courts / players) * multiplier, multiplier default 1
+  (the knob courtSitRatio). The multiplier accounts for minutes a base
+  cost lacks: a sit lands at 7.5 * share vs a played game's ~12 average
+  (with minutes) — and vs the active player's net ~10 (the wait credit
+  between games, Frank's 12.5*0.8). Slight catch-up for a returning
+  sitter, not a leap: "sitting player doesn't just automatically get 1st".
+- ONE CONVENTION THROUGHOUT: the engine now speaks the panel's number
+  (bigger = sooner). The knobs are display-signed (wait +1, games −7.5,
+  min −0.25, dupr +1, gap −10, faces −2, sits multiplier 1). Saved
+  custom knob values from before the flip need re-entering with the new
+  signs.
