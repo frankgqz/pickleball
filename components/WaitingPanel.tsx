@@ -37,7 +37,7 @@ function derivation(
   lines.push(`on court: ${row.minutesPlayed}m × ${coef(cfg.courtMinPlayed)} = ${s(row.minutesPlayed * cfg.courtMinPlayed)}`);
   lines.push(`dupr: ${row.dupr} × ${coef(cfg.courtDuprScore)} = ${s(why.level)}`);
   lines.push(`sits missed games: ${row.cycles} × ${coef(-cycleRate)} = ${s(why.absence)}`);
-  lines.push(`join credit: pool avg × ${f(cfg.courtJoinRatio ?? 1)} + bonus ${f(cfg.courtJoinBonus ?? 0)} = ${s(why.offset)}`);
+  lines.push(`join credit: pool avg + bonus ${f(cfg.courtJoinBonus ?? 0)} = ${s(why.offset)}`);
   lines.push(`────────────────────────────────`);
   lines.push(`score = ${s(row.score)}`);
   if (withFit && fitWhy) {

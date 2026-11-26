@@ -236,6 +236,7 @@ game behind the pool = play once, then level.
   custom knob values from before the flip need re-entering with the new
   signs.
 - join credit = the pool's average HISTORY (played + wait + sits — no
-  dupr; the joiner keeps their own rating term) × Join ratio + Join
-  bonus (4): Frank's "a little higher than the average" catch-up for
-  arriving late. The bonus is a static knob (his leeway).
+  dupr; the joiner keeps their own rating term) + Join bonus (5 ≈ half
+  a game): the slight catch-up for arriving late. ONE knob — the ratio
+  idea retired (Frank: "not a ratio, an additive bonus"); the pool
+  average is always granted full.

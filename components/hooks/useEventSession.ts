@@ -30,8 +30,7 @@ export const DEFAULT_CONFIG: TournamentConfig = {
   courtDuprScore: 1,
   courtDupLast: -2,
   courtSitRatio: 1,
-  courtJoinRatio: 1,
-  courtJoinBonus: 4,
+  courtJoinBonus: 5,
 };
 
 // Format constants with proper literal types

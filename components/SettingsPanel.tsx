@@ -191,7 +191,6 @@ export default function SettingsPanel({ config, updateConfig, onRestartEvent, se
               ["courtDuprScore", "Dupr", "0.25"],
               ["courtDupLast", "Faces", "0.5"],
               ["courtSitRatio", "Sit ratio", "0.05"],
-              ["courtJoinRatio", "Join ratio", "0.05"],
               ["courtJoinBonus", "Join bonus", "0.5"],
             ].map(([key, label, step]) => (
               <div key={key}>
