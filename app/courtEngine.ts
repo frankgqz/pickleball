@@ -12,6 +12,9 @@ export type CourtConfig = {
   courtDupLast: number // per shared face with a locked player (−2)
   courtSitRatio: number // sits/missed multiplier (1 — the slight catch-up)
   courtJoinRatio: number // late-join history-credit ratio (1)
+  courtJoinBonus: number // on top of the join credit (4) — the slight
+  //  catch-up for arriving late (Frank 2026-11-26: "a little higher than
+  //  the average"; static, the knob is the leeway)
 }
 
 export type CourtPlayer = {
@@ -34,6 +37,7 @@ export const COURT_DEFAULTS: CourtConfig = {
   courtDupLast: -2,
   courtSitRatio: 1,
   courtJoinRatio: 1,
+  courtJoinBonus: 4,
 }
 
 export type ScoreWhy = {
@@ -117,7 +121,7 @@ export function joinOffset(
     const w = scoreOf(p, now, cfg, { ...ctx, activePlayers: pool.length, formingDuprAvg: null })
     return w.played + w.wait + w.absence
   })
-  return (history.reduce((s, v) => s + v, 0) / history.length) * (cfg.courtJoinRatio ?? 1)
+  return (history.reduce((s, v) => s + v, 0) / history.length) * (cfg.courtJoinRatio ?? 1) + (cfg.courtJoinBonus ?? 0)
 }
 
 

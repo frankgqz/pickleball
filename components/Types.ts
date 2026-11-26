@@ -95,6 +95,7 @@ export interface TournamentConfig {
   courtDupLast: number
   courtSitRatio: number
   courtJoinRatio: number
+  courtJoinBonus: number
   format: "STANDARD"  | "COURT" | "FIXED_PARTNER" | "POOL_PLAY";
   roundFormat?: "FIXED_14V23" | "PICK_PARTNER" | "SOCIAL" | "TEAMS";
   /** Teams mode: playerId -> partnerId (MUTUAL). Latest pairing only. */

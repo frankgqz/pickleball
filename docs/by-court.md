@@ -235,3 +235,7 @@ game behind the pool = play once, then level.
   min −0.25, dupr +1, gap −10, faces −2, sits multiplier 1). Saved
   custom knob values from before the flip need re-entering with the new
   signs.
+- join credit = the pool's average HISTORY (played + wait + sits — no
+  dupr; the joiner keeps their own rating term) × Join ratio + Join
+  bonus (4): Frank's "a little higher than the average" catch-up for
+  arriving late. The bonus is a static knob (his leeway).
